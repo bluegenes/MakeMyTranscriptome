@@ -1,0 +1,1 @@
+Transcript_id	Gene_id	Transcript_Length	Sprot_BLASTX	Sprot_BLASTX_Length	Prot_id	Prot_coordinates	Sprot_BLASTP	PFAM	SignalP	TmHMM	RNAMMER	Uniref90_BLASTX	Uniref90_BLASTP	eggNOG	eggNOG_function	GO_terms	GO_slim	Kegg_Orthology	Kegg_Enzyme	Kegg_Pathway	BLAST_NR	BLAST_NR_Length	BLAST_NR_BestWords	Closest_BLASTX	Closest_BLASTX_Length	orthoDB	BioCyc	entrezGene
