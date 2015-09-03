@@ -46,7 +46,7 @@ GEN_LOGS = lambda x : (os.path.join(GEN_PATH_LOGS(),x+'.out_log'),os.path.join(G
 
 
 if(not os.path.isdir(PATH_DATABASES)):
-	os.makedir(PATH_DATABASES)
+	os.makedirs(PATH_DATABASES)
 if(not os.path.isdir(PATH_ASSEMBLIES)):
-	os.makedir(PATH_ASSEMBLIES)
+	os.makedirs(PATH_ASSEMBLIES)
 

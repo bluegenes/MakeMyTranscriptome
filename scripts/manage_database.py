@@ -12,8 +12,6 @@ from os import rename,remove
 from os.path import basename
 import json
 
-PATH_DATABASES+='/test'
-
 url_sprot = 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz'
 sprot_target = '{0!s}/uniprot_sprot/uniprot_sprot.fasta'.format(PATH_DATABASES)
 
