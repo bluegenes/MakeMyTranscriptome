@@ -44,3 +44,9 @@ GEN_PATH_LOGS = lambda : os.path.join(GEN_PATH_DIR(),'logs')
 GEN_PATH_ASSEMBLY = lambda : os.path.join(GEN_PATH_DIR(),NAME_ASSEMBLY+'.fasta')
 GEN_LOGS = lambda x : (os.path.join(GEN_PATH_LOGS(),x+'.out_log'),os.path.join(GEN_PATH_LOGS(),x+'.err_log'))
 
+
+if(not os.path.isdir(PATH_DATABASES)):
+	os.makedir(PATH_DATABASES)
+if(not os.path.isdir(PATH_ASSEMBLIES)):
+	os.makedir(PATH_ASSEMBLIES)
+
