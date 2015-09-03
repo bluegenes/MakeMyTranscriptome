@@ -5,7 +5,7 @@ else:
 	from urllib import urlretrieve
 
 
-from task_functions import PATH_DATABASES
+from path_vars import PATH_DATABASES
 from time import strftime
 import gzip
 from os import rename,remove

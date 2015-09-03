@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import re
 import argparse
+from path_vars import PATH_NOG_CATEGORIES
 
 #######################################################################
 """ Read in Data; Set Plotting Style """
@@ -21,7 +22,7 @@ args = parser.parse_args()
 reportDF=pd.io.parsers.read_table(args.input, header=0, index_col = False,sep='\t')
 #reportDF=pd.io.parsers.read_table('Axolotl_no_rmdup_good_summarized_annotation.txt', header=0, index_col = False)
 #reportDF=pd.io.parsers.read_table('rabbitfish_highq_rmdup_repaired_sumTrin_annotation.txt', header=0, index_col = False)
-descriptions=open('/ni2/tessa_projects/build/databases/nog_categories','r')
+descriptions=open(PATH_NOG_CATEGORIES,'r')
 
 sns.set(style="white")
 sns.despine()
