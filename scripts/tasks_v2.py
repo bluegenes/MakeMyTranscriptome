@@ -179,6 +179,7 @@ class Supervisor:
 					except (Task.ExitCodeException,Task.TaskException) as inst:
 						self.errors.append(inst)
 						self.running.remove(t)
+						cur_cpu-=t.cpu
 						self.task_status[t]['stop'] = time.time()
 						self.task_status[t]['state'] = Supervisor.STATE_ERR
 						self.task_status[t]['exit_code'] = t.exit_code
