@@ -73,12 +73,16 @@ def download_databases(log_table):
 	date = strftime('%b-%d-%Y')
 
 	try:
+		if(not os.path.isdir(PATH_DATABASES+'/uniprot_sprot')):
+			os.mkdirs(PATH_DATABASES+'/uniprot_sprot')
 		url_unzip(url_sprot,sprot_target)
 		log_table[basename(sprot_target)] = date
 	except:
 		print('failed to install {0!s}'.format(basename(sprot_target)))
 	
 	try:
+		if(not os.path.isdir(PATH_DATABASES+'/uniref90')):
+			os.mkdirs(PATH_DATABASES+'/uniref90')
 		url_unzip(url_uniref90,uniref90_target)
 		log_table[basename(uniref90_target)] = date
 	except:

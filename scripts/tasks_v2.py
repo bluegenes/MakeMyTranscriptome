@@ -303,9 +303,8 @@ class Supervisor:
 						dependant_task.dependencies.remove(task)
 						dependant_task.dependencies.extend(sub_tasks)
 					self.tasks.remove(task)
-					break
-			r_graph = {h:set([d for d in h.dependencies if(isinstance(d,Task) or isinstance(d,Supervisor))]) for h in self.tasks}
-			f_graph = {h:set([d for d in r_graph if(h in r_graph[d]) ]) for h in self.tasks}
+				r_graph = {h:set([d for d in h.dependencies if(isinstance(d,Task) or isinstance(d,Supervisor))]) for h in self.tasks}
+				f_graph = {h:set([d for d in r_graph if(h in r_graph[d]) ]) for h in self.tasks}
 		return self.tasks
 
 

@@ -3,7 +3,6 @@
 
 from tasks_v2 import Task
 import os
-join = os.path.join
 from functools import reduce
 from path_vars import *
 
@@ -141,9 +140,8 @@ def trinity_task(fastq,fastq2,unpaired,cpu_cap, tasks):
 		input_str+='--left '+','.join(fastq+unpaired)
 		input_str+=' --right '+','.join(fastq2)
 	trgs = [GEN_PATH_ASSEMBLY()]
-	cmd = ('ulimit -s unlimited; ulimit -a; {0!s} --seqType fq {1!s} --CPU {3!s}  '
-			'--JM 120G --bflyCPU {3!s} --bflyHeapSpaceMax 120G --bfly_opts "-V 10 '
-			'--stderr" --output {4!s}/trinity; cp {4!s}/trinity/Trinity.fasta {5!s}; '
+	cmd = ('{0!s} --seqType fq {1!s} --CPU {3!s} --JM 180G --bflyCPU {3!s} --bflyHeapSpaceMax 180G '
+			'--bfly_opts "-V 10 --stderr" --output {4!s}/trinity; cp {4!s}/trinity/Trinity.fasta {5!s};'
 			).format( PATH_TRINITY, input_str, 'dummy', cpu_cap, GEN_PATH_ASSEMBLY_FILES(), trgs[0])
 	name = 'trinity_assembly'
 	out,err = GEN_LOGS(name)
@@ -454,7 +452,7 @@ def intersect_bed_task(bam_file,bed_reference,output_name,tasks):
 	'''
 	trgs = ['{0!s}/{1!s}.bed'.format(GEN_PATH_EXPRESSION_FILES(),output_name)]
 	cmd = '{0!s} intersect -abam {1!s} -b {2!s} -wb -bed > {3!s}'.format(PATH_BEDTOOLS,bam_file,bed_reference,trgs[0])
-	name = 'intersect_bed'
+	name = 'intersect_bed_'+output_name
 	out,err = GEN_LOGS(name)
 	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
@@ -486,5 +484,60 @@ def rnaspades_task(left,right,unpaired,cpu_cap,tasks):
 	name = 'rnaSPAdes_assembly'
 	out,err = GEN_LOGS(name)
 	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
+
+
+def build_salmon_task(cpu_cap,tasks):
+	trgs = []
+	cmd = '{0!s} index -t {1!s} -i {2!s}/{3!s}_salmon -p {4!s}'.format(PATH_SALMON,
+		GEN_PATH_ASSEMBLY(),GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY,cpu_cap)
+	name = 'build_salmon'
+	out,err = GEN_LOGS(name)
+	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
+
+
+def salmon_task(index,left,right,out_name,gene_map,cpu_cap,tasks):
+	trgs = []
+	cmd = '{0!s} quant -i {1!s} -1 {2!s} -2 {3!s} -o {4!s}/{5!s} --geneMap {6!s} -l IU -p {7!s} --extraSensitive'.format(
+			PATH_SALMON,index,left,right,GEN_PATH_EXPRESSION_FILES(),out_name,gene_map,cpu_cap)
+	name = 'salmon'
+	out,err = GEN_LOGS(name)
+	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
+
+
+def build_kallisto_task(tasks):
+	trgs = []
+	cmd = '{0!s} index -i {1!s}/{2!s}_kallisto {3!s}'.format(
+			PATH_KALLISTO,GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY,GEN_PATH_ASSEMBLY())
+	name = 'build_kallisto'
+	out,err = GEN_LOGS(name)
+	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
+
+
+def kallisto_task(index,out_name,left,right,tasks):
+	trgs = []
+	cmd = '{0!s} quant -i {1!s} -o {2!s}/{3!s} {4!s} {5!s}'.format(
+			PATH_KALLISTO,index,GEN_PATH_EXPRESSION_FILES(),out_name,left,right)
+	name = 'kallisto'
+	out,err = GEN_LOGS(name)
+	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
+
+
+def build_blast_task(fasta,out_path,dbtype,tasks):
+	trgs = []
+	cmd = 'makeblastdb -in {0!s} -dbtype {2!s} -out {1!s}'.format(fasta,out_path,dbtype)
+	name = 'build_blast_'+os.path.basename(fasta)
+	out,err = GEN_LOGS(name)
+	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
+
+
+def split_mito_task(tasks):
+	trgs = []
+	cmd = ''.format()
+	name = 'split_mito'
+	out,err = GEN_LOGS(name)
+
+
+
+
 
 

@@ -20,6 +20,7 @@ PATH_CEGMA = 'cegma'
 PATH_EXPRESS = '/matta1/biotools/redhat/express-1.5.1-linux_x86_64/express'
 PATH_FASTQC = '/matta1/biotools/redhat/FastQC/fastqc'
 PATH_GENE_TRANS_MAP = PATH_SCRIPTS+'/get_Trinity_gene_to_trans_map.pl'
+PATH_KALLISTO = '/matta1/biotools/redhat/kallisto_linux-v0.42.1/kallisto'
 PATH_PFAM = 'hmmscan'
 PATH_PFAM_DB = '/matta1/hitsdata/reference_files/for_trinotate/for_transDecoder/Pfam-AB.hmm.bin'
 PATH_PRINSEQ = 	'/matta1/biotools/redhat/prinseq-lite-0.20.4/prinseq-lite.pl'
@@ -42,6 +43,7 @@ GEN_PATH_ANNOTATION_FILES = lambda : os.path.join(GEN_PATH_DIR(),'annotation_fil
 GEN_PATH_EXPRESSION_FILES = lambda : os.path.join(GEN_PATH_DIR(),'expression_files')
 GEN_PATH_LOGS = lambda : os.path.join(GEN_PATH_DIR(),'logs')
 GEN_PATH_ASSEMBLY = lambda : os.path.join(GEN_PATH_DIR(),NAME_ASSEMBLY+'.fasta')
+
 GEN_LOGS = lambda x : (os.path.join(GEN_PATH_LOGS(),x+'.out_log'),os.path.join(GEN_PATH_LOGS(),x+'.err_log'))
 
 
