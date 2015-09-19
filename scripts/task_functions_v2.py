@@ -530,12 +530,13 @@ def build_blast_task(fasta,out_path,dbtype,tasks):
 	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def split_mito_task(tasks):
-	trgs = []
-	cmd = ''.format()
+def split_mito_task(blast_mt,tasks):
+	trgs = ['{0!s}/mtDNA_contigs.fasta'.fomat(GEN_PATH_ASSEMBLY_FILES()),'{0!s}/no_mtDNA_contigs.fasta'.format(GEN_PATH_ASSEMBLY_FILES())]
+	cmd = '{0!s}/split_fasta.py {1!s} {3!s} {2!s}/mtDNA_contigs.fasta {2!s}/no_mtDNA_contigs.fasta'.format(PATH_SCRIPTS,GEN_PATH_ASSEMBLY(),GEN_PATH_ASSEMBLY_FILES(),blast_mt)
 	name = 'split_mito'
 	out,err = GEN_LOGS(name)
-
+	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
+	
 
 
 
