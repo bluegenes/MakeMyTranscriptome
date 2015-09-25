@@ -32,7 +32,7 @@ def full_args():
 	parser.add_argument('-test',help='Use this flag to test the pipeline.',action='store_true')
 	parser.add_argument('-no_rmdup',help='Use thie flag to disable the removing duplicates portion of the pre-assembly read cleaning.',action='store_true')	
 	parser.add_argument('-no_trim',help='Use this flag to disable all trimming portions of pre-assembly read cleaning. Duplicate and low quality reads will not be removed. Subsampling will still be executed.',action='store_true')
-	parser.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The deafult value is 50.', default='50')
+	parser.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The deafult value is 50.', default=50,type=int)
 	parser.add_argument('-rnaspades',help='Use this flag to specify that assembly should be performed by rnaSPAdes rather than the default Trinity.',action='store_true')
 	parser.add_argument('-cegma',help='Use this flag to run cegma as part of the annotation pipeline. Cegma is an old tool for assesing the quality of assemblies. Normal behavior of the pipeline is to use busco for assesing assemblies. Using this flag will run cegma in addition to Busco.',action='store_true')
 	parser.add_argument('-blast_uniref90',help='Use this flag to enable the uniref-90 blast runs as part of the annotation pipeline.',action='store_true')
@@ -56,7 +56,7 @@ def assembly_args():
 	parser.add_argument('-rnaspades',help='Use this flag to specify that assembly should be performed by rnaSPAdes rather than the default Trinity.',action='store_true')
 	parser.add_argument('-no_rmdup',help='Use thie flag to disable the removing duplicates portion of the pre-assembly read cleaning.',action='store_true')	
 	parser.add_argument('-no_trim',help='Use this flag to disable all trimming portions of pre-assembly read cleaning. Duplicate and low quality reads will not be removed. Subsampling will still be executed.',action='store_true')
-	parser.add_argument('--max_reads',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The deafult value is 50.', default='50')	
+	parser.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The deafult value is 50.', default=50,type=int)	
 	parser.add_argument('-no_log',help='Pipeline will delete log files.',action='store_true')
 	parser.add_argument('-force',help='Use this flag to perform a fresh run of the pipeline. All steps will be executed regradless of what has already been performed.',action='store_true')
 	parser.add_argument('--cpu', help='Sets the process cap for execution. Default is 12. Use 0 to indicate no process cap should be used.',default=12,type=int)
@@ -164,22 +164,23 @@ def check_expression_args(args):
 
 def fastq_pair_check(fastq1,fastq2):
 	count1 = 0
-	with open(fsatq1) as f:
+	with open(fastq1) as f:
 		for line in f:
-			if(line[0]=='@'):
-				count1+=1
+			count1+=1
 	count2 = 0
 	with open(fastq2) as f:
 		for line in f:
-			if(line[0]=='@'):
-				count2+=1
+			count2+=1
 	return count1==count2
 
 def handle_csv(args):
 	f = open(args.csv)
 	head = f.readline().rstrip().split(',')
 	args.paired_names=[]
-	args.unpaired_names = []
+	args.unpaired_names=[]
+	args.fastq1=[]
+	args.fastq2=[]
+	args.unpaired=[]
 	if(args.model==None):
 		args.model = ' '.join(head[3:])
 	for line in f:
@@ -217,12 +218,12 @@ def run_full(args):
 	global_setup(args)
 	gen_sample_info(args)
 	supers = []
-	assembly_super = gen_assembly_supervisor(args.fastq,args.fastq2,args.unpaired,[],args.no_trim,
+	assembly_super = gen_assembly_supervisor(args.fastq1,args.fastq2,args.unpaired,[],args.no_trim,
 										args.rnaspades,args.no_rmdup,args.subsample_size,args.cpu)
 	supers.append(assembly_super)
 	annotion_super = gen_annotation_assembly(args.cpu,args.busco_ref,args.blast_uniref90,args.cegma,[assembly_super])
 	supers.append(annotion_super)
-	expression_super = gen_expression_super(args.fastq,args.fastq2,args.paired_names,args.unpaired,args.unpaired_names,args.cpu,args.sample_info,args.model,[assembly_super])
+	expression_super = gen_expression_super(args.fastq1,args.fastq2,args.paired_names,args.unpaired,args.unpaired_names,args.cpu,args.sample_info,args.model,[assembly_super])
 	supers.append(expression_super)
 	run_supers(args,supers)
 
@@ -230,7 +231,7 @@ def run_assembly(args):
 	check_assembly_args(args)
 	global_setup(args)
 	supers = []
-	assembly_super = gen_assembly_supervisor(args.fastq,args.fastq2,args.unpaired,[],args.no_trim,
+	assembly_super = gen_assembly_supervisor(args.fastq1,args.fastq2,args.unpaired,[],args.no_trim,
 										args.rnaspades,args.no_rmdup,args.subsample_size,args.cpu)
 	supers.append(assembly_super)
 	run_supers(args,supers)
@@ -252,13 +253,13 @@ def run_expression(args):
 	supers=[]
 	cp = tf.cp_assembly_task(args.assembly,[])
 	supers.append(cp)
-	expression_super = gen_expression_super(args.fastq,args.fastq2,args.paired_names,args.unpaired,args.unpaired_names,args.cpu,args.sample_info,args.model,[cp])
+	expression_super = gen_expression_super(args.fastq1,args.fastq2,args.paired_names,args.unpaired,args.unpaired_names,args.cpu,args.sample_info,args.model,[cp])
 	supers.append(expression_super)
 	run_supers(args,supers)
 
 def run_supers(args,supers):
-	run_log = os.path.join(tf.GEN_PATH_DIR(),'master.log')
-	total = Supervisor(tasks=supers,cpu=args.cpu,force_run=args.force,log=run_log)
+	run_log = os.path.join(tf.GEN_PATH_DIR(),'run.log')
+	total = Supervisor(tasks=supers,cpu=args.cpu,force_run=args.force,log=run_log,email=args.email)
 	total.run()
 
 
@@ -270,7 +271,7 @@ if(__name__=='__main__'):
 		if(tool=='full'[:len(tool)]):
 			args = full_args()
 			args.tool_selector='full'
-			run_all(args)
+			run_full(args)
 		if(tool=='assembly'[:len(tool)]):
 			args = assembly_args()
 			args.tool_selector='assembly'
