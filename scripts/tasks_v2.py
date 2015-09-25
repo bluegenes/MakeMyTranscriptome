@@ -5,6 +5,7 @@ import signal
 import subprocess
 import pickle
 from functools import reduce
+from itertools import chain
 
 
 class Task():
@@ -152,6 +153,7 @@ class Supervisor:
 		self.log_str = ''
 		self.task_status = {t:{'state':Supervisor.STATE_INITIALIZED,'exit_code':None,'message':None,'start':None,'stop':None}  for t in tasks}
 		self.errors = []
+		self.targets = [t for t in chain(*[x.targets for x in tasks])]
 
 	
 	def run(self):
@@ -360,12 +362,12 @@ class Supervisor:
 
 
 if(__name__=='__main__'):
-	t1 = Task('py3 ..\\test.py 4',dependencies=[],name='t1')
-	t2 = Task('py3 ..\\test.py 6',dependencies=[t1],name='t2')
-	t3 = Task('py3 ..\\test.py 3',dependencies=[],name='t3')
-	t4 = Task('py3 ..\\test.py 2',dependencies=[t3],name='t4')
-	t5 = Task('py3 ..\\test.py 1',dependencies=[],name='t5')
-	t6 = Task('py3 ..\\test.py 7',dependencies=[],name='t6')
+	t1 = Task('py3 ..\\..\\test.py 4',dependencies=[],name='t1')
+	t2 = Task('py3 ..\\..\\test.py 6',dependencies=[t1],name='t2')
+	t3 = Task('py3 ..\\..\\test.py 3',dependencies=[],name='t3')
+	t4 = Task('py3 ..\\..\\test.py 2',dependencies=[t3],name='t4')
+	t5 = Task('py3 ..\\..\\test.py 1',dependencies=[],name='t5')
+	t6 = Task('py3 ..\\..\\test.py 7',dependencies=[],name='t6')
 	s1 = Supervisor([t1,t2],name='s1')
 	s2 = Supervisor([t3,t4],name='s2',dependencies=[s1])
 	s3 = Supervisor([s1,s2],name='s3')

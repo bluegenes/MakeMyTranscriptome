@@ -33,6 +33,14 @@ id_mapping_target = '{0!s}/idmapping.dat'.format(PATH_DATABASES)
 url_sprot_map = 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.dat.gz'
 sprot_map_target = '{0!s}/uniprot_sprot.dat'.format(PATH_DATABASES)
 
+url_kog_functional = 'http://eggnogdb.embl.de/download/eggnog_4.1/data/NOG/NOG.annotations.tsv.gz'
+kog_functional_target = '{0!s}/allKOG_functional_info.txt'.format(PATH_DATABASES)
+
+url_slim_generic = 'http://www.geneontology.org/ontology/subsets/goslim_generic.obo'
+slim_generic_target = '{0!s}/goslim_generic.obo'.format(PATH_DATABASES)
+
+url_idmapping_selected = 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/idmapping_selected.tab.gz'
+idmapping_selected_target = '{0!s}/idmapping_selected.tab'.format(PATH_DATABASES)
 
 idmapping_keys={'BioCyc':'{0!s}/idmapping.biocyc'.format(PATH_DATABASES),
 				'eggNOG':'{0!s}/idmapping.eggNOG'.format(PATH_DATABASES),
@@ -77,6 +85,8 @@ def download_databases(log_table):
 			os.mkdirs(PATH_DATABASES+'/uniprot_sprot')
 		url_unzip(url_sprot,sprot_target)
 		log_table[basename(sprot_target)] = date
+	except (KeyboardInterrupt, SystemExit):
+		raise
 	except:
 		print('failed to install {0!s}'.format(basename(sprot_target)))
 	
@@ -85,30 +95,40 @@ def download_databases(log_table):
 			os.mkdirs(PATH_DATABASES+'/uniref90')
 		url_unzip(url_uniref90,uniref90_target)
 		log_table[basename(uniref90_target)] = date
+	except (KeyboardInterrupt, SystemExit):
+		raise
 	except:
 		print('failed to install {0!s}'.format(basename(uniref90_target)))
 
 	try:
 		safe_retrieve(url_go_pathway,go_pathway_target)
 		log_table[basename(go_pathway_target)] = date
+	except (KeyboardInterrupt, SystemExit):
+		raise
 	except:
 		print('failed to install {0!s}'.format(basename(go_pathway_target)))
 
 	try:
 		safe_retrieve(url_swiss_enzyme,swiss_enzyme_target)
 		log_table[basename(swiss_enzyme_target)] = date
+	except (KeyboardInterrupt, SystemExit):
+		raise
 	except:
 		print('failed to install {0!s}'.format(basename(swiss_enzyme_target)))
 
 	try:
 		safe_retrieve(url_pfam_enzyme,pfam_enzyme_target)
 		log_table[basename(pfam_enzyme_target)] = date
+	except (KeyboardInterrupt, SystemExit):
+		raise
 	except:
 		print('failed to install {0!s}'.format(basename(pfam_enzyme_target)))
 
 	try:
 		url_unzip(url_id_mapping,id_mapping_target)
 		log_table[basename(id_mapping_target)] = date
+	except (KeyboardInterrupt, SystemExit):
+		raise
 	except:
 		print('failed to install {0!s}'.format(basename(sprot_map_target)))
 	return log_table

@@ -137,6 +137,8 @@ def trinity_task(fastq,fastq2,unpaired,cpu_cap, tasks):
 	if(unpaired!=[] and fastq==[]):
 		input_str+='--single '+','.join(unpaired)
 	if(fastq!=[]):
+		print(fastq)
+		print(unpaired)
 		input_str+='--left '+','.join(fastq+unpaired)
 		input_str+=' --right '+','.join(fastq2)
 	trgs = [GEN_PATH_ASSEMBLY()]
@@ -474,11 +476,11 @@ def rnaspades_task(left,right,unpaired,cpu_cap,tasks):
 	virtual_target = '{0!s}/rna_spades_out_dir'.format(GEN_PATH_ASSEMBLY_FILES())
 	trgs = [GEN_PATH_ASSEMBLY()]
 	input_strings = []
-	if(left!=None):
-		input_strings.append('-1 '+left)
-		input_strings.append('-2'+right)
-	if(unpaired!=None):
-		input_strings.append('-s '+unpaired)
+	if(left!=[]):
+		input_strings.append('-1 '+left[0])
+		input_strings.append('-2 '+right[0])
+	if(unpaired!=[]):
+		input_strings.append('-s '+unpaired[0])
 	cmd = '{0!s} {1!s} --threads {2!s} -o {3!s}; cp {3!s}/contigs.fasta {4!s};'.format(
 			PATH_RNASPADES,' '.join(input_strings),cpu_cap,virtual_target,trgs[0])
 	name = 'rnaSPAdes_assembly'
