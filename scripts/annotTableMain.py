@@ -1,3 +1,24 @@
+###############################################################################
+###############################################################################
+#
+# Author	-	Andrew Walters
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+###############################################################################
+###############################################################################
+
 from finishTable import *
 from initTable import *
 import argparse
@@ -69,10 +90,12 @@ if __name__ == '__main__':
     psr.add_argument('--contig2closest',metavar='contig2closest',type=read_file_test,help='what is this')
     psr.add_argument('--go2slim',metavar='go2slim',type=read_file_test,help='what is this')
     psr.add_argument('--contig2blastnr',metavar='contig2blastnr',type=read_file_test,help='what is this')
+    #IDMAPPING
     psr.add_argument('--sp2ko',metavar='sp2ko',type=read_file_test,help='what is this')
     psr.add_argument('--sp2nog',metavar='sp2nog',type=read_file_test,help='what is this')
     psr.add_argument('--sp2ortho',metavar='sp2ortho',type=read_file_test,help='what is this')
     psr.add_argument('--sp2bioc',metavar='sp2bioc',type=read_file_test,help='what is this')
+    #IDMAPPING SELECTED
     psr.add_argument('--sp2goentrez',metavar='sp2goentrez',type=read_file_test,help='what is this')
     #outfile name
     psr.add_argument('--outfile',metavar='outfile',help='what is this')
