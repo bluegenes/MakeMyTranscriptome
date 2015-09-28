@@ -1,3 +1,24 @@
+###############################################################################
+###############################################################################
+#
+# Author	-	Andrew Walters
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+###############################################################################
+###############################################################################
+
 #initialize Table
 
 """Space generator for empty files"""
@@ -103,7 +124,6 @@ def addProtID(annot_table, transFile):
                 annot_table[index].append(protCoord)
                 index += 1
                 break
-            #if sum([ord(c) for c in trID]) > sum([ord(c) for c in annot_table[index][0]]):
             if compare(trID, annot_table[index][0]):
                 annot_table[index].append(".")
                 annot_table[index].append(".")
@@ -173,12 +193,18 @@ def addPfam(annot_table, pfamFile):
                     temp = line[1] + "^" + " ".join(line[22:])
                     annot_table[index][-1] = annot_table[index][-1] + "`" + temp
                     break
+            #prevents extra "." from being added
+            if not first:
+            	first = True
+                index += 1
             if compare(trID, annot_table[index][0]):
                 annot_table[index].append(".")
                 index += 1
                 first = True
             else:
                 break
+    if len(annot_table[index]) > 8:
+        index += 1
     while (index < length):
         annot_table[index].append(".")
         index += 1
@@ -337,13 +363,3 @@ def addTrEMBLTopBlastP(annot_table, unirefPFile):
         index += 1
     file.close()
     return annot_table
-
-
-
-"""
-out = open("testOut.txt", "w")
-for row in Table:
-    out.write("\t".join(row))
-    out.write("\n")
-out.close()
-"""

@@ -1,14 +1,25 @@
-#!/usr/bin/python2.6
-
-###!/usr/bin/env python
-
-# Tessa Pierce
-# 2.1.14 - 2.3.2014
-
-# script to take a trinotate annotation report and count the number of annotations, particularly per gene. Want to ouput 1) annotation summary, 2)  fasta file with gene info? = one giant, or one file per gene with each file containing the fasta for each transcript? 3) an annotation tsv for by-gene annotation (similar to input, but reduced in complexity to only reflect by-gene information
+###############################################################################
+###############################################################################
+#
+# Author	-	Andrew Walters
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+###############################################################################
+###############################################################################
 
 import sys, re, os
-#import numpy as np
 import urllib2
 import operator
 from buildDicts import *
@@ -24,22 +35,16 @@ def splitByGene(annotTable):
     for line in annotTable:
         gene = line[1]
         if gene in geneDt:
-            for index, item in enumerate(geneDt[gene]):
-		entries = item.split(";;")
-
-###DEBUG
-                try:
-                    if line[index+1] not in entries and line[index+1] != ".":
-                        geneDt[gene][index] = geneDt[gene][index] + ";;" + line[index+1]
-                except:
-		    print("ERROR")
-		    print(line)
-		    print(gene)
-		    print(geneDt[gene])
-		    print("ERROR")
-###DEBUG
+            for column, item in enumerate(geneDt[gene]):
+            	if column > 0:
+            	    tableColumn = column + 1
+            	else:
+            	    tableColumn = column
+            	entries = item.split(";;")
+        	if line[tableColumn] not in entries and line[tableColumn] != ".":
+        	    geneDt[gene][column] = geneDt[gene][column] + ";;" + line[tableColumn]
         else:
-            geneDt[gene] = [line[0]] + line[2:] # don't need gene name in the entry
+            geneDt[gene] = [line[0]] + line[2:] # don't need gene ID in the entry
     return geneDt
 
 """Returns dictionary comprised of only entries with a specific column filled and the int number of total entries
@@ -48,7 +53,7 @@ def extractAnnotations(annotDict, colToExtract):
     extractedDt = {}
     count = 0
     for gene, info in annotDict.items():
-        if len(info[colToExtract]) > 0:
+        if len(info[colToExtract]) > 1:
             extractedDt[gene] = info # if has hit in this column
             count += 1
     return extractedDt, count #fiName
@@ -151,23 +156,23 @@ def writeDict(dict, output_file):
 
 """Main method to finish full annotation table"""
 def finishAnnotTable(annot_table, args, indexDict):
+
     # create conversion dicts and add kegg annotations
 
-    #koToPathDt = createConversion("/ni2/sio296/squid/sumTrinotate/conversion_databases/orthology_pathway.list")
-    #spToEzDt = createConversion("/ni2/sio296/squid/sumTrinotate/conversion_databases/swiss_enzyme.list")
-    #ezToPathDt = createConversionEzPath("/ni2/sio296/squid/sumTrinotate/conversion_databases/enzyme_pathway.list")
-    #pfToEzDt = createConversion("/ni2/sio296/squid/sumTrinotate/conversion_databases/pfam_enzyme.list")
-    #goToPath = createConversion("/ni2/sio296/squid/sumTrinotate/conversion_databases/go_pathway.txt")
-    #nogToF = createConversionNogF("/ni2/sio296/squid/sumTrinotate/conversion_databases/allKOG_functional_info.txt")
-    #contigToClosest = createConversionContigClosest("/ni2/sio296/squid/sumTrinotate/conversion_databases/contig2closest")
-    #goToGOSlim = createConversionGOSlim("/ni2/sio296/squid/sumTrinotate/conversion_databases/goslim_generic.obo")
-    #contigToBlastNR = createConversionContigBlastNR("/ni2/sio296/squid/sumTrinotate/conversion_databases/contig2blastnr.txt")
-    #IDMAP Converions
-    #spToKO = createConversionIDMAP("/ni2/sio296/squid/sumTrinotate/conversion_databases/idmapping.KO")
-    #spToNog = createConversionIDMAP("/ni2/sio296/squid/sumTrinotate/conversion_databases/idmapping.eggNOG")
-    #spToOrtho = createConversionIDMAP("/ni2/sio296/squid/sumTrinotate/conversion_databases/idmapping.orthodb")
-    #spToBioC = createConversionIDMAP("/ni2/sio296/squid/sumTrinotate/conversion_databases/idmapping.biocyc")
-    #spToGOandEntrez = createConversoinGOandEntrez("/ni2/sio296/squid/sumTrinotate/conversion_databases/idmapping_selected.tab")
+    #koToPathDt = orthology_pathway.list
+    #spToEzDt = swiss_enzyme.list
+    #ezToPathDt = enzyme_pathway.list
+    #pfToEzDt = pfam_enzyme.list
+    #goToPath = go_pathway.txt
+    #nogToF = allKOG_functional_info.txt
+    #contigToClosest = contig2closest
+    #goToGOSlim = goslim_generic.obo
+    #contigToBlastNR = contig2blastnr.txt
+    #spToKO = idmapping.KO
+    #spToNog = idmapping.eggNOG
+    #spToOrtho = idmapping.orthodb
+    #spToBioC = idmapping.biocyc
+    #spToGOandEntrez = idmapping_selected.tab
 
 
     """Conversion Files"""

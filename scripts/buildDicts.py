@@ -1,3 +1,24 @@
+###############################################################################
+###############################################################################
+#
+# Author	-	Andrew Walters
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+###############################################################################
+###############################################################################
+
 import urllib2
 
 def createConversion(conversion_file): #conversion files from: http://www.genome.jp/linkdb/
@@ -16,7 +37,7 @@ def createConversionNogF(conversion_file):
     conversion = open(conversion_file)
     for line in conversion:
         line = line.strip().split("\t")
-        first = line[0]
+        first = line[0][3:]
         second = line[1]
         convDt[first] = second
     return convDt
@@ -39,12 +60,16 @@ def createConversionContigBlastNR(conversion_file):
 def createConversionContigClosest(conversion_file):
     convDt = {}
     conversion = open(conversion_file)
+    prev = ""
     for line in conversion:
         line = line.strip().split("\t")
+        if prev == line[0]:
+        	continue
         first = line[0]
         second = line[12]
         third = line[14]
         convDt[first] = (second, third)
+        prev = first
     return convDt
 
 
