@@ -11,6 +11,7 @@
 
 from sys import stdout
 from time import time
+from time import sleep
 
 
 def wrapper(g,dec_name):
@@ -99,6 +100,11 @@ def logger(seperator=' : ',outfile=stdout):
 	return dec
 
 
+def infinite():
+	while(True):
+		sleep(1)
+
+
 if(__name__=='__main__'):
 	
 	
@@ -123,6 +129,14 @@ if(__name__=='__main__'):
 			elems.append(gloabal_allign( i-1, j-1, seq1=seq1, seq2=seq2, score=score, indel=indel) + score( seq1[i-1], seq2[j-1]))
 		return max(elems)
 	
+	'''
 	start = time()
 	fib(37)
 	print(time()-start)
+	'''
+	try:
+		infinite()
+	except Exception as inst:
+		print('help')
+		print('do things')
+

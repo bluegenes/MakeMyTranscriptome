@@ -8,7 +8,7 @@ from functools import reduce
 from itertools import chain
 
 
-class Task():
+class Task:
 
 	class ExitCodeException(Exception):
 		exit_code = None
@@ -170,7 +170,7 @@ class Supervisor:
 						if(t.finished()):
 							self.running.remove(t)
 							cur_cpu-=t.cpu
-							self.task_status[t]['stop'] = time.time()
+							self.task_status[t]['stop'] = int(time.time())
 							self.task_status[t]['state'] = Supervisor.STATE_FINISHED
 							self.task_status[t]['exit_code'] = t.exit_code
 							m,s = divmod(self.task_status[t]['stop']-self.task_status[t]['stop'],60)
@@ -182,14 +182,15 @@ class Supervisor:
 						self.errors.append(inst)
 						self.running.remove(t)
 						cur_cpu-=t.cpu
-						self.task_status[t]['stop'] = time.time()
+						self.task_status[t]['stop'] = int(time.time())
 						self.task_status[t]['state'] = Supervisor.STATE_ERR
 						self.task_status[t]['exit_code'] = t.exit_code
-						m,s = divmod(self.task_status[t]['stop']-self.task_status[t]['stop'],60)
+						m,s = divmod(self.task_status[t]['stop']-self.task_status[t]['start'],60)
 						h,m = divmod(m,60)
 						self.task_status[t]['message'] = 'Failed in {0!s}h {1!s}m {2!s}s'.format(h,m,s)
 						self.log(t.name+':'+self.task_status[t]['state']+':'+time.asctime()+'\n\n')						
 						self.__removeTaskPath__(t)
+				
 				for t in [task for task in self.tasks]:
 					if(t.cpu+cur_cpu<=self.cpu and t.checkDependencies()):
 						cur_cpu+=t.cpu
@@ -197,9 +198,10 @@ class Supervisor:
 						self.tasks.remove(t)
 						t.start()
 						self.task_status[t]['state'] = Supervisor.STATE_RUNNING
-						self.task_status[t]['start'] = time.time()
+						self.task_status[t]['start'] = int(time.time())
 						self.log(t.name+':'+self.task_status[t]['state']+':'+time.asctime()+'\n\n')
 						self.log_file.write(t.command+'\n\n')
+
 				if(len(self.running)==0 and len(self.tasks)!=0):
 					break
 				time.sleep(self.delay)
@@ -227,12 +229,13 @@ class Supervisor:
 					for e in self.errors:
 						err_str+=str(e)+'\n'
 				raise Exception(err_str)			
-		except Exception as inst:
+		except BaseException as inst:
 			self.killRun()
-			self.write_history(history_update)
 			self.log_file.write(str(inst))
-			raise inst
-		self.write_history(history_update)
+			raise
+		finally:
+			self.write_history(history_update)
+			#self.send_email('',subject='Pipeline Finished')
 
 
 	def __removeTaskPath__(self,task):
@@ -265,7 +268,7 @@ class Supervisor:
 		task_required = {t:False for t in self.tasks}
 		task_history = self.get_history()
 		flag = True
-		check_targets = lambda x : not reduce(lambda y,z : y and os.path.exists(z) , [True]+x)
+		check_targets = lambda x : not all(os.path.exists(z) for z in x)
 		while(flag):
 			flag = False
 			for t in self.tasks:
@@ -327,7 +330,7 @@ class Supervisor:
 		history = history.union(update)
 		history_file = open(self.history_log_path,'wb')
 		pickle.dump(history,history_file)
-		history_file.close() 
+		history_file.close()
 
 
 	def log(self,message):
@@ -336,13 +339,15 @@ class Supervisor:
 		sys.stdout.write(message)
 		if(time.time() > self.last_email+self.email_interval):
 			self.last_email = time.time()
-			self.send_email(self.log_str,'Pipeline Running Update')
+			#self.send_email(self.log_str,'Pipeline Running Update')
+			self.log_str=''
 
 
 	def send_email(self,message,subject=''):
 		if(self.email==None):
 			return
 		else:
+			message = ''.join([c if(c!='\n') else '\\n'for c in message])
 			cmd = "echo '{0!s}' | mail -s '{1!s}' '{2!s}'".format(message,subject,self.email)
 			subprocess.call(cmd)
 

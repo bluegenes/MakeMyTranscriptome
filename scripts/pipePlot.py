@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import re
 import argparse
-from path_vars import PATH_NOG_CATEGORIES
+from task_functions_v2 import PATH_NOG_CATEGORIES
 
 #######################################################################
 """ Read in Data; Set Plotting Style """

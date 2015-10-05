@@ -155,7 +155,7 @@ def cat_task(left,right,basename,tasks):
 	return Task(command=cmd,dependencies=tasks,name=name,stdout=out,stderr=err,targets=trgs)
 
 
-def subset_task(infiles,out_base,num,tasks):
+def subset_task(fastq1,fastq2,out_base,num,tasks):
 	'''	Defines subset task. Uses GEN_PATH_DIR(), PATH_SCRIPTS.
 		Params :
 			infiles - a pair of fastq files to read from
@@ -163,9 +163,9 @@ def subset_task(infiles,out_base,num,tasks):
 			num - the number of reads to keep.
 			tasks - a list of tasks that this is dependant on.
 	'''
-	trgs = ['{0!s}/{1!s}_{2!s}.fastq'.format(GEN_PATH_ASSEMBLY_FILES(),out_base,x) for x in range(1,3)]
-	cmd = 'python {0!s}/random_subset.py {1!s} 0 100 {2!s} {3!s} {4!s}'.format(
-			PATH_SCRIPTS,' '.join(infiles),num,trgs[0],trgs[1])
+	trgs = ['{0!s}/{1!s}_{2!s}.fastq'.format(GEN_PATH_ASSEMBLY_FILES(),out_base,x) for x in (1,2)]
+	cmd = 'python {0!s}/random_subset.py -1 {1!s} -2 {2!s} -n 100 -s {3!s} -t1 {4!s} -t2 {5!s}'.format(
+			PATH_SCRIPTS,','.join(fastq1),','.join(fastq2),num,trgs[0],trgs[1])
 	name = 'subset_reads'
 	out,err = GEN_LOGS(name)
 	return Task(command=cmd,dependencies=tasks,name=name,stdout=out,stderr=err,targets=trgs)
@@ -183,12 +183,10 @@ def trinity_task(fastq,fastq2,unpaired,cpu_cap, tasks):
 	if(unpaired!=[] and fastq==[]):
 		input_str+='--single '+','.join(unpaired)
 	if(fastq!=[]):
-		print(fastq)
-		print(unpaired)
 		input_str+='--left '+','.join(fastq+unpaired)
 		input_str+=' --right '+','.join(fastq2)
 	trgs = [GEN_PATH_ASSEMBLY()]
-	cmd = ('{0!s} --seqType fq {1!s} --CPU {3!s} --JM 180G --bflyCPU {3!s} --bflyHeapSpaceMax 180G '
+	cmd = ('ulimit -s unlimited; ulimit -a; {0!s} --seqType fq {1!s} --CPU {3!s} --JM 180G --bflyCPU {3!s} --bflyHeapSpaceMax 180G '
 			'--bfly_opts "-V 10 --stderr" --output {4!s}/trinity; cp {4!s}/trinity/Trinity.fasta {5!s};'
 			).format( PATH_TRINITY, input_str, 'dummy', cpu_cap, GEN_PATH_ASSEMBLY_FILES(), trgs[0])
 	name = 'trinity_assembly'
@@ -202,9 +200,9 @@ def cegma_task(cpu_cap,tasks):
 			cpu_cap - number of threads to be used by cegma
 			tasks - a list of tasks that this task is dependant on (trinity_task)
 	'''
-	trgs = ['{0!s}/{1!s}.completeness_report'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
+	trgs = ['{0!s}/{1!s}.completeness_report'.format(GEN_PATH_ASSEMBLY_FILES(),NAME_ASSEMBLY)]
 	cmd = '{0!s} -g {1!s} -v -o {3!s}/{2!s} -T {4!s}'.format(PATH_CEGMA,
-			GEN_PATH_ASSEMBLY(),NAME_ASSEMBLY,GEN_PATH_ANNOTATION_FILES(),cpu_cap)
+			GEN_PATH_ASSEMBLY(),NAME_ASSEMBLY,GEN_PATH_ASSEMBLY_FILES(),cpu_cap)
 	name = 'cegma'
 	out,err = GEN_LOGS(name)
 	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=cpu_cap,stdout=out,stderr=err)
@@ -217,10 +215,10 @@ def busco_task(reference_name,cpu_cap,tasks):
 			cpu_cap - the cpu limit to be gicen to busco.
 			tasks - a list of tasks that this task is dependant on.
 	'''
-	trgs = ['{0!s}/run_busco_{1!s}'.format(GEN_PATH_ANNOTATION_FILES(),reference_name)]
+	trgs = ['{0!s}/run_busco_{1!s}'.format(GEN_PATH_ASSEMBLY_FILES(),reference_name)]
 	cmd = ('cd {0!s}; /matta1/biotools/anaconda/envs/py3k/bin/python {1!s} '
 			'-o busco_{2!s} -in {3!s} -l {4!s}/{2!s} -m trans -f -c {5!s}'
-			).format(GEN_PATH_ANNOTATION_FILES(),PATH_BUSCO,reference_name,GEN_PATH_ASSEMBLY(),
+			).format(GEN_PATH_ASSEMBLY_FILES(),PATH_BUSCO,reference_name,GEN_PATH_ASSEMBLY(),
 			PATH_BUSCO_REFERENCE,cpu_cap)
 	name = 'busco_'+reference_name
 	out,err = GEN_LOGS(name)
@@ -232,7 +230,7 @@ def assembly_stats_task(tasks):
 		Params :
 			tasks - a list of tasks that this task is dependant on (trinity_task)
 	'''
-	trgs = ['{0!s}/{1!s}.stats'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
+	trgs = ['{0!s}/{1!s}.stats'.format(GEN_PATH_ASSEMBLY_FILES(),NAME_ASSEMBLY)]
 	cmd = 'python {0!s}/assembly_stats.py {1!s}/{2!s}.fasta > {3!s}'.format(PATH_SCRIPTS,GEN_PATH_DIR(),NAME_ASSEMBLY,trgs[0])
 	name = 'assembly_stats'
 	out,err = GEN_LOGS(name)
@@ -586,7 +584,13 @@ def split_mito_task(blast_mt,tasks):
 	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 	
 
-
+def pipeplot_task(annotation_table,tasks):
+	trgs = []
+	cmd = 'mkdir -p {0!s}/plots ; cd {0!s}/plots ; python {1!s}/pipePlot.py -i {2!s} ;'.format(
+			GEN_PATH_ANNOTATION_FILES(),PATH_SCRIPTS,annotation_table)
+	name = 'pipeplot'
+	out,err = GEN_LOGS(name)
+	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
 

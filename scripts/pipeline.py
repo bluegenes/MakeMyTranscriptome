@@ -32,7 +32,7 @@ def full_args():
 	parser.add_argument('-test',help='Use this flag to test the pipeline.',action='store_true')
 	parser.add_argument('-no_rmdup',help='Use thie flag to disable the removing duplicates portion of the pre-assembly read cleaning.',action='store_true')	
 	parser.add_argument('-no_trim',help='Use this flag to disable all trimming portions of pre-assembly read cleaning. Duplicate and low quality reads will not be removed. Subsampling will still be executed.',action='store_true')
-	parser.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The deafult value is 50.', default=50,type=int)
+	parser.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The deafult value is 50.', default=50,type=float)
 	parser.add_argument('-rnaspades',help='Use this flag to specify that assembly should be performed by rnaSPAdes rather than the default Trinity.',action='store_true')
 	parser.add_argument('-cegma',help='Use this flag to run cegma as part of the annotation pipeline. Cegma is an old tool for assesing the quality of assemblies. Normal behavior of the pipeline is to use busco for assesing assemblies. Using this flag will run cegma in addition to Busco.',action='store_true')
 	parser.add_argument('-blast_uniref90',help='Use this flag to enable the uniref-90 blast runs as part of the annotation pipeline.',action='store_true')
@@ -56,7 +56,7 @@ def assembly_args():
 	parser.add_argument('-rnaspades',help='Use this flag to specify that assembly should be performed by rnaSPAdes rather than the default Trinity.',action='store_true')
 	parser.add_argument('-no_rmdup',help='Use thie flag to disable the removing duplicates portion of the pre-assembly read cleaning.',action='store_true')	
 	parser.add_argument('-no_trim',help='Use this flag to disable all trimming portions of pre-assembly read cleaning. Duplicate and low quality reads will not be removed. Subsampling will still be executed.',action='store_true')
-	parser.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The deafult value is 50.', default=50,type=int)	
+	parser.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The deafult value is 50.', default=50,type=float)	
 	parser.add_argument('-no_log',help='Pipeline will delete log files.',action='store_true')
 	parser.add_argument('-force',help='Use this flag to perform a fresh run of the pipeline. All steps will be executed regradless of what has already been performed.',action='store_true')
 	parser.add_argument('--cpu', help='Sets the process cap for execution. Default is 12. Use 0 to indicate no process cap should be used.',default=12,type=int)
@@ -128,7 +128,7 @@ def check_full_args(args):
 		raise Exception('\n\nERROR : csv input is required for full execution of pipeline.')
 	if(not os.path.isfile(args.csv)):
 		raise Exception('\n\nERROR : Invalid csv argument. '+args.csv+' does not exist.')
-	args.subsample_size = 10**15 if(args.subsample_size<=0) else args.subsample_size*10**6
+	args.subsample_size = args.subsample_size*10**6
 	handle_csv(args)
 
 def check_assembly_args(args):
@@ -218,10 +218,10 @@ def run_full(args):
 	global_setup(args)
 	gen_sample_info(args)
 	supers = []
-	assembly_super = gen_assembly_supervisor(args.fastq1,args.fastq2,args.unpaired,[],args.no_trim,
-										args.rnaspades,args.no_rmdup,args.subsample_size,args.cpu)
+	assembly_super = gen_assembly_supervisor(args.fastq1,args.fastq2,args.unpaired,[],args.busco_ref,args.no_trim,args.rnaspades,
+											args.no_rmdup,args.subsample_size,args.cpu,args.cegma)
 	supers.append(assembly_super)
-	annotion_super = gen_annotation_assembly(args.cpu,args.busco_ref,args.blast_uniref90,args.cegma,[assembly_super])
+	annotion_super = gen_annotation_assembly(args.cpu,args.blast_uniref90,[assembly_super])
 	supers.append(annotion_super)
 	expression_super = gen_expression_super(args.fastq1,args.fastq2,args.paired_names,args.unpaired,args.unpaired_names,args.cpu,args.sample_info,args.model,[assembly_super])
 	supers.append(expression_super)
@@ -231,8 +231,8 @@ def run_assembly(args):
 	check_assembly_args(args)
 	global_setup(args)
 	supers = []
-	assembly_super = gen_assembly_supervisor(args.fastq1,args.fastq2,args.unpaired,[],args.no_trim,
-										args.rnaspades,args.no_rmdup,args.subsample_size,args.cpu)
+	assembly_super = gen_assembly_supervisor(args.fastq1,args.fastq2,args.unpaired,[],args.busco_ref,args.no_trim,args.rnaspades,
+											args.no_rmdup,args.subsample_size,args.cpu,args.cegma)
 	supers.append(assembly_super)
 	run_supers(args,supers)
 
@@ -242,7 +242,7 @@ def run_annotation(args):
 	supers = []
 	cp = tf.cp_assembly_task(args.assembly,[])
 	supers.append(cp)
-	annotion_super = gen_annotation_assembly(args.cpu,args.busco_ref,args.blast_uniref90,args.cegma,[cp])
+	annotion_super = gen_annotation_assembly(args.cpu,args.blast_uniref90,[cp])
 	supers.append(annotion_super)
 	run_supers(args,supers)
 
@@ -284,6 +284,7 @@ if(__name__=='__main__'):
 			args = expression_args()
 			args.tool_selector='expression'
 			run_expression(args)
+		raise Exception('\n\nError : Unable to identify what tool should be executed. Valid arguments are "full", "assembly", "annotation", or "expression".')
 	else:
 		raise Exception('\n\nError : Unable to identify what tool should be executed. Valid arguments are "full", "assembly", "annotation", or "expression".')
 		

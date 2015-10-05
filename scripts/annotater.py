@@ -4,10 +4,7 @@ from tasks_v2 import Supervisor, Task
 import task_functions_v2 as tf
 
 
-def gen_annotation_assembly(cpu,busco_ref,blast_uniref90,cegma,dependency_set):
-	cegma = tf.cegma_task(cpu,[])
-	busco = tf.busco_task(busco_ref,int(cpu/2),[])
-	assembly_stats = tf.assembly_stats_task([])
+def gen_annotation_assembly(cpu,blast_uniref90,dependency_set):
 	gene_trans_map = tf.gene_trans_map_task([])
 	blastx_sprot = tf.blastx_task(tf.PATH_SWISS_PROT,int(cpu/2),[])
 	rnammer = tf.rnammer_task([])
@@ -33,11 +30,10 @@ def gen_annotation_assembly(cpu,busco_ref,blast_uniref90,cegma,dependency_set):
 		blastx_ur90_target, rnammer.targets[0], predict_orfs.targets[0], 
 		blastp_sprot.targets[0],blastp_ur90_target,pfam.targets[0],signalp.targets[0],
 		tmhmm.targets[0],dependencies)
+	pipeplot = tf.pipeplot_task(annot.targets[0],[annot])
 	keg = tf.keg_task([annot])
-	all_tasks = [busco,assembly_stats,gene_trans_map,blastx_sprot,rnammer,
-				predict_orfs,signalp,blastp_sprot,tmhmm,pfam,annot,keg]
-	if(cegma):
-		all_tasks.append(cegma)
+	all_tasks = [gene_trans_map,blastx_sprot,rnammer,
+				predict_orfs,signalp,blastp_sprot,tmhmm,pfam,annot,keg,pipeplot]
 	if(blast_uniref90):
 		all_tasks.append(blastp_ur90)
 		all_tasks.append(blastx_ur90)

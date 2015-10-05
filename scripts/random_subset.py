@@ -34,6 +34,7 @@ USAGE MESSAGE :
 '''
 import argparse
 import random
+from itertools import chain
 
 '''	Generates a psuedorandom subset of paired fastq files filename1 and 
 	filename2. It first seperates all entries into numbins sequential subsets. 
@@ -47,11 +48,52 @@ import random
 		filename1target- path to write sample from filename1 to
 		filename2target- path to write sample from filename2 to
 '''
+
+def fq_parser(fq):
+	f = open(fq)
+	count = 0
+	ret = []
+	for line in f:
+		ret.append(line)
+		count+=1
+		if(count%4==0):
+			yield ret
+			ret = []
+
+
+def paired_fq_parser(fq1,fq2):
+	iters = [zip(fq_parser(f1),fq_parser(f2)) for f1,f2 in zip(fq1,fq2)]
+	for e1,e2 in chain(*iters):
+		yield (e1,e2)
+
+
+
+
+
+def GenRandomizedSubset_v2(fq1,fq2,numbins,samplesize,target1,target2):
+	entry_count = 0
+	for e in paired_fq_parser(fq1,fq2):
+		entry_count+=1
+	if(samplesize<1 and samplesize>0):
+		samplesize = samplesize*entry_count
+	if(samplesize<=0):
+		samplesize = entry_count*2
+	p_val = float(samplesize)/entry_count
+	t1 = open(target1,'w')
+	t2 = open(target2,'w')
+	for e1,e2 in paired_fq_parser(fq1,fq2):
+		if(random.random()<p_val):
+			for line in e1:
+				t1.write(line)
+			for line in e2:
+				t2.write(line)
+
+
+
 def GenRandomizedSubset(filename1,filename2,linecount,numbins,samplesize,filename1target,filename2target):
 	entries = linecount/4
 	binsize = entries/numbins
 	
-	#divide entries into numbins equal sized subsets. i.e. entires=100, numbins = 2, ranges = [ (0,50),(50,100) ]
 	ranges = [[int(round(binsize*x)),int(round(binsize*(x+1)))] for x in range(numbins)]
 	if(ranges[-1][1]!=entries):
 		ranges[-1][1] = entries
@@ -124,15 +166,19 @@ def lc(filename):
 
 #Acts like a main method
 if(__name__=='__main__'):
-	parser = argparse.ArgumentParser(description="Descritpion: Fastq file sampling algorithm.")
-	parser.add_argument('SourceFile1', metavar='SourceFile1', type=rfcheck, help='The fastq file that is paired with SourceFile2 and that we desire a sample of.')
-	parser.add_argument('SourceFile2', metavar='SourceFile2', type=rfcheck, help='The fastq file that is paired with SourceFile1 and that we desire a sample of.')
-	parser.add_argument('Linecount', metavar='Linecount', type=int, help='The number of lines in either SourceFile1 or SourceFile2. Enter 0 if you want randomSubset.py to compute Linecount.')
-	parser.add_argument('Numbins', metavar='Numbins', type=int, help = 'The number of bins to divide the Fastq file into, before taking subsets of each.')	
-	parser.add_argument('SampleSize', metavar='SampleSize', type=float, help='The desired samplesize in number of fastq entries to include in sample, or in percent as a number between 0 and 1.')
-	parser.add_argument('TargetFile1', metavar='TargetFile1', type=wfcheck, help='An output filename. The sample from SourceFile1 writes to TargetFile1.')
-	parser.add_argument('TargetFile2', metavar='TargetFile2', type=wfcheck, help='An output filename. The sample from SourceFile2 writes to TargetFile2.') 
+	parser = argparse.ArgumentParser(description="Descritpion: Fastq file sampling script.")
+	parser.add_argument('-1','--fastq1', help='a list of comma seperated fastq files paired with the files in fastq2.')
+	parser.add_argument('-2','--fastq2', help='a list of comma seperated fastq files paired with the files in fastq1.')
+	parser.add_argument('-n','--numbins', type=int, help = 'The number of bins to divide the Fastq entries into, before taking subsets of each.')	
+	parser.add_argument('-s','--sample_size', type=float, help='The desired samplesize in number of fastq entries to include in sample, or in percent as a number between 0 and 1.')
+	parser.add_argument('-t1','--target_file1', type=wfcheck, help='An output filename. The sample from SourceFile1 writes to TargetFile1.')
+	parser.add_argument('-t2','--target_file2', type=wfcheck, help='An output filename. The sample from SourceFile2 writes to TargetFile2.') 
 	args = parser.parse_args()
+	args.fastq1 = args.fastq1.split(',')
+	args.fastq2 = args.fastq2.split(',')
+	GenRandomizedSubset_v2(args.fastq1,args.fastq2,args.numbins,args.sample_size,args.target_file1,args.target_file2)
+
+	'''
 	if(args.Linecount==0):
 		args.Linecount = lc(args.SourceFile1)
 	if(args.SampleSize<1):
@@ -140,3 +186,5 @@ if(__name__=='__main__'):
 	else:
 		args.SampleSize=int(args.SampleSize)
 	GenRandomizedSubset(args.SourceFile1,args.SourceFile2,args.Linecount,args.Numbins,args.SampleSize,args.TargetFile1,args.TargetFile2)
+	'''
+
