@@ -1,3 +1,24 @@
+###############################################################################
+###############################################################################
+#
+# Author	-	Andrew Walters
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+###############################################################################
+###############################################################################
+
 from finishTable import *
 
 
@@ -69,11 +90,9 @@ def addNogtoF(line, nogToF, index):
     ''' Finds eggNOG Function using eggNOG and adds it to column 15
         eggNOG:14 -> eggNOG_Function:15
     '''
-    nog_match = re.compile('^(\S*)\^', re.IGNORECASE)
-    nog_term = re.search(nog_match, line[index['eggNOG']])
-    if nog_term is not None:
-        nog_term = nog_term.groups()[0]
-        line[index['eggNOG_Function']] = getConversion(nog_term, nogToF)
+    nog_term = line[index['eggNOG']]
+    if nog_term != ".":
+        line[index['eggNOG_function']] = getConversion(nog_term, nogToF)
     return line
 
 
