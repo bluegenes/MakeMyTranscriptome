@@ -46,7 +46,7 @@ GEN_PATH_DIR = lambda : os.path.join(PATH_ASSEMBLIES,NAME_OUT_DIR)
 GEN_PATH_ASSEMBLY_FILES = lambda : os.path.join(GEN_PATH_DIR(),'assembly_files')
 GEN_PATH_ANNOTATION_FILES = lambda : os.path.join(GEN_PATH_DIR(),'annotation_files')
 GEN_PATH_EXPRESSION_FILES = lambda : os.path.join(GEN_PATH_DIR(),'expression_files')
-GEN_PATH_LOGS = lambda : os.path.join(GEN_PATH_DIR(),'logs')
+GEN_PATH_LOGS = lambda : os.path.join(GEN_PATH_DIR(),'log_files')
 GEN_PATH_ASSEMBLY = lambda : os.path.join(GEN_PATH_DIR(),NAME_ASSEMBLY+'.fasta')
 
 GEN_LOGS = lambda x : (os.path.join(GEN_PATH_LOGS(),x+'.out_log'),os.path.join(GEN_PATH_LOGS(),x+'.err_log'))
@@ -155,7 +155,7 @@ def cat_task(left,right,basename,tasks):
 	return Task(command=cmd,dependencies=tasks,name=name,stdout=out,stderr=err,targets=trgs)
 
 
-def subset_task(fastq1,fastq2,out_base,num,tasks):
+def subset_task(fastq1,fastq2,out_base,num,seed,tasks):
 	'''	Defines subset task. Uses GEN_PATH_DIR(), PATH_SCRIPTS.
 		Params :
 			infiles - a pair of fastq files to read from
@@ -164,14 +164,14 @@ def subset_task(fastq1,fastq2,out_base,num,tasks):
 			tasks - a list of tasks that this is dependant on.
 	'''
 	trgs = ['{0!s}/{1!s}_{2!s}.fastq'.format(GEN_PATH_ASSEMBLY_FILES(),out_base,x) for x in (1,2)]
-	cmd = 'python {0!s}/random_subset.py -1 {1!s} -2 {2!s} -n 100 -s {3!s} -t1 {4!s} -t2 {5!s}'.format(
-			PATH_SCRIPTS,','.join(fastq1),','.join(fastq2),num,trgs[0],trgs[1])
+	cmd = 'python {0!s}/random_subset.py -1 {1!s} -2 {2!s} -n 100 -s {3!s} -t1 {4!s} -t2 {5!s} --seed {6!s}'.format(
+			PATH_SCRIPTS,','.join(fastq1),','.join(fastq2),num,trgs[0],trgs[1],seed)
 	name = 'subset_reads'
 	out,err = GEN_LOGS(name)
 	return Task(command=cmd,dependencies=tasks,name=name,stdout=out,stderr=err,targets=trgs)
 
 
-def trinity_task(fastq,fastq2,unpaired,cpu_cap, tasks):
+def trinity_task(fastq,fastq2,unpaired,cpu_cap_trin,cpu_cap_bfly,mem_trin,mem_bfly,tasks):
 	'''	Defines the trinity task. Uses GEN_PATH_DIR(), PATH_TRINITY, NAME_ASSEMBLY
 		Params :	
 			left - a 1/left fastq files
@@ -186,12 +186,12 @@ def trinity_task(fastq,fastq2,unpaired,cpu_cap, tasks):
 		input_str+='--left '+','.join(fastq+unpaired)
 		input_str+=' --right '+','.join(fastq2)
 	trgs = [GEN_PATH_ASSEMBLY()]
-	cmd = ('ulimit -s unlimited; ulimit -a; {0!s} --seqType fq {1!s} --CPU {3!s} --JM 180G --bflyCPU {3!s} --bflyHeapSpaceMax 180G '
-			'--bfly_opts "-V 10 --stderr" --output {4!s}/trinity; cp {4!s}/trinity/Trinity.fasta {5!s};'
-			).format( PATH_TRINITY, input_str, 'dummy', cpu_cap, GEN_PATH_ASSEMBLY_FILES(), trgs[0])
+	cmd = ('ulimit -s unlimited; ulimit -a; {0!s} --seqType fq {1!s} --CPU {2!s} --JM {3!s}G --bflyCPU {4!s} --bflyHeapSpaceMax {5!s}G '
+			'--bfly_opts "-V 10 --stderr" --output {6!s}/trinity; cp {6!s}/trinity/Trinity.fasta {7!s};'
+			).format( PATH_TRINITY, input_str, cpu_cap_trin, mem_trin, cpu_cap_bfly, mem_bfly, GEN_PATH_ASSEMBLY_FILES(), trgs[0])
 	name = 'trinity_assembly'
 	out,err = GEN_LOGS(name)
-	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=cpu_cap,stdout=out,stderr=err)
+	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=max(cpu_cap_trin,cpu_cap_bfly),stdout=out,stderr=err)
 
 
 def cegma_task(cpu_cap,tasks):
@@ -324,7 +324,7 @@ def blastp_task(pep_path,path_db,cpu_cap,tasks):
 			tasks - a list of tasks that this task is dependant on (predict_orfs_task)
 	'''
 	db_name = os.path.basename(path_db).split('.')[0]
-	trgs = ["{0!s}/{1!s}_{2!s}.blastn".format(GEN_PATH_ANNOTATION_FILES(), NAME_ASSEMBLY,db_name)]
+	trgs = ["{0!s}/{1!s}_{2!s}.blastp".format(GEN_PATH_ANNOTATION_FILES(), NAME_ASSEMBLY,db_name)]
 	cmd = ('{0!s} -query {1!s} -db {2!s} -num_threads {3!s} -max_target_seqs 1 '
 			'-outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send '
 			'evalue bitscore stitle qcovs slen" -evalue 0.001 > {4!s}'

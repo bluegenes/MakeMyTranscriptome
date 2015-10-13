@@ -37,7 +37,7 @@ class Task:
 		self.error_check = error_check if(error_check!=None) else lambda exit_code : exit_code!=0
 		self.opened_files = []
 		self.process = None
-		self.exit_code=None
+		self.exit_code = None
 
 	
 	def checkDependencies(self):

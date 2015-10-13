@@ -3,6 +3,7 @@ import os
 import sys
 from tasks_v2 import Supervisor, Task
 import task_functions_v2 as tf
+import time
 
 def gen_unpaired_prinseq_supervisor(fastq1,fastq2,unpaired,dependency_set,rmdup):
 	tasks = []
@@ -26,7 +27,7 @@ def gen_paired_prinseq_supervisor(fastq1,fastq2,unpaired,dependency_set,rmdup):
 	return Supervisor(tasks=tasks)	
 
 
-def gen_assembly_supervisor(fastq1,fastq2,unpaired,dependency_set,busco_ref,no_trim=False,rnaSPAdes=False,rmdup=False,subset_size=50000000,cpu=12,cegma_flag=False):
+def gen_assembly_supervisor(fastq1,fastq2,unpaired,dependency_set,busco_ref,no_trim=False,rnaSPAdes=False,rmdup=False,subset_size=50000000,cpu=12,cegma_flag=False,subset_seed='I am a seed value'):
 	tasks = []
 	tasks.append(tf.fastqc_task(fastq1+fastq2+unpaired,'pre_trimming',[]))
 	assembler_dependencies = []
@@ -37,7 +38,7 @@ def gen_assembly_supervisor(fastq1,fastq2,unpaired,dependency_set,busco_ref,no_t
 			fastq2 = [paired_sup.targets[x] for x in range(1,len(paired_sup.targets),2)]
 			tasks.append(paired_sup)
 			tasks.append(tf.fastqc_task(fastq1+fastq2,'post_trimming_paired',[paired_sup]))
-		subset = tf.subset_task(fastq1,fastq2,'trinity_input',subset_size,[paired_sup] if(not no_trim) else [])
+		subset = tf.subset_task(fastq1,fastq2,'trinity_input',subset_size,subset_seed,[paired_sup] if(not no_trim) else [])
 		fastq1 = [subset.targets[0]]
 		fastq2 = [subset.targets[1]]
 		tasks.append(subset)
@@ -51,12 +52,12 @@ def gen_assembly_supervisor(fastq1,fastq2,unpaired,dependency_set,busco_ref,no_t
 			tasks.append(unpaired_sup)
 			tasks.append(tf.fastqc_task(unpaired,'post_trimming_unpaired',[unpaired_sup]))
 			assembler_dependencies.append(unpaired_sup)
-	if(not rnaSPAdes):
-		trinity = tf.trinity_task(fastq1,fastq2,unpaired,cpu,assembler_dependencies)
-		tasks.append(trinity)
-	else:
+	if(rnaSPAdes):
 		rnaspades = tf.rnaspades_task(fastq1,fastq2,unpaired,cpu,assembler_dependencies)
 		tasks.append(rnaspades)
+	else:
+		trinity = tf.trinity_task(fastq1,fastq2,unpaired,cpu,int(cpu/2),120,120,assembler_dependencies)
+		tasks.append(trinity)
 	assembler_main_task = tasks[-1]
 	cegma = tf.cegma_task(cpu,[assembler_main_task])
 	busco = tf.busco_task(busco_ref,int(cpu/2),[assembler_main_task])

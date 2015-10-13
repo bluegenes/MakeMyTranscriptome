@@ -7,6 +7,7 @@ from assembler import gen_assembly_supervisor
 from annotater import gen_annotation_assembly
 from expression import gen_expression_super
 from itertools import chain
+import time
 
 
 #####################____Argument_Parsers____#####################
@@ -33,6 +34,7 @@ def full_args():
 	parser.add_argument('-no_rmdup',help='Use thie flag to disable the removing duplicates portion of the pre-assembly read cleaning.',action='store_true')	
 	parser.add_argument('-no_trim',help='Use this flag to disable all trimming portions of pre-assembly read cleaning. Duplicate and low quality reads will not be removed. Subsampling will still be executed.',action='store_true')
 	parser.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The deafult value is 50.', default=50,type=float)
+	parser.add_argument('--subsample_seed',help='A seed used to initialize the random number generator used during random sampling.',default=str(time.time()))
 	parser.add_argument('-rnaspades',help='Use this flag to specify that assembly should be performed by rnaSPAdes rather than the default Trinity.',action='store_true')
 	parser.add_argument('-cegma',help='Use this flag to run cegma as part of the annotation pipeline. Cegma is an old tool for assesing the quality of assemblies. Normal behavior of the pipeline is to use busco for assesing assemblies. Using this flag will run cegma in addition to Busco.',action='store_true')
 	parser.add_argument('-blast_uniref90',help='Use this flag to enable the uniref-90 blast runs as part of the annotation pipeline.',action='store_true')
@@ -57,6 +59,9 @@ def assembly_args():
 	parser.add_argument('-no_rmdup',help='Use thie flag to disable the removing duplicates portion of the pre-assembly read cleaning.',action='store_true')	
 	parser.add_argument('-no_trim',help='Use this flag to disable all trimming portions of pre-assembly read cleaning. Duplicate and low quality reads will not be removed. Subsampling will still be executed.',action='store_true')
 	parser.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The deafult value is 50.', default=50,type=float)	
+	parser.add_argument('--subsample_seed',help='A seed used to initialize the random number generator used during random sampling.',default=str(time.time()))
+	parser.add_argument('-cegma',help='Use this flag to run cegma as part of the annotation pipeline. Cegma is an old tool for assesing the quality of assemblies. Normal behavior of the pipeline is to use busco for assesing assemblies. Using this flag will run cegma in addition to Busco.',action='store_true')
+	parser.add_argument('--busco_ref',help='Set the reference that busco will use for analysis',default='metazoa')
 	parser.add_argument('-no_log',help='Pipeline will delete log files.',action='store_true')
 	parser.add_argument('-force',help='Use this flag to perform a fresh run of the pipeline. All steps will be executed regradless of what has already been performed.',action='store_true')
 	parser.add_argument('--cpu', help='Sets the process cap for execution. Default is 12. Use 0 to indicate no process cap should be used.',default=12,type=int)
@@ -69,7 +74,6 @@ def annotation_args():
 	parser = argparse.ArgumentParser(description='Selected_tool : Annotation. Executing this tool will run asssembly quality assesment along with a series of tools designing to provide information about the assembled transcripts.')
 	parser.add_argument('tool_selector',help=argparse.SUPPRESS)
 	parser.add_argument('-a','--assembly',help='A fasta transcriptome assembly that needs to be annotated.')
-	parser.add_argument('-cegma',help='Use this flag to run cegma as part of the annotation pipeline. Cegma is an old tool for assesing the quality of assemblies. Normal behavior of the pipeline is to use busco for assesing assemblies. Using this flag will run cegma in addition to Busco.',action='store_true')
 	parser.add_argument('-blast_uniref90',help='Use this flag to enable the uniref-90 blast runs as part of the annotation pipeline.',action='store_true')
 	parser.add_argument('-blast_nr',help='Use this flag to enable the NR (non-redundant protein database) blast runs as part of the annotation pipeline. This could take a very long time to complete.',action='store_true')
 	parser.add_argument('-no_log',help='Pipeline will delete log files.',action='store_true')
@@ -115,7 +119,7 @@ def global_setup(args):
 			base = base if('.' not in base) else '.'.join(base.split('.')[:-1])
 			base = base if('1' not in base) else '1'.join(base.split('1')[:-1])
 	if(args.tool_selector=='annotation' or args.tool_selector=='expression'):
-		base = os.path.basename(args.asssembly)
+		base = os.path.basename(args.assembly)
 		base = base if('.' not in base) else '.'.join(base.split('.')[:-1])
 	tf.NAME_OUT_DIR = args.out_name if(args.out_name!=None) else base
 	tf.build_dir_task([]).run()
@@ -163,6 +167,7 @@ def check_expression_args(args):
 	handle_csv(args)
 
 def fastq_pair_check(fastq1,fastq2):
+	'''
 	count1 = 0
 	with open(fastq1) as f:
 		for line in f:
@@ -172,6 +177,8 @@ def fastq_pair_check(fastq1,fastq2):
 		for line in f:
 			count2+=1
 	return count1==count2
+	'''
+	return True
 
 def handle_csv(args):
 	f = open(args.csv)
@@ -219,7 +226,7 @@ def run_full(args):
 	gen_sample_info(args)
 	supers = []
 	assembly_super = gen_assembly_supervisor(args.fastq1,args.fastq2,args.unpaired,[],args.busco_ref,args.no_trim,args.rnaspades,
-											args.no_rmdup,args.subsample_size,args.cpu,args.cegma)
+											args.no_rmdup,args.subsample_size,args.cpu,args.cegma,args.subsample_seed)
 	supers.append(assembly_super)
 	annotion_super = gen_annotation_assembly(args.cpu,args.blast_uniref90,[assembly_super])
 	supers.append(annotion_super)
@@ -232,7 +239,7 @@ def run_assembly(args):
 	global_setup(args)
 	supers = []
 	assembly_super = gen_assembly_supervisor(args.fastq1,args.fastq2,args.unpaired,[],args.busco_ref,args.no_trim,args.rnaspades,
-											args.no_rmdup,args.subsample_size,args.cpu,args.cegma)
+											args.no_rmdup,args.subsample_size,args.cpu,args.cegma,args.subsample_seed)
 	supers.append(assembly_super)
 	run_supers(args,supers)
 

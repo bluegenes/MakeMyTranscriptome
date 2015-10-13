@@ -35,6 +35,7 @@ USAGE MESSAGE :
 import argparse
 import random
 from itertools import chain
+import time
 
 '''	Generates a psuedorandom subset of paired fastq files filename1 and 
 	filename2. It first seperates all entries into numbins sequential subsets. 
@@ -67,10 +68,7 @@ def paired_fq_parser(fq1,fq2):
 		yield (e1,e2)
 
 
-
-
-
-def GenRandomizedSubset_v2(fq1,fq2,numbins,samplesize,target1,target2):
+def GenRandomizedSubset_v2(fq1,fq2,numbins,samplesize,target1,target2,seed=None):
 	entry_count = 0
 	for e in paired_fq_parser(fq1,fq2):
 		entry_count+=1
@@ -81,13 +79,15 @@ def GenRandomizedSubset_v2(fq1,fq2,numbins,samplesize,target1,target2):
 	p_val = float(samplesize)/entry_count
 	t1 = open(target1,'w')
 	t2 = open(target2,'w')
+	seed_time = seed if(seed!=None) else str(time.time())
+	print("Seed Used For RNG : "+str(seed_time))
+	random.seed(seed_time)
 	for e1,e2 in paired_fq_parser(fq1,fq2):
 		if(random.random()<p_val):
 			for line in e1:
 				t1.write(line)
 			for line in e2:
 				t2.write(line)
-
 
 
 def GenRandomizedSubset(filename1,filename2,linecount,numbins,samplesize,filename1target,filename2target):
@@ -173,10 +173,11 @@ if(__name__=='__main__'):
 	parser.add_argument('-s','--sample_size', type=float, help='The desired samplesize in number of fastq entries to include in sample, or in percent as a number between 0 and 1.')
 	parser.add_argument('-t1','--target_file1', type=wfcheck, help='An output filename. The sample from SourceFile1 writes to TargetFile1.')
 	parser.add_argument('-t2','--target_file2', type=wfcheck, help='An output filename. The sample from SourceFile2 writes to TargetFile2.') 
+	parser.add_argument('--seed',help='The seed value to be used by the random number generator.',default=str(time.time()))
 	args = parser.parse_args()
 	args.fastq1 = args.fastq1.split(',')
 	args.fastq2 = args.fastq2.split(',')
-	GenRandomizedSubset_v2(args.fastq1,args.fastq2,args.numbins,args.sample_size,args.target_file1,args.target_file2)
+	GenRandomizedSubset_v2(args.fastq1,args.fastq2,args.numbins,args.sample_size,args.target_file1,args.target_file2,args.seed)
 
 	'''
 	if(args.Linecount==0):
