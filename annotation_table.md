@@ -1,0 +1,1 @@
+This page will contain all of the stuff that people need to know about the annotation table.
