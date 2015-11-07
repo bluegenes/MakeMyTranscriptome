@@ -284,7 +284,7 @@ class Supervisor:
 		for t in task_required:
 			if(not task_required[t]):
 				self.tasks.remove(t)
-				self.task_status[t]['state'] = 'skipped'
+				self.task_status[t]['state'] = Supervisor.STATE_SKIPPED
 				self.log(t.name+':'+self.task_status[t]['state']+'\n')
 				for d in f_graph[t]:
 					if(t in d.dependencies):
@@ -336,7 +336,7 @@ class Supervisor:
 	def log(self,message):
 		self.log_str+=message
 		self.log_file.write(message)
-		sys.stdout.write(message)
+		print(message)
 		if(time.time() > self.last_email+self.email_interval):
 			self.last_email = time.time()
 			#self.send_email(self.log_str,'Pipeline Running Update')

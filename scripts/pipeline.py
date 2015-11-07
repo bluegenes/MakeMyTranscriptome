@@ -12,8 +12,8 @@ import time
 
 #####################____Argument_Parsers____#####################
 def master_args():
-	parser = argparse.ArgumentParser(description=('Description: OCT is a powerful convenience tool that '
-		'allows a user to run a full transcriptomics pipeline with a single command. OCT will manage the '
+	parser = argparse.ArgumentParser(description=('Description: MMT is a powerful convenience tool that '
+		'allows a user to run a full transcriptomics pipeline with a single command. MMT will manage the '
 		'assembly of the reads, annotate the resultant transcripts, and perform a differential '
 		'expression analysis of your dataset. In addition to performing the above three phases (assembly, '
 		'annotation, expression) in a single command, each of these three principle phases can be run '
@@ -34,7 +34,8 @@ def full_args():
 	parser.add_argument('-no_rmdup',help='Use thie flag to disable the removing duplicates portion of the pre-assembly read cleaning.',action='store_true')	
 	parser.add_argument('-no_trim',help='Use this flag to disable all trimming portions of pre-assembly read cleaning. Duplicate and low quality reads will not be removed. Subsampling will still be executed.',action='store_true')
 	parser.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The deafult value is 50.', default=50,type=float)
-	parser.add_argument('--subsample_seed',help='A seed used to initialize the random number generator used during random sampling.',default=str(time.time()))
+	parser.add_argument('--subsample_seed',help='A seed used to initialize the random number generator used during random sampling.')
+	parser.add_argument('-trinity_normalization',action='store_true',help='Use this flag to use the trinity normalization option')
 	parser.add_argument('-rnaspades',help='Use this flag to specify that assembly should be performed by rnaSPAdes rather than the default Trinity.',action='store_true')
 	parser.add_argument('-cegma',help='Use this flag to run cegma as part of the annotation pipeline. Cegma is an old tool for assesing the quality of assemblies. Normal behavior of the pipeline is to use busco for assesing assemblies. Using this flag will run cegma in addition to Busco.',action='store_true')
 	parser.add_argument('-blast_uniref90',help='Use this flag to enable the uniref-90 blast runs as part of the annotation pipeline.',action='store_true')
@@ -56,10 +57,11 @@ def assembly_args():
 	parser.add_argument('-1','--fastq1',help='A comma seperated list of fastq files. Each file should be paired with the same indexed file in fastq2.')
 	parser.add_argument('-2','--fastq2',help='A comma seperated list of fastq files. Each file should be paired with the same indexed file in fastq1.')
 	parser.add_argument('-rnaspades',help='Use this flag to specify that assembly should be performed by rnaSPAdes rather than the default Trinity.',action='store_true')
+	parser.add_argument('-trinity_normalization',action='store_true',help='Use this flag to use the trinity normalization option')
 	parser.add_argument('-no_rmdup',help='Use thie flag to disable the removing duplicates portion of the pre-assembly read cleaning.',action='store_true')	
 	parser.add_argument('-no_trim',help='Use this flag to disable all trimming portions of pre-assembly read cleaning. Duplicate and low quality reads will not be removed. Subsampling will still be executed.',action='store_true')
 	parser.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The deafult value is 50.', default=50,type=float)	
-	parser.add_argument('--subsample_seed',help='A seed used to initialize the random number generator used during random sampling.',default=str(time.time()))
+	parser.add_argument('--subsample_seed',help='A seed used to initialize the random number generator used during random sampling.')
 	parser.add_argument('-cegma',help='Use this flag to run cegma as part of the annotation pipeline. Cegma is an old tool for assesing the quality of assemblies. Normal behavior of the pipeline is to use busco for assesing assemblies. Using this flag will run cegma in addition to Busco.',action='store_true')
 	parser.add_argument('--busco_ref',help='Set the reference that busco will use for analysis',default='metazoa')
 	parser.add_argument('-no_log',help='Pipeline will delete log files.',action='store_true')
@@ -73,7 +75,7 @@ def assembly_args():
 def annotation_args():
 	parser = argparse.ArgumentParser(description='Selected_tool : Annotation. Executing this tool will run asssembly quality assesment along with a series of tools designing to provide information about the assembled transcripts.')
 	parser.add_argument('tool_selector',help=argparse.SUPPRESS)
-	parser.add_argument('-a','--assembly',help='A fasta transcriptome assembly that needs to be annotated.')
+	parser.add_argument('-a','--assembly',help='A fasta transcriptome assembly that will be used for computing expression levels.')
 	parser.add_argument('-blast_uniref90',help='Use this flag to enable the uniref-90 blast runs as part of the annotation pipeline.',action='store_true')
 	parser.add_argument('-blast_nr',help='Use this flag to enable the NR (non-redundant protein database) blast runs as part of the annotation pipeline. This could take a very long time to complete.',action='store_true')
 	parser.add_argument('-no_log',help='Pipeline will delete log files.',action='store_true')
@@ -122,6 +124,7 @@ def global_setup(args):
 		base = os.path.basename(args.assembly)
 		base = base if('.' not in base) else '.'.join(base.split('.')[:-1])
 	tf.NAME_OUT_DIR = args.out_name if(args.out_name!=None) else base
+	tf.NAME_ASSEMBLY = tf.NAME_OUT_DIR
 	tf.build_dir_task([]).run()
 
 def check_full_args(args):
@@ -226,7 +229,7 @@ def run_full(args):
 	gen_sample_info(args)
 	supers = []
 	assembly_super = gen_assembly_supervisor(args.fastq1,args.fastq2,args.unpaired,[],args.busco_ref,args.no_trim,args.rnaspades,
-											args.no_rmdup,args.subsample_size,args.cpu,args.cegma,args.subsample_seed)
+											args.no_rmdup,args.subsample_size,args.cpu,args.cegma,args.subsample_seed,args.trinity_normalization)
 	supers.append(assembly_super)
 	annotion_super = gen_annotation_assembly(args.cpu,args.blast_uniref90,[assembly_super])
 	supers.append(annotion_super)
@@ -239,7 +242,7 @@ def run_assembly(args):
 	global_setup(args)
 	supers = []
 	assembly_super = gen_assembly_supervisor(args.fastq1,args.fastq2,args.unpaired,[],args.busco_ref,args.no_trim,args.rnaspades,
-											args.no_rmdup,args.subsample_size,args.cpu,args.cegma,args.subsample_seed)
+											args.no_rmdup,args.subsample_size,args.cpu,args.cegma,args.subsample_seed,args.trinity_normalization)
 	supers.append(assembly_super)
 	run_supers(args,supers)
 
@@ -267,8 +270,37 @@ def run_expression(args):
 def run_supers(args,supers):
 	run_log = os.path.join(tf.GEN_PATH_DIR(),'run.log')
 	total = Supervisor(tasks=supers,cpu=args.cpu,force_run=args.force,log=run_log,email=args.email)
-	total.run()
+	try:
+		total.run()
+	except:
+		build_log(args,total.task_status)
+		raise
+	build_log(args,total.task_status)
 
+def build_log(args,task_status):
+	master_log = os.path.join(tf.GEN_PATH_DIR(),'master.log')
+	f = open(master_log,'a')
+	f.write('####################__'+args.tool_selector+'__####################\n')
+	print(len(task_status))
+	skipped_tasks = {t:task_status[t] for t in task_status if(task_status[t]['state']==Supervisor.STATE_SKIPPED)}
+	completed_tasks = {t:task_status[t] for t in task_status if(task_status[t]['state']==Supervisor.STATE_FINISHED)}
+	failed_tasks = {t:task_status[t] for t in task_status if(task_status[t]['state']==Supervisor.STATE_ERR)}
+	removed_tasks = {t:task_status[t] for t in task_status if(task_status[t]['state']==Supervisor.STATE_REMOVED)}
+	f.write('\nThe following jobs were detected as already having been completed. They '
+		'were not executed as part of this pipeline\'s execution. Output from previous runs was used instead\n')
+	for t in skipped_tasks:
+		f.write('\t'+t.name+'\n')
+	f.write('\nThe following jobs were exectued succesfully.\n')
+	for t in completed_tasks:
+		f.write('\t'+t.name+' : '+completed_tasks[t]['message']+'\n')
+	f.write('\nThe following jobs encountered an unexpected error during execution.\n')
+	for ti in failed_tasks:
+		f.write('\t'+t.name+' : '+completed_tasks[t]['message']+'\n')
+	f.write('\nDue to the above errors, the following jobs could not be started.\n')
+	for ti in failed_tasks:
+		f.write('\t'+t.name+'\n')
+	f.write('\n\n')
+	f.close()
 
 
 if(__name__=='__main__'):
@@ -296,3 +328,6 @@ if(__name__=='__main__'):
 		raise Exception('\n\nError : Unable to identify what tool should be executed. Valid arguments are "full", "assembly", "annotation", or "expression".')
 		
 	#main(args)
+
+
+	

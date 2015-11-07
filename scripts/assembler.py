@@ -27,7 +27,7 @@ def gen_paired_prinseq_supervisor(fastq1,fastq2,unpaired,dependency_set,rmdup):
 	return Supervisor(tasks=tasks)	
 
 
-def gen_assembly_supervisor(fastq1,fastq2,unpaired,dependency_set,busco_ref,no_trim=False,rnaSPAdes=False,rmdup=False,subset_size=50000000,cpu=12,cegma_flag=False,subset_seed='I am a seed value'):
+def gen_assembly_supervisor(fastq1,fastq2,unpaired,dependency_set,busco_ref,no_trim=False,rnaSPAdes=False,rmdup=False,subset_size=50000000,cpu=12,cegma_flag=False,subset_seed='I am a seed value',normalize_flag=False):
 	tasks = []
 	tasks.append(tf.fastqc_task(fastq1+fastq2+unpaired,'pre_trimming',[]))
 	assembler_dependencies = []
@@ -38,11 +38,11 @@ def gen_assembly_supervisor(fastq1,fastq2,unpaired,dependency_set,busco_ref,no_t
 			fastq2 = [paired_sup.targets[x] for x in range(1,len(paired_sup.targets),2)]
 			tasks.append(paired_sup)
 			tasks.append(tf.fastqc_task(fastq1+fastq2,'post_trimming_paired',[paired_sup]))
-		subset = tf.subset_task(fastq1,fastq2,'trinity_input',subset_size,subset_seed,[paired_sup] if(not no_trim) else [])
+		subset = tf.subset_task(fastq1,fastq2,'final_reads',subset_size,subset_seed,[paired_sup] if(not no_trim) else [])
 		fastq1 = [subset.targets[0]]
 		fastq2 = [subset.targets[1]]
 		tasks.append(subset)
-		late_fastqc = tf.fastqc_task(subset.targets,'trinity_input_paired',[subset])
+		late_fastqc = tf.fastqc_task(subset.targets,'final_reads_paired',[subset])
 		tasks.append(late_fastqc)
 		assembler_dependencies = [subset]
 	if(unpaired!=[]):
@@ -56,7 +56,7 @@ def gen_assembly_supervisor(fastq1,fastq2,unpaired,dependency_set,busco_ref,no_t
 		rnaspades = tf.rnaspades_task(fastq1,fastq2,unpaired,cpu,assembler_dependencies)
 		tasks.append(rnaspades)
 	else:
-		trinity = tf.trinity_task(fastq1,fastq2,unpaired,cpu,int(cpu/2),120,120,assembler_dependencies)
+		trinity = tf.trinity_task(fastq1,fastq2,unpaired,cpu,int(cpu/2),120,120,normalize_flag,assembler_dependencies)
 		tasks.append(trinity)
 	assembler_main_task = tasks[-1]
 	cegma = tf.cegma_task(cpu,[assembler_main_task])

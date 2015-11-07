@@ -19,6 +19,7 @@ Usage Message :
 
 
 import argparse
+import json
 
 '''	Computes the mean of an iterable l.
 '''
@@ -90,9 +91,9 @@ def FastaStats(f):
 	ret['median'] = median(lens)
 	ret['mean'] = mean(lens)
 	ret['n50'] = fasta_nx(lens,0.5)
-	ret['total'] = sum(lens)
-	ret['gcpercent'] = float(gccount)/ret['total']
-	ret['transcripts'] = len(lens)
+	ret['total_length'] = sum(lens)
+	ret['gcpercent'] = float(gccount)/ret['total_length']
+	ret['num_transcripts'] = len(lens)
 	return ret
 
 #Acts like a main method
@@ -101,5 +102,4 @@ if(__name__=='__main__'):
 	parser.add_argument('f', metavar='FastaFile', type=argparse.FileType('r'), help='The fasta file that we desire stats for.')
 	args = parser.parse_args()
 	stats = FastaStats(args.f)
-	for key in stats:
-		print(key + ' : ' + str(stats[key]))
+	print(json.dumps(stats))

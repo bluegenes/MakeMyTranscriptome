@@ -22,6 +22,7 @@ PATH_BOWTIE2 = '/matta1/biotools/redhat/bowtie2-2.1.0'
 PATH_BUSCO = '/matta1/biotools/redhat/BUSCO_v1.1b/BUSCO_v1.1b.py'
 PATH_BUSCO_REFERENCE = '/matta1/hitsdata/reference_files/BUSCO'
 PATH_CEGMA = 'cegma'
+PATH_DIAMOND = '/matta1/biotools/redhat/diamond'
 PATH_EXPRESS = '/matta1/biotools/redhat/express-1.5.1-linux_x86_64/express'
 PATH_FASTQC = '/matta1/biotools/redhat/FastQC/fastqc'
 PATH_GENE_TRANS_MAP = PATH_SCRIPTS+'/get_Trinity_gene_to_trans_map.pl'
@@ -41,6 +42,7 @@ PATH_SWISS_PROT = os.path.join(PATH_DATABASES,'uniprot_sprot','uniprot_sprot.fas
 PATH_UNIREF90 = os.path.join(PATH_DATABASES,'uniref90','uniref90.fasta')
 PATH_NOG_CATEGORIES = os.path.join(PATH_DATABASES,'nog_categories')
 
+
 ''' dynamic path variable functions'''
 GEN_PATH_DIR = lambda : os.path.join(PATH_ASSEMBLIES,NAME_OUT_DIR)
 GEN_PATH_ASSEMBLY_FILES = lambda : os.path.join(GEN_PATH_DIR(),'assembly_files')
@@ -51,6 +53,8 @@ GEN_PATH_ASSEMBLY = lambda : os.path.join(GEN_PATH_DIR(),NAME_ASSEMBLY+'.fasta')
 
 GEN_LOGS = lambda x : (os.path.join(GEN_PATH_LOGS(),x+'.out_log'),os.path.join(GEN_PATH_LOGS(),x+'.err_log'))
 
+
+####################___Set_Up_Stuff___####################
 
 def build_dir_task(tasks):
 	'''
@@ -66,19 +70,6 @@ def build_dir_task(tasks):
 	return Task(command=cmd,dependencies=tasks,targets=trgs,stdout=os.devnull,stderr=os.devnull)
 
 
-def fastqc_task(fq_files,output_name,tasks):
-	'''	Defines task for running fastqc. Uses GEN_PATH_DIR(), PATH_FASTQC,
-		Params :
-			fq_files - list of fastq files to run fastqc on
-			tasks - a list of tasks that this task is dependant on.
-	'''
-	trgs = ['{0!s}/fastqc_{1!s}'.format(GEN_PATH_ASSEMBLY_FILES(),output_name)]
-	cmd = 'mkdir {2!s}; {0!s} {1!s} --outdir {2!s}'.format(PATH_FASTQC,' '.join(fq_files),trgs[0])
-	name = 'fastqc_'+output_name
-	out,err = GEN_LOGS(name)
-	return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
-
-
 def cp_assembly_task(source,tasks):
 	'''	Defines task used to initialize an assembly when running on fasta 
 		files. Uses GEN_PATH_DIR() and NAME_ASSEMBLY.
@@ -90,6 +81,21 @@ def cp_assembly_task(source,tasks):
 	cmd = 'cp {0!s} {1!s}'.format(source,trgs[0])
 	name = 'setting_fasta'
 	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name)
+
+
+###################___Assembly_Tasks___###################
+
+def fastqc_task(fq_files,output_name,tasks):
+	'''	Defines task for running fastqc. Uses GEN_PATH_DIR(), PATH_FASTQC,
+		Params :
+			fq_files - list of fastq files to run fastqc on
+			tasks - a list of tasks that this task is dependant on.
+	'''
+	trgs = ['{0!s}/fastqc_{1!s}'.format(GEN_PATH_ASSEMBLY_FILES(),output_name)]
+	cmd = 'mkdir {2!s}; {0!s} {1!s} --outdir {2!s}'.format(PATH_FASTQC,' '.join(fq_files),trgs[0])
+	name = 'fastqc_'+output_name
+	out,err = GEN_LOGS(name)
+	return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
 
 
 def prinseq_unpaired_task(input1,basename,opts,tasks):
@@ -164,14 +170,16 @@ def subset_task(fastq1,fastq2,out_base,num,seed,tasks):
 			tasks - a list of tasks that this is dependant on.
 	'''
 	trgs = ['{0!s}/{1!s}_{2!s}.fastq'.format(GEN_PATH_ASSEMBLY_FILES(),out_base,x) for x in (1,2)]
-	cmd = 'python {0!s}/random_subset.py -1 {1!s} -2 {2!s} -n 100 -s {3!s} -t1 {4!s} -t2 {5!s} --seed {6!s}'.format(
-			PATH_SCRIPTS,','.join(fastq1),','.join(fastq2),num,trgs[0],trgs[1],seed)
+	cmd = 'python {0!s}/random_subset.py -1 {1!s} -2 {2!s} -n 100 -s {3!s} -t1 {4!s} -t2 {5!s}'.format(
+			PATH_SCRIPTS,','.join(fastq1),','.join(fastq2),num,trgs[0],trgs[1])
+	if(seed!=None):
+		cmd+=' --seed '+seed
 	name = 'subset_reads'
 	out,err = GEN_LOGS(name)
 	return Task(command=cmd,dependencies=tasks,name=name,stdout=out,stderr=err,targets=trgs)
 
 
-def trinity_task(fastq,fastq2,unpaired,cpu_cap_trin,cpu_cap_bfly,mem_trin,mem_bfly,tasks):
+def trinity_task(fastq,fastq2,unpaired,cpu_cap_trin,cpu_cap_bfly,mem_trin,mem_bfly,normalize_flag,tasks):
 	'''	Defines the trinity task. Uses GEN_PATH_DIR(), PATH_TRINITY, NAME_ASSEMBLY
 		Params :	
 			left - a 1/left fastq files
@@ -179,6 +187,7 @@ def trinity_task(fastq,fastq2,unpaired,cpu_cap_trin,cpu_cap_bfly,mem_trin,mem_bf
 			cpu_cap - number of threads used by trinity
 			tasks - a list of tasks that this task is dependant on
 	'''
+	normalize_flag = '--normalize_reads' if(normalize_flag) else ''
 	input_str = ''
 	if(unpaired!=[] and fastq==[]):
 		input_str+='--single '+','.join(unpaired)
@@ -186,12 +195,30 @@ def trinity_task(fastq,fastq2,unpaired,cpu_cap_trin,cpu_cap_bfly,mem_trin,mem_bf
 		input_str+='--left '+','.join(fastq+unpaired)
 		input_str+=' --right '+','.join(fastq2)
 	trgs = [GEN_PATH_ASSEMBLY()]
-	cmd = ('ulimit -s unlimited; ulimit -a; {0!s} --seqType fq {1!s} --CPU {2!s} --JM {3!s}G --bflyCPU {4!s} --bflyHeapSpaceMax {5!s}G '
+	cmd = ('ulimit -s unlimited; ulimit -a; {0!s} --seqType fq {1!s} --CPU {2!s} --JM {3!s}G --bflyCalculateCPU {4!s} '
 			'--bfly_opts "-V 10 --stderr" --output {6!s}/trinity; cp {6!s}/trinity/Trinity.fasta {7!s};'
-			).format( PATH_TRINITY, input_str, cpu_cap_trin, mem_trin, cpu_cap_bfly, mem_bfly, GEN_PATH_ASSEMBLY_FILES(), trgs[0])
+			).format( PATH_TRINITY, input_str, cpu_cap_trin, mem_trin, normalize_flag, mem_bfly, GEN_PATH_ASSEMBLY_FILES(), trgs[0])
 	name = 'trinity_assembly'
 	out,err = GEN_LOGS(name)
 	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=max(cpu_cap_trin,cpu_cap_bfly),stdout=out,stderr=err)
+
+
+def rnaspades_task(left,right,unpaired,cpu_cap,tasks):
+	'''
+	'''
+	virtual_target = '{0!s}/rna_spades_out_dir'.format(GEN_PATH_ASSEMBLY_FILES())
+	trgs = [GEN_PATH_ASSEMBLY()]
+	input_strings = []
+	if(left!=[]):
+		input_strings.append('-1 '+left[0])
+		input_strings.append('-2 '+right[0])
+	if(unpaired!=[]):
+		input_strings.append('-s '+unpaired[0])
+	cmd = '{0!s} {1!s} --threads {2!s} -o {3!s}; cp {3!s}/contigs.fasta {4!s};'.format(
+			PATH_RNASPADES,' '.join(input_strings),cpu_cap,virtual_target,trgs[0])
+	name = 'rnaSPAdes_assembly'
+	out,err = GEN_LOGS(name)
+	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
 
 def cegma_task(cpu_cap,tasks):
@@ -230,12 +257,14 @@ def assembly_stats_task(tasks):
 		Params :
 			tasks - a list of tasks that this task is dependant on (trinity_task)
 	'''
-	trgs = ['{0!s}/{1!s}.stats'.format(GEN_PATH_ASSEMBLY_FILES(),NAME_ASSEMBLY)]
+	trgs = ['{0!s}/assembly_stats.json'.format(GEN_PATH_ASSEMBLY_FILES())]
 	cmd = 'python {0!s}/assembly_stats.py {1!s}/{2!s}.fasta > {3!s}'.format(PATH_SCRIPTS,GEN_PATH_DIR(),NAME_ASSEMBLY,trgs[0])
 	name = 'assembly_stats'
 	out,err = GEN_LOGS(name)
 	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
+
+##################___Annotation_Tasks___##################
 
 def gene_trans_map_task(tasks):
 	'''	Defines gene_trans_map task. Uses NAME_ASSEMBLY, PATH_DIR, PATH_GENE_TRANS_MAP.
@@ -291,11 +320,12 @@ def predict_orfs_task(cpu_cap, tasks):
 
 		*trasndecoder.* are targets
 	'''
-	trgs = ['{0!s}/{1!s}.fasta.transdecoder.pep'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
-	cmd = ("cd {0!s}; {1!s} -t {2!s} --workdir {0!s} --CPU {3!s} 2>&1 | "
-			"tee {0!s}/transDecoder_no_pfam_log").format(GEN_PATH_ANNOTATION_FILES(),
+	path_transdecoder_output = GEN_PATH_ANNOTATION_FILES()+'/transdecoder'
+	trgs = ['{0!s}/{1!s}.fasta.transdecoder.pep'.format(path_transdecoder_output,NAME_ASSEMBLY)]
+	cmd = ("mkdir -p {0!s}; cd {0!s}; {1!s} -t {2!s} --workdir {0!s} --CPU {3!s} 2>&1 | "
+			"tee {0!s}/transDecoder_no_pfam_log").format(path_transdecoder_output,
 			PATH_TRANSDECODER,GEN_PATH_ASSEMBLY(),cpu_cap)
-	name = 'predict_orfs'
+	name = 'TransDecoder'
 	out,err = GEN_LOGS(name)
 	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
@@ -307,9 +337,8 @@ def signalp_task(pep_path, tasks):
 			output_name - name of output file
 			tasks - a list of tasks that this task is dependant on.
 	'''
-	output_name = 'signalp'
-	trgs = ['{0!s}/{1!s}'.format(GEN_PATH_ANNOTATION_FILES(),output_name)]
-	cmd = '{2!s} -f short -n {1!s} {0!s} > {1!s}.log'.format(pep_path,trgs[-1],PATH_SIGNALP)
+	trgs = ['{0!s}/{1!s}.signalp'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
+	cmd = '{2!s} -f short -n {1!s} {0!s}'.format(pep_path,trgs[-1],PATH_SIGNALP)
 	name = 'signalp'
 	out,err = GEN_LOGS(name)
 	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
@@ -356,7 +385,7 @@ def pfam_task(pep_path, cpu_cap, tasks):
 			tasks - a list of tasks that this task is dependant on.
 	'''
 	trgs = ['{0!s}/{1!s}.pfam'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
-	cmd = '{4!s} --cpu {0!s} --domtblout {1!s} {2!s} {3!s} > {1!s}.log'.format(cpu_cap,
+	cmd = '{4!s} --cpu {0!s} --domtblout {1!s} {2!s} {3!s}'.format(cpu_cap,
 			trgs[0],PATH_PFAM_DB,pep_path,PATH_PFAM)
 	name = 'pfam'
 	out,err = GEN_LOGS(name)
@@ -410,6 +439,28 @@ def keg_task(tasks):
 	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
+def pipeplot_task(annotation_table,tasks):
+	trgs = []
+	cmd = 'mkdir -p {0!s}/plots ; cd {0!s}/plots ; python {1!s}/pipePlot.py -i {2!s} ;'.format(
+			GEN_PATH_ANNOTATION_FILES(),PATH_SCRIPTS,annotation_table)
+	name = 'pipeplot'
+	out,err = GEN_LOGS(name)
+	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
+ 
+
+def diamond_task(ref,blast_type,cpu_cap,tasks):
+	trgs = ['{0!s}/diamond_{1!s}_{2!s}'.format(GEN_PATH_ANNOTATION_FILES(),ref,blast_type)]
+	cmd = ('{0!s} {1!s} --db {2!s} --query {3!s} --daa {4!s} --tmpdir {5!s} --max-target-seqs 20 '
+			'--index-chunks 1 --sensitive --threads {6!s} --evalue 0.001').format(PATH_DIAMOND,
+				blast_type,ref,GEN_PATH_ASSEMBLY(),trgs[0],GEN_PATH_ANNOTATION_FILES(),cpu_cap)
+	trgs[0]+='.daa'
+	name = 'diamond_'+ref
+	out,err = GEN_LOGS()
+	return Task(command=cmd,dependencies=tasks,cpu=cpu_cap,targets=trgs,name=name,stdout=out,stderr=err)
+ 
+
+##################___Expression_Tasks___##################
+
 def build_bowtie_task(tasks):
 	'''
 	'''
@@ -451,7 +502,8 @@ def express_task(bam_input,out_name,tasks):
 	'''
 	'''
 	trgs = ['{0!s}/{1!s}.xprs'.format(GEN_PATH_EXPRESSION_FILES(),out_name)]
-	cmd = 'mkdir {1!s}/{2!s}; {0!s} --output-dir {1!s}/{2!s}/ {3!s} {4!s}; mv {1!s}/{2!s}/results.xprs {5!s}'.format(
+	cmd = ('mkdir {1!s}/{2!s}; {0!s} --output-dir {1!s}/{2!s}/ {3!s} {4!s}; mv '
+			'{1!s}/{2!s}/results.xprs {5!s}; rm -rf {1!s}/{2!s};').format(
 			PATH_EXPRESS,GEN_PATH_EXPRESSION_FILES(),out_name,GEN_PATH_ASSEMBLY(),bam_input,trgs[0])
 	name = 'express_'+out_name
 	out,err = GEN_LOGS(name)
@@ -506,30 +558,13 @@ def intersect_bed_task(bam_file,bed_reference,output_name,tasks):
 def deseq2_task(counts_to_table_results,sample_info,basename,model,tasks):
 	'''
 	'''
-	trgs = ['{0!s}/deseq2_{1!s}_Condition/'.format(GEN_PATH_EXPRESSION_FILES(),basename)]
-	cmd = 'Rscript {5!s}/deseq2.r --args {0!s} {1!s} {2!s} {3!s} {4!s}; cp {1!s} {2!s}/sample_info.txt;'.format(
+	pseudo_model_temp = ''.join([c if c!=' ' else '_' for c in model])
+	trgs = ['{0!s}/deseq2_{1!s}_{2!s}/'.format(GEN_PATH_EXPRESSION_FILES(),basename,pseudo_model_temp)]
+	cmd = 'Rscript {5!s}/deseq2.r --args {0!s} {1!s} {2!s} {3!s} {4!s}'.format(
 			counts_to_table_results,sample_info,GEN_PATH_EXPRESSION_FILES(),basename,model,PATH_SCRIPTS)
 	name = 'de_'+basename
 	out,err = GEN_LOGS(name)
 	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
-
-
-def rnaspades_task(left,right,unpaired,cpu_cap,tasks):
-	'''
-	'''
-	virtual_target = '{0!s}/rna_spades_out_dir'.format(GEN_PATH_ASSEMBLY_FILES())
-	trgs = [GEN_PATH_ASSEMBLY()]
-	input_strings = []
-	if(left!=[]):
-		input_strings.append('-1 '+left[0])
-		input_strings.append('-2 '+right[0])
-	if(unpaired!=[]):
-		input_strings.append('-s '+unpaired[0])
-	cmd = '{0!s} {1!s} --threads {2!s} -o {3!s}; cp {3!s}/contigs.fasta {4!s};'.format(
-			PATH_RNASPADES,' '.join(input_strings),cpu_cap,virtual_target,trgs[0])
-	name = 'rnaSPAdes_assembly'
-	out,err = GEN_LOGS(name)
-	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
 
 def build_salmon_task(cpu_cap,tasks):
@@ -576,6 +611,14 @@ def build_blast_task(fasta,out_path,dbtype,tasks):
 	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
+def build_diaimond_task(fasta,out_path,dbtype,tasks):
+	trgs = [out_path+'.dmnd']
+	cmd = '{0!s} makedb --in {1!s} --db {2!s}'.format(PATH_DIAMOND,fasta,out_path)
+	name = 'build_diamond_'+fasta
+	out,err = GEN_LOGS()
+	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
+ 
+
 def split_mito_task(blast_mt,tasks):
 	trgs = ['{0!s}/mtDNA_contigs.fasta'.fomat(GEN_PATH_ASSEMBLY_FILES()),'{0!s}/no_mtDNA_contigs.fasta'.format(GEN_PATH_ASSEMBLY_FILES())]
 	cmd = '{0!s}/split_fasta.py {1!s} {3!s} {2!s}/mtDNA_contigs.fasta {2!s}/no_mtDNA_contigs.fasta'.format(PATH_SCRIPTS,GEN_PATH_ASSEMBLY(),GEN_PATH_ASSEMBLY_FILES(),blast_mt)
@@ -583,14 +626,5 @@ def split_mito_task(blast_mt,tasks):
 	out,err = GEN_LOGS(name)
 	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 	
-
-def pipeplot_task(annotation_table,tasks):
-	trgs = []
-	cmd = 'mkdir -p {0!s}/plots ; cd {0!s}/plots ; python {1!s}/pipePlot.py -i {2!s} ;'.format(
-			GEN_PATH_ANNOTATION_FILES(),PATH_SCRIPTS,annotation_table)
-	name = 'pipeplot'
-	out,err = GEN_LOGS(name)
-	return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
-
 
 
