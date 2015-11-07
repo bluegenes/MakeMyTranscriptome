@@ -121,6 +121,18 @@ todo_include_todos = True
 # a list of builtin themes.
 html_theme = 'alabaster'
 
+# Adding style option
+html_style = 'labibi.css'
+
+# Add html context??????
+html_context = {
+   "google_analytics_id" : 'UA-59786406-3',
+   "disqus_shortname" : 'tessapierce',
+   "github_base_account" : 'bluegenes',
+   "github_project" : 'makeMyTranscriptome',
+}
+
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
