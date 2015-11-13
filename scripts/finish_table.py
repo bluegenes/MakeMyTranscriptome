@@ -1,7 +1,6 @@
 ###############################################################################
 ###############################################################################
 #
-# Author	-	Andrew Walters
 #
 #
 #
@@ -20,10 +19,9 @@
 ###############################################################################
 
 import sys, re, os
-import urllib2
 import operator
-from buildDicts import *
-from addColumns import *
+from build_conversions import *
+from add_database_columns import *
 #from list_of_dictionaries import build_dictionaries, build_weights
 
 
@@ -154,57 +152,43 @@ def writeDict(dict, output_file):
     outFile.close()
 
 
-"""Main method to finish full annotation table"""
-def finishAnnotTable(annot_table, args, indexDict):
+def finish_annot_table(annot_table, args, index_dict):
+	"""
+	   Description:	Main method to add database conversions
+	   Input:		Annotation Table, Input Args, Column Index Dictionary
+	   Return:		Annotation Table
+	"""
 
-    # create conversion dicts and add kegg annotations
-
-    #koToPathDt = orthology_pathway.list
-    #spToEzDt = swiss_enzyme.list
-    #ezToPathDt = enzyme_pathway.list
-    #pfToEzDt = pfam_enzyme.list
-    #goToPath = go_pathway.txt
-    #nogToF = allKOG_functional_info.txt
-    #contigToClosest = contig2closest
-    #goToGOSlim = goslim_generic.obo
-    #contigToBlastNR = contig2blastnr.txt
-    #spToKO = idmapping.KO
-    #spToNog = idmapping.eggNOG
-    #spToOrtho = idmapping.orthodb
-    #spToBioC = idmapping.biocyc
-    #spToGOandEntrez = idmapping_selected.tab
-
-
-    """Conversion Files"""
-    koToPathDt = createConversion(args.ko2path)
-    spToEzDt = createConversion(args.sp2enzyme)
-    ezToPathDt = createConversionEzPath(args.enzyme2path)
-    pfToEzDt = createConversion(args.pfam2enzyme)
-    goToPath = createConversion(args.go2path)
-    nogToF = createConversionNogF(args.nog2function)
-    contigToClosest = createConversionContigClosest(args.contig2closest)
-    goToGOSlim = createConversionGOSlim(args.go2slim)
-    contigToBlastNR = createConversionContigBlastNR(args.contig2blastnr)
-    spToKO = createConversionIDMAP(args.sp2ko)
-    spToNog = createConversionIDMAP(args.sp2nog)
-    spToOrtho = createConversionIDMAP(args.sp2ortho)
-    spToBioC = createConversionIDMAP(args.sp2bioc)
-    spToGOandEntrez = createConversoinGOandEntrez(args.sp2goentrez)
+    # Conversion Files
+    ko_to_path = conversion(args.ko2path)
+    sp_to_ez = conversion(args.sp2enzyme)
+    ez_to_path = conversion_ez_path(args.enzyme2path)
+    pf_to_ez = conversion(args.pfam2enzyme)
+    go_to_path = conversion(args.go2path)
+    nog_to_f = conversion_nogf(args.nog2function)
+    contig_to_closest = conversion_contig_closest(args.contig2closest)
+    go_to_goslim = conversion_goslim(args.go2slim)
+    contig_to_blastnr = conversion_contig_blastnr(args.contig2blastnr)
+    sp_to_ko = conversion_idmap(args.sp2ko)
+    sp_to_nog = conversion_idmap(args.sp2nog)
+    sp_to_ortho = conversion_idmap(args.sp2ortho)
+    sp_to_bioc = conversion_idmap(args.sp2bioc)
+    sp_to_go_entrez = conversion_go_entrez(args.sp2goentrez)
 
 
     for index, line in enumerate(annot_table):
         annot_table[index] = line + (['.'] * 15)
-        annot_table[index] = addIDMAP(annot_table[index], spToKO, indexDict, indexDict['Kegg_Orthology'])
-        annot_table[index] = addIDMAP(annot_table[index], spToNog, indexDict, indexDict['eggNOG'])
-        annot_table[index] = addIDMAP(annot_table[index], spToOrtho, indexDict, indexDict['orthoDB'])
-        annot_table[index] = addIDMAP(annot_table[index], spToBioC, indexDict, indexDict['BioCyc'])
-        annot_table[index] = addSPtoGOandEntrez(annot_table[index], spToGOandEntrez, indexDict)
-        annot_table[index] = addKOtoPath(annot_table[index], koToPathDt, indexDict)
-        annot_table[index] = addSPtoEnzymetoPath(annot_table[index], spToEzDt, ezToPathDt, indexDict)
-        annot_table[index] = addPfamtoEnzymetoPath(annot_table[index], pfToEzDt, ezToPathDt, indexDict)
-        annot_table[index] = addGOtoPath(annot_table[index], goToPath, indexDict)
-        annot_table[index] = addNogtoF(annot_table[index], nogToF, indexDict)
-        annot_table[index] = addBlastNR(annot_table[index], contigToBlastNR, indexDict)
-        annot_table[index] = addClosestHit(annot_table[index], contigToClosest, indexDict)
-        annot_table[index] = addGOSlim(annot_table[index], goToGOSlim, indexDict)
+        annot_table[index] = add_idmap(annot_table[index], sp_to_ko, index_dict, index_dict['Kegg_Orthology'])
+        annot_table[index] = add_idmap(annot_table[index], sp_to_nog, index_dict, index_dict['eggNOG'])
+        annot_table[index] = add_idmap(annot_table[index], sp_to_ortho, index_dict, index_dict['orthoDB'])
+        annot_table[index] = add_idmap(annot_table[index], sp_to_bioc, index_dict, index_dict['BioCyc'])
+        annot_table[index] = add_sp_to_go_and_entrez(annot_table[index], sp_to_go_entrez, index_dict)
+        annot_table[index] = add_ko_to_path(annot_table[index], ko_to_path, index_dict)
+        annot_table[index] = add_sp_to_enzyme_to_path(annot_table[index], sp_to_ez, ez_to_path, index_dict)
+        annot_table[index] = add_pfam_to_enzyme_to_path(annot_table[index], pf_to_ez, ez_to_path, index_dict)
+        annot_table[index] = add_go_to_path(annot_table[index], go_to_path, index_dict)
+        annot_table[index] = add_nog_to_func(annot_table[index], nog_to_f, index_dict)
+        annot_table[index] = add_blastnr(annot_table[index], contig_to_blastnr, index_dict)
+        annot_table[index] = add_closest_hit(annot_table[index], contig_to_closest, index_dict)
+        annot_table[index] = add_goslim(annot_table[index], go_to_goslim, index_dict)
     return annot_table
