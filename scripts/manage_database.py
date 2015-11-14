@@ -34,7 +34,7 @@ url_nr = 'ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz'
 nr_target = PATH_NR
 
 url_busco_metazoa = 'http://busco.ezlab.org/files/metazoa_buscos.tar.gz'
-busco_metazoa_target = 
+busco_metazoa_target = PATH_BUSCO_METAZOA
 
 url_go_pathway = 'http://rest.genome.jp/link/go/pathway'
 go_pathway_target = '{0!s}/go_pathway.txt'.format(PATH_DATABASES)
@@ -117,7 +117,8 @@ def get(log_table, flag, source, target):
             tar_retrieve(source, target)
         else:
             print('Your shits fucked.')
-        log_table[basename(target)] = strftime('%b-%d-%Y')
+        basename = os.path.basename(target)
+        log_table[basename] = strftime('%b-%d-%Y')
     except ContentTooShortError:
         print('failed to install {0!s}'.format(basename(arget)))
 
@@ -169,14 +170,14 @@ def subset_dat(dat_file, key_file_dict, log_table):
 
 def check_database_dir():
     if(not os.path.isdir(PATH_DATABASES)):
-        os.makedir(PATH_DATABASES)
+        os.mkdir(PATH_DATABASES)
         write_log({})
     if(not os.path.isdir(swissprot_folder)):
-        os.makedir(swissprot_folder)
+        os.mkdir(swissprot_folder)
     if(not os.path.isdir(uniref90_folder)):
-        os.makedir(uniref90_folder)
+        os.mkdir(uniref90_folder)
     if(not os.path.isdir(nr_folder)):
-        os.makedir(nr)
+        os.mkdir(nr_folder)
 
 
 def main():
