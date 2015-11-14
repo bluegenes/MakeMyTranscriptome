@@ -18,7 +18,6 @@
 ###############################################################################
 ###############################################################################
 
-#initialize Table
 
 def error_check(line, length):
 	"""
@@ -85,7 +84,7 @@ def conversion_transcriptid_geneid(conversion_file):
 	return convDt
 
 
-def add_fasta(fasta_file, transmap_file):
+def add_fasta(fasta_file, transmap_file, nr_file):
 	"""
 	   Description:	Initiates Table with Columns 0,1,2 - TranscriptID, GeneID, TranscriptLength
 	   Input:		Fasta File, GeneTransMap File
@@ -96,17 +95,21 @@ def add_fasta(fasta_file, transmap_file):
 	transcriptid = ''
 	length = 0
 	geneid = conversion_transcriptid_geneid(transmap_file)
+	lengths = {}
 	for line in file:
 		if '>' == line[0]:
 			if length > 0:
 				annot_table += [[transcriptid, geneid[transcriptid], str(length)]]
+				lengths[transcriptid] = length
 			length = 0
 			transcriptid = line.split(' ')[0][1:]
 		else:
 			length += len(line.strip())
 	annot_table += [[transcriptid, geneid[transcriptid], str(length)]]
 	file.close()
-	return annot_table
+	if nr_file == 'NONE':
+		return annot_table, 0
+	return annot_table, lengths
 
 
 def add_swissprot_top_blastx(annot_table, swissprotx_file):
@@ -465,6 +468,7 @@ def add_trembl_top_blastp(annot_table, unirefp_file):
 		annot_table[index].append('.')
 		index += 1
 	file.close()
-	for row in annot_table:
-		error_check(row, 14)
+	for index in range(len(annot_table)):
+		error_check(annot_table[index], 14)
+		annot_table[index] += ['.'] * 15
 	return annot_table

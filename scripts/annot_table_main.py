@@ -34,7 +34,7 @@ def main(args):
                  'orthoDB': 26, 'BioCyc': 27, 'entrezGene': 28}
 
 
-    annot_table = add_fasta(args.fasta, args.geneTransMap)
+    annot_table, lengths = add_fasta(args.fasta, args.geneTransMap, args.nr)
     annot_table = add_swissprot_top_blastx(annot_table, args.spX)
     annot_table = add_protid(annot_table, args.transdecoder)
     annot_table = add_swissprot_top_blastp(annot_table, args.spP)
@@ -63,7 +63,7 @@ def main(args):
     else:
         annot_table = add_trembl_top_blastp(annot_table, args.ur90P)
     #INIT_FINISHED
-    annot_table = finish_annot_table(annot_table, args, indexDict)
+    annot_table = finish_annot_table(annot_table, args, indexDict, lengths)
     #FULL_TABLE_BUILT
     annot_by_gene = splitByGene(annot_table)
     #WRITING_FILES
@@ -91,6 +91,11 @@ if __name__ == '__main__':
     psr.add_argument('--pfam',metavar='ident',type=read_file_test,help='what is this')
     psr.add_argument('--signalP',metavar='ident',type=read_file_test,help='what is this')
     psr.add_argument('--tmhmm',metavar='ident',type=read_file_test,help='what is this')
+    ###
+    #ADD TO WIKI / TELL NOLAN!
+    psr.add_argument('--nr',metavar='ident',type=read_file_test,help='what is this')
+    psr.add_argument('--closest',metavar='contig2closest',type=read_file_test,help='what is this')
+    ###
     #conversion files
     psr.add_argument('--ko2path',metavar='ko2path',type=read_file_test,help='what is this')
     psr.add_argument('--sp2enzyme',metavar='sp2enzyme',type=read_file_test,help='what is this')
@@ -98,9 +103,13 @@ if __name__ == '__main__':
     psr.add_argument('--pfam2enzyme',metavar='pfam2enzyme',type=read_file_test,help='what is this')
     psr.add_argument('--go2path',metavar='go2path',type=read_file_test,help='what is this')
     psr.add_argument('--nog2function',metavar='nog2function',type=read_file_test,help='what is this')
-    psr.add_argument('--contig2closest',metavar='contig2closest',type=read_file_test,help='what is this')
     psr.add_argument('--go2slim',metavar='go2slim',type=read_file_test,help='what is this')
-    psr.add_argument('--contig2blastnr',metavar='contig2blastnr',type=read_file_test,help='what is this')
+    ###
+    #READING IN AS BLAST FORMAT
+    #psr.add_argument('--contig2closest',metavar='contig2closest',type=read_file_test,help='what is this')
+    #BUILDING IN THIS SCRIPT MEOW - TELL NOLAN TO REMOVE
+    #psr.add_argument('--contig2blastnr',metavar='contig2blastnr',type=read_file_test,help='what is this')
+    ###
     #IDMAPPING
     psr.add_argument('--sp2ko',metavar='sp2ko',type=read_file_test,help='what is this')
     psr.add_argument('--sp2nog',metavar='sp2nog',type=read_file_test,help='what is this')

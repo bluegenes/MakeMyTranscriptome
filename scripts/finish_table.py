@@ -152,7 +152,7 @@ def writeDict(dict, output_file):
     outFile.close()
 
 
-def finish_annot_table(annot_table, args, index_dict):
+def finish_annot_table(annot_table, args, index_dict, lengths):
 	"""
 	   Description:	Main method to add database conversions
 	   Input:		Annotation Table, Input Args, Column Index Dictionary
@@ -168,7 +168,7 @@ def finish_annot_table(annot_table, args, index_dict):
     nog_to_f = conversion_nogf(args.nog2function)
     contig_to_closest = conversion_contig_closest(args.contig2closest)
     go_to_goslim = conversion_goslim(args.go2slim)
-    contig_to_blastnr = conversion_contig_blastnr(args.contig2blastnr)
+    contig_to_blastnr = conversion_contig_blastnr(args.nr, lengths)
     sp_to_ko = conversion_idmap(args.sp2ko)
     sp_to_nog = conversion_idmap(args.sp2nog)
     sp_to_ortho = conversion_idmap(args.sp2ortho)
@@ -177,7 +177,6 @@ def finish_annot_table(annot_table, args, index_dict):
 
 
     for index, line in enumerate(annot_table):
-        annot_table[index] = line + (['.'] * 15)
         annot_table[index] = add_idmap(annot_table[index], sp_to_ko, index_dict, index_dict['Kegg_Orthology'])
         annot_table[index] = add_idmap(annot_table[index], sp_to_nog, index_dict, index_dict['eggNOG'])
         annot_table[index] = add_idmap(annot_table[index], sp_to_ortho, index_dict, index_dict['orthoDB'])
