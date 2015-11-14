@@ -33,6 +33,7 @@ def full_args():
     parser.add_argument('-test',help='Use this flag to test the pipeline.',action='store_true')
     parser.add_argument('-no_rmdup',help='Use thie flag to disable the removing duplicates portion of the pre-assembly read cleaning.',action='store_true')    
     parser.add_argument('-no_trim',help='Use this flag to disable all trimming portions of pre-assembly read cleaning. Duplicate and low quality reads will not be removed. Subsampling will still be executed.',action='store_true')
+    parser.add_argument('-trimmomatic',help='Use trimmomatic instead of prinseq to trime reads',action='store_true')
     parser.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The deafult value is 50.', default=50,type=float)
     parser.add_argument('--subsample_seed',help='A seed used to initialize the random number generator used during random sampling.')
     parser.add_argument('--truncate',help='snip reads down to this size if longer than this size. Default is no truncations.',type=int,default=-1)    
@@ -62,6 +63,7 @@ def assembly_args():
     parser.add_argument('-trinity_normalization',action='store_true',help='Use this flag to use the trinity normalization option')
     parser.add_argument('-no_rmdup',help='Use thie flag to disable the removing duplicates portion of the pre-assembly read cleaning.',action='store_true')    
     parser.add_argument('-no_trim',help='Use this flag to disable all trimming portions of pre-assembly read cleaning. Duplicate and low quality reads will not be removed. Subsampling will still be executed.',action='store_true')
+    parser.add_argument('-trimmomatic',help='Use trimmomatic instead of prinseq to trime reads',action='store_true')
     parser.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The deafult value is 50.', default=50,type=float)    
     parser.add_argument('--subsample_seed',help='A seed used to initialize the random number generator used during random sampling.')
     parser.add_argument('--truncate',help='snip reads down to this size if longer than this size. Default is no truncations.',type=int,default=-1)
@@ -234,7 +236,7 @@ def run_full(args):
     supers = []
     assembly_super = gen_assembly_supervisor(args.fastq1,args.fastq2,args.unpaired,[],args.busco_ref,args.no_trim,args.rnaspades,
                                             args.no_rmdup,args.subsample_size,args.cpu,args.cegma,args.subsample_seed,
-                                            args.trinity_normalization,args.truncate,args.transrate_ref)
+                                            args.trinity_normalization,args.truncate,args.transrate_ref,args.trimmomatic)
     supers.append(assembly_super)
     annotion_super = gen_annotation_assembly(args.cpu,args.blast_uniref90,[assembly_super])
     supers.append(annotion_super)
@@ -248,7 +250,7 @@ def run_assembly(args):
     supers = []
     assembly_super = gen_assembly_supervisor(args.fastq1,args.fastq2,args.unpaired,[],args.busco_ref,args.no_trim,args.rnaspades,
                                             args.no_rmdup,args.subsample_size,args.cpu,args.cegma,args.subsample_seed,
-                                            args.trinity_normalization,args.truncate,args.transrate_ref)
+                                            args.trinity_normalization,args.truncate,args.transrate_ref,args.trimmomatic)
     supers.append(assembly_super)
     run_supers(args,supers)
 
