@@ -12,23 +12,26 @@ NAME_OUT_DIR = 'pipeline_output'
 
 ''' static path variables '''
 PATH_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PATH_SCRIPTS = os.path.join(PATH_ROOT,'scripts')
-PATH_DATABASES = os.path.join(PATH_ROOT,'databases')
-PATH_ASSEMBLIES = os.path.join(PATH_ROOT,'assemblies')
+PATH_SCRIPTS = os.path.join(PATH_ROOT, 'scripts')
+PATH_DATABASES = os.path.join(PATH_ROOT, 'databases')
+PATH_ASSEMBLIES = os.path.join(PATH_ROOT, 'assemblies')
 PATH_BEDTOOLS = 'bedtools'
 PATH_BLASTP = 'blastp'
 PATH_BLASTX = 'blastx'
 PATH_BOWTIE2 = ''
 PATH_BUSCO = 'BUSCO_v1.1b.py'
 PATH_BUSCO_REFERENCE = '/matta1/hitsdata/reference_files/BUSCO'
+PATH_BUSCO_METAZOA = '{0!s}/metazoa_buscos'.format(PATH_DATABASES)
 PATH_CEGMA = 'cegma'
 PATH_DIAMOND = 'diamond'
 PATH_EXPRESS = 'express'
 PATH_FASTQC = 'fastqc'
 PATH_GENE_TRANS_MAP = os.path.join(PATH_SCRIPTS, 'get_Trinity_gene_to_trans_map.pl')
 PATH_KALLISTO = 'kallisto'
+PATH_NR = os.path.join(PATH_DATABASES, 'nr', 'nr.fasta')
 PATH_PFAM = 'hmmscan'
 PATH_PFAM_DB = '/matta1/hitsdata/reference_files/for_trinotate/for_transDecoder/Pfam-AB.hmm.bin'
+PATH_PFAM_DB_DATABASES = '{0!s}/Pfam-AB.hmm.bin'.format(PATH_DATABASES)
 PATH_PRINSEQ = 'prinseq-lite.pl'
 PATH_RNAMMER = '/matta1/biotools/redhat/rnammer-1.2/rnammer'
 PATH_RNAMMER_PL = 'RnammerTranscriptome.pl'
@@ -38,7 +41,9 @@ PATH_RNASPADES = 'rnaspades.py'
 PATH_TMHMM = 'tmhmm'
 PATH_TRANSDECODER = 'TransDecoder'
 PATH_TRANSRATE = 'transrate'
-PATH_TRIMMOMATIC = 'trimmomatic-0.33.jar'
+PATH_TRIMMOMATIC = '/matta1/biotools/redhat/Trimmomatic-0.33/trimmomatic-0.33.jar'
+PATH_TRIMMOMATIC_ADAPTERS_SINGLE = '/matta1/biotools/redhat/Trimmomatic-0.33/adapters/TruSeq3-SE.fa'
+PATH_TRIMMOMATIC_ADAPTERS_PAIRED = '/matta1/biotools/redhat/Trimmomatic-0.33/adapters/TruSeq3-PE.fa'
 PATH_TRINITY = 'Trinity'
 PATH_SWISS_PROT = os.path.join(PATH_DATABASES, 'uniprot_sprot', 'uniprot_sprot.fasta')
 PATH_UNIREF90 = os.path.join(PATH_DATABASES, 'uniref90', 'uniref90.fasta')
@@ -54,6 +59,7 @@ def GEN_PATH_LOGS(): return os.path.join(GEN_PATH_DIR(), 'log_files')
 def GEN_PATH_ASSEMBLY(): return os.path.join(GEN_PATH_DIR(),NAME_ASSEMBLY+'.fasta')
 def GEN_LOGS(x): return (os.path.join(GEN_PATH_LOGS(), x+'.out_log'),
                          os.path.join(GEN_PATH_LOGS(), x+'.err_log'))
+def ROUND_DIVIDE(x, y): return int(round(float(x/y)))
 
 
 def build_dir_task(tasks):
@@ -66,7 +72,7 @@ def build_dir_task(tasks):
 
 
 def cp_assembly_task(source,tasks):
-    '''    Defines task used to initialize an assembly when running on fasta 
+    '''    Defines task used to initialize an assembly when running on fasta
         files. Uses GEN_PATH_DIR() and NAME_ASSEMBLY.
         Params :
             source - The path to the source fasta that should be used for analsis
@@ -128,16 +134,28 @@ def prinseq_task(input_1, input_2, basename, opts, tasks):
     return Task(command = cmd, dependencies=tasks, name=name, stdout=out, stderr=err, targets=trgs)
 
 
+def trimmomatic_unpaired_task(input1, cpu_cap, basename, tasks):
+    form = lambda s, i : s.format(GEN_PATH_ASSEMBLY_FILES(), basename, os.path.basename(i))
+    trgs = [form('{0!s}/{1!s}_{2!s}', input1)]
+    orphans = [form('{0!s}/{1!s}_orphans_{2!s}', input1)]
+    cmd = ('java -jar {0!s} SE -threads {4!s} {1!s} {2!s} {3!s} ILLUMINACLIP:'
+           '{5!s}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:35'
+           ).format(PATH_TRIMMOMATIC, input1, trgs[0], orphans[0],cpu_cap,
+           PATH_TRIMMOMATIC_ADAPTERS_SINGLE)
+
+
 def trimmomatic_task(left, right, cpu_cap, basename, tasks):
-    trgs = ['{0!s}/{1!s}_1_{2!s}'.format(GEN_PATH_ASSEMBLY_FILES(), basename, os.path.basename(input_1)),
-            '{0!s}/{1!s}_2_{2!s}'.format(GEN_PATH_ASSEMBLY_FILES(), basename, os.path.basename(input_2))]
-    pseudo_trgs = ['{0!s}/{1!s}_{2!s}P.fq'.format(GEN_PATH_ASSEMBLY_FILES(), basename, x) for x in range(1, 3)]
-    cmd = ('java -jar {0!s} PE {1!s} {2!s} -baseout {4!s} -threads {3!s} '
-           'ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 '
-           'SLIDINGWINDOW:4:15 MINLEN:35; mv {5!s} {6!s}; mv {7!s} {8!s}').join(
-           PATH_TRIMMOMATIC, left, right, cpu_cap, basename, pseudo_trgs[0], trgs[0],
-           pseudo_trgs[1], trgs[1])
-    name = 'basename'
+    form = lambda s, i : s.format(GEN_PATH_ASSEMBLY_FILES(), basename, os.path.basename(i))
+    trgs = [form('{0!s}/{1!s}_1_{2!s}', left),
+            form('{0!s}/{1!s}_2_{2!s}', right)]
+    orphans = [form('{0!s}/{1!s}_1s_{2!s}', left),
+               form('{0!s}/{1!s}_2s_{2!s}', right)]
+    cmd = ('java -jar {0!s} PE -threads {3!s} {1!s} {2!s} {5!s} {4!s} {7!s} '
+           '{6!s} ILLUMINACLIP:{8!s}:2:30:10 LEADING:3 TRAILING:3 '
+           'SLIDINGWINDOW:4:15 MINLEN:35').format(
+           PATH_TRIMMOMATIC, left, right, cpu_cap, orphans[0], trgs[0],
+           orphans[1], trgs[1], PATH_TRIMMOMATIC_ADAPTERS_PAIRED)
+    name = basename
     out, err = GEN_LOGS(name)
     return Task(command=cmd, dependencies=tasks, name=name, stdout=out, stderr=err, targets=trgs, cpu=cpu_cap) 
 
@@ -482,14 +500,16 @@ def pipeplot_task(annotation_table,tasks):
  
 
 def diamond_task(ref,blast_type,cpu_cap,tasks):
-    trgs = ['{0!s}/diamond_{1!s}_{2!s}'.format(GEN_PATH_ANNOTATION_FILES(),ref,blast_type)]
-    cmd = ('{0!s} {1!s} --db {2!s} --query {3!s} --daa {4!s} --tmpdir {5!s} --max-target-seqs 20 '
-            '--index-chunks 1 --sensitive --threads {6!s} --evalue 0.001').format(PATH_DIAMOND,
-                blast_type,ref,GEN_PATH_ASSEMBLY(),trgs[0],GEN_PATH_ANNOTATION_FILES(),cpu_cap)
-    trgs[0]+='.daa'
+    trgs = ['{0!s}/diamond_{1!s}.{2!s}'.format(GEN_PATH_ANNOTATION_FILES(), ref, blast_type)]
+    pseudo_trgs = ['{0!s}/diamond_{1!s}_{2!s}'.format(GEN_PATH_ANNOTATION_FILES(), ref, blast_type)]
+    cmd = ('{0!s} {1!s} --db {2!s}/{3!s} --query {4!s} --daa {5!s} --tmpdir '
+           '{6!s} --max-target-seqs 20 --index-chunks 1 --sensitive --threads '
+           '{7!s} --evalue 0.001; {0!s} view -daa {5!s} --out {8!s}').format(
+           PATH_DIAMOND, blast_type, PATH_DATABASES, ref, GEN_PATH_ASSEMBLY(),
+           pseudo_trgs[0], GEN_PATH_ANNOTATION_FILES(), cpu_cap, trgs[0])
     name = 'diamond_'+ref
     out,err = GEN_LOGS()
-    return Task(command=cmd,dependencies=tasks,cpu=cpu_cap,targets=trgs,name=name,stdout=out,stderr=err)
+    return Task(command=cmd, dependencies=tasks, cpu=cpu_cap, targets=trgs, name=name, stdout=out, stderr=err)
  
 
 ##################___Expression_Tasks___##################
@@ -644,20 +664,25 @@ def build_blast_task(fasta,out_path,dbtype,tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def build_diaimond_task(fasta,out_path,dbtype,tasks):
+def build_diaimond_task(fasta,out_path,tasks):
     trgs = [out_path+'.dmnd']
-    cmd = '{0!s} makedb --in {1!s} --db {2!s}'.format(PATH_DIAMOND,fasta,out_path)
+    cmd = '{0!s} makedb --in {1!s} --db {2!s}'.format(PATH_DIAMOND, fasta, out_path)
     name = 'build_diamond_'+fasta
-    out,err = GEN_LOGS()
-    return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
+    out, err = GEN_LOGS()
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
  
 
 def split_mito_task(blast_mt,tasks):
     trgs = ['{0!s}/mtDNA_contigs.fasta'.fomat(GEN_PATH_ASSEMBLY_FILES()),'{0!s}/no_mtDNA_contigs.fasta'.format(GEN_PATH_ASSEMBLY_FILES())]
     cmd = '{0!s}/split_fasta.py {1!s} {3!s} {2!s}/mtDNA_contigs.fasta {2!s}/no_mtDNA_contigs.fasta'.format(PATH_SCRIPTS,GEN_PATH_ASSEMBLY(),GEN_PATH_ASSEMBLY_FILES(),blast_mt)
     name = 'split_mito'
-    out,err = GEN_LOGS(name)
+    out, err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
-    
 
 
+def pfam_build_task(source, tasks):
+    trgs = [PATH_PFAM_DB_DATABASES]
+    cmd = 'cd {0!s} ; hmmpress -f {1!s};'.format(PATH_DATABASES, source)
+    name = 'hmmpress'
+    out, err = GEN_LOGS(name)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
