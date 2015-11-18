@@ -1,7 +1,7 @@
 from task_functions_v2 import (
     PATH_DATABASES, PATH_UNIREF90, PATH_SWISS_PROT,
-    PATH_NR, PATH_BUSCO_METAZOA, pfam_build_task,
-    build_diaimond_task, build_blast_task)
+    PATH_NR, PATH_BUSCO_METAZOA, PATH_PFAM_DATABASE,
+    pfam_build_task, build_diaimond_task, build_blast_task)
 from time import strftime
 import gzip
 import tarfile
@@ -17,6 +17,7 @@ else:
 swissprot_folder = os.path.join(PATH_DATABASES, 'uniprot_sprot')
 uniref90_folder = os.path.join(PATH_DATABASES, 'uniref90')
 nr_folder = os.path.join(PATH_DATABASES, 'nr')
+pfam_folder = os.path.join(PATH_DATABASES, 'pfam')
 
 '''
 makeblastdb *3
@@ -57,8 +58,8 @@ kog_functional_target = '{0!s}/allKOG_functional_info.txt'.format(PATH_DATABASES
 url_slim_generic = 'http://www.geneontology.org/ontology/subsets/goslim_generic.obo'
 slim_generic_target = '{0!s}/goslim_generic.obo'.format(PATH_DATABASES)
 
-url_pfam_db = 'https://data.broadinstitute.org/Trinity/Trinotate_v2.0_RESOURCES/Pfam-A.hmm.gz'
-pfam_db_target = '{0!s}/Pfam-A.hmm'.format(PATH_DATABASES)
+url_pfam_db = 'ftp://ftp.ebi.ac.uk/pub/databases/Pfam//releases/Pfam28.0/Pfam-A.hmm.gz'
+pfam_db_target = PATH_PFAM_DATABASE
 
 url_idmapping_selected = 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/idmapping_selected.tab.gz'
 idmapping_selected_target = '{0!s}/idmapping_selected.tab'.format(PATH_DATABASES)
@@ -71,10 +72,11 @@ idmapping_keys = {'BioCyc': '{0!s}/idmapping.biocyc'.format(PATH_DATABASES),
 
 def run_tasks(tasks):
     for t in tasks:
+        print(t.name)
         t.stdout = t.name+'.stdout'
         t.stderr = t.name+'.stderr'
 
-    s = Supervisor(tasks=tasks, force_run=True)
+    s = Supervisor(tasks=tasks, force_run=True, log='database_supervisor_log')
     s.run()
     for t in tasks:
         os.remove(t.stdout)
@@ -120,7 +122,7 @@ def get(log_table, flag, source, target):
         basename = os.path.basename(target)
         log_table[basename] = strftime('%b-%d-%Y')
     except ContentTooShortError:
-        print('failed to install {0!s}'.format(basename(arget)))
+        print('failed to install {0!s}'.format(source))
 
 
 def read_log():
@@ -178,6 +180,8 @@ def check_database_dir():
         os.mkdir(uniref90_folder)
     if(not os.path.isdir(nr_folder)):
         os.mkdir(nr_folder)
+    if(not os.path.isdir(pfam_folder)):
+        os.mkdir(pfam_folder)
 
 
 def main():
@@ -185,13 +189,13 @@ def main():
     log_table = read_log()
     log_table = download_databases(log_table)
     log_table = subset_dat(id_mapping_target, idmapping_keys, log_table)
-    nr_task = build_blast_task(nr_target, nr_target, 'prot', [])
-    nr_diamond = build_diaimond_task(nr_target, nr_target, [])
-    swissprot_task = build_blast_task(sprot_target, sprot_target, 'prot', [])
-    swissprot_diamond = build_diaimond_task(sprot_target, sprot_target, [])
-    uniref90_task = build_blast_task(uniref90_target, uniref90_target, 'prot', [])
-    uniref90_diamond = build_diaimond_task(uniref90_target, uniref90_target, [])
-    pfam_task = pfam_build_task(pfam_db_target, [])
+    nr_task = build_blast_task(nr_target, nr_target, 'prot', [], False)
+    nr_diamond = build_diaimond_task(nr_target, nr_target, [], False)
+    swissprot_task = build_blast_task(sprot_target, sprot_target, 'prot', [], False)
+    swissprot_diamond = build_diaimond_task(sprot_target, sprot_target, [], False)
+    uniref90_task = build_blast_task(uniref90_target, uniref90_target, 'prot', [], False)
+    uniref90_diamond = build_diaimond_task(uniref90_target, uniref90_target, [], False)
+    pfam_task = pfam_build_task(pfam_db_target, [], False)
     run_tasks([nr_task, nr_diamond, swissprot_task, swissprot_diamond,
                uniref90_task, uniref90_diamond, pfam_task])
     write_log(log_table)

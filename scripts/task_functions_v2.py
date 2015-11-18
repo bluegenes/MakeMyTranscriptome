@@ -30,8 +30,7 @@ PATH_GENE_TRANS_MAP = os.path.join(PATH_SCRIPTS, 'get_Trinity_gene_to_trans_map.
 PATH_KALLISTO = 'kallisto'
 PATH_NR = os.path.join(PATH_DATABASES, 'nr', 'nr.fasta')
 PATH_PFAM = 'hmmscan'
-PATH_PFAM_DB = '/matta1/hitsdata/reference_files/for_trinotate/for_transDecoder/Pfam-AB.hmm.bin'
-PATH_PFAM_DB_DATABASES = '{0!s}/Pfam-AB.hmm.bin'.format(PATH_DATABASES)
+PATH_PFAM_DATABASE = '{0!s}/pfam/Pfam-A.hmm'.format(PATH_DATABASES)
 PATH_PRINSEQ = 'prinseq-lite.pl'
 PATH_RNAMMER = '/matta1/biotools/redhat/rnammer-1.2/rnammer'
 PATH_RNAMMER_PL = 'RnammerTranscriptome.pl'
@@ -437,7 +436,7 @@ def pfam_task(pep_path, cpu_cap, tasks):
     '''
     trgs = ['{0!s}/{1!s}.pfam'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
     cmd = '{4!s} --cpu {0!s} --domtblout {1!s} {2!s} {3!s}'.format(cpu_cap,
-            trgs[0],PATH_PFAM_DB,pep_path,PATH_PFAM)
+            trgs[0],PATH_PFAM_DATABASE,pep_path,PATH_PFAM)
     name = 'pfam'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
@@ -656,19 +655,19 @@ def kallisto_task(index,out_name,left,right,tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def build_blast_task(fasta,out_path,dbtype,tasks):
+def build_blast_task(fasta,out_path,dbtype,tasks,log_flag=True):
     trgs = []
     cmd = 'makeblastdb -in {0!s} -dbtype {2!s} -out {1!s}'.format(fasta,out_path,dbtype)
     name = 'build_blast_'+os.path.basename(fasta)
-    out,err = GEN_LOGS(name)
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def build_diaimond_task(fasta,out_path,tasks):
+def build_diaimond_task(fasta,out_path,tasks,log_flag=True):
     trgs = [out_path+'.dmnd']
     cmd = '{0!s} makedb --in {1!s} --db {2!s}'.format(PATH_DIAMOND, fasta, out_path)
-    name = 'build_diamond_'+fasta
-    out, err = GEN_LOGS()
+    name = 'build_diamond_'+os.path.basename(fasta)
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
  
 
@@ -676,13 +675,13 @@ def split_mito_task(blast_mt,tasks):
     trgs = ['{0!s}/mtDNA_contigs.fasta'.fomat(GEN_PATH_ASSEMBLY_FILES()),'{0!s}/no_mtDNA_contigs.fasta'.format(GEN_PATH_ASSEMBLY_FILES())]
     cmd = '{0!s}/split_fasta.py {1!s} {3!s} {2!s}/mtDNA_contigs.fasta {2!s}/no_mtDNA_contigs.fasta'.format(PATH_SCRIPTS,GEN_PATH_ASSEMBLY(),GEN_PATH_ASSEMBLY_FILES(),blast_mt)
     name = 'split_mito'
-    out, err = GEN_LOGS(name)
+    out, err = GEN_LOGS(name) 
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def pfam_build_task(source, tasks):
-    trgs = [PATH_PFAM_DB_DATABASES]
+def pfam_build_task(source, tasks, log_flag=True):
+    trgs = [PATH_PFAM_DATABASE+'.h3f']
     cmd = 'cd {0!s} ; hmmpress -f {1!s};'.format(PATH_DATABASES, source)
     name = 'hmmpress'
-    out, err = GEN_LOGS(name)
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
