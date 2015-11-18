@@ -4,7 +4,6 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--db2Name', help='tab-separated database lookup: full name file for reference (eg nr or swissprot)')
 parser.add_argument('-b','--blast', help='blast input file')
-parser.add_argument('-o','--out', help='output file')
 
 args = parser.parse_args()
 
@@ -30,7 +29,7 @@ with open(args.db2Name, 'r') as f:
 	    hitInfo.append(line[1])
     f.close()
 
-outExtendedTab = open(args.out, 'w')
+outExtendedTab = open(args.blast, 'w')
 for hit in blastOrder:
     outExtendedTab.write('\t'.join(map(str,blastD[hit])) + '\n')
 
