@@ -26,7 +26,7 @@ PATH_CEGMA = 'cegma'
 PATH_DIAMOND = 'diamond'
 PATH_EXPRESS = 'express'
 PATH_FASTQC = 'fastqc'
-PATH_GENE_TRANS_MAP = os.path.join(PATH_SCRIPTS, 'get_Trinity_gene_to_trans_map.pl')
+PATH_GENE_TRANS_MAP = 'get_Trinity_gene_to_trans_map.pl'
 PATH_KALLISTO = 'kallisto'
 PATH_NR = os.path.join(PATH_DATABASES, 'nr', 'nr.fasta')
 PATH_PFAM = 'hmmscan'
@@ -339,14 +339,13 @@ def blastx_task(path_db,cpu_cap,tasks):
     db_name = os.path.basename(path_db).split('.')[0]
     trgs = ["{0!s}/{1!s}_{2!s}.blastx".format(GEN_PATH_ANNOTATION_FILES(), NAME_ASSEMBLY,db_name)]
     cmd = ('{0!s} -query {1!s}/{2!s}.fasta -db {3!s} -num_threads {4!s} -max_target_seqs 1 '
-            '-outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart '
-            'send evalue bitscore stitle qcovs slen" -evalue 0.0001 > {5!s}'
+            '-outfmt 6 -evalue 0.0001 > {5!s}'
             ).format( PATH_BLASTX, GEN_PATH_DIR(), NAME_ASSEMBLY, path_db, cpu_cap, trgs[0])
     name = 'blastx_{0!s}'.format(db_name)
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=cpu_cap,stdout=out,stderr=err)
 
-    
+
 def rnammer_task(tasks):
     ''' defines rnammer task. Uses NAME_ASSEMBLY, PATH_DIR, PATH_RNAMMER_PL, PATH_RNAMMER.
         Params :
@@ -405,8 +404,7 @@ def blastp_task(pep_path,path_db,cpu_cap,tasks):
     db_name = os.path.basename(path_db).split('.')[0]
     trgs = ["{0!s}/{1!s}_{2!s}.blastp".format(GEN_PATH_ANNOTATION_FILES(), NAME_ASSEMBLY,db_name)]
     cmd = ('{0!s} -query {1!s} -db {2!s} -num_threads {3!s} -max_target_seqs 1 '
-            '-outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send '
-            'evalue bitscore stitle qcovs slen" -evalue 0.001 > {4!s}'
+            '-outfmt 6 -evalue 0.001 > {4!s}'
             ).format(PATH_BLASTP,pep_path,path_db,cpu_cap,trgs[0])
     name = 'blastp_{0!s}'.format(db_name)
     out,err = GEN_LOGS(name)
@@ -442,23 +440,9 @@ def pfam_task(pep_path, cpu_cap, tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
 
-def annot_table_task(trans_map,blastx_sp,blastx_ur90,rnammer_results,pep_path,blastn_sp,blastn_ur90,pfam_results,signalp_results,tmhmm_results,tasks):
-    '''    Defines annotTableMain task. Uses PATH_SCRIPTS, PATH_DIR, NAME_ASSEMBLY, 
-        params:
-            trans_map - Path to the output from gene_trans_map_task
-            blastx_sp - Path to the the output from blastx_task when run against swiss prot
-            blastx_ur90 - Path to the output from blastx_task when run against Uniref-90
-            rnammer_results - Path to the output from rnammer_task
-            pep_path - Path to the output from predict_orfs_task
-            blastn_sp - Path to the output from blastn_task when run against swiss prot
-            blastn_ur90 - path to the output from blastn_task when run against Uniref-90
-            pfam_results - path to the output from pfam_task
-            signalp_results - path to the output from signalp_task
-            tmhmm_results - path to the output from tmhmm
-            tasks - a list of tasks that this task is dependant on
-    '''
-    suffixes = ['annotation.txt','annotation_by_gene.txt']
-    trgs = ['{0!s}/{1!s}_{2!s}'.format(GEN_PATH_DIR(),NAME_ASSEMBLY,sufx) for sufx in suffixes]
+# def annot_table_task(trans_map,blastx_sp,blastx_ur90,rnammer_results,pep_path,blastn_sp,blastn_ur90,pfam_results,signalp_results,tmhmm_results,tasks):
+def annot_table_task(opts, tasks):
+    ''' 
     cmd = ('python {0!s}/annot_table_main.py --fasta {1!s} --geneTransMap {2!s} ' 
             '--spX {3!s} --ur90X {4!s} --rnammer {5!s} --transdecoder {6!s} --spP {7!s} '
             ' --ur90P {8!s} --pfam {9!s} --signalP {10!s} --tmhmm {11!s} --ko2path {12!s}/orthology_pathway.list '
@@ -471,8 +455,26 @@ def annot_table_task(trans_map,blastx_sp,blastx_ur90,rnammer_results,pep_path,bl
             '{12!s}/idmapping_selected.tab --outfile {13!s}/{14!s}').format(PATH_SCRIPTS,GEN_PATH_ASSEMBLY(),
             trans_map,blastx_sp,blastx_ur90,rnammer_results,pep_path,blastn_sp,blastn_ur90,pfam_results,
             signalp_results,tmhmm_results,PATH_DATABASES,GEN_PATH_DIR(),NAME_ASSEMBLY)
+    '''
+    return Task(command='ls',dependencies=tasks,name='dummy',targets=['dummy'])
+    suffixes = ['annotation.txt','annotation_by_gene.txt']
+    trgs = ['{0!s}/{1!s}_{2!s}'.format(GEN_PATH_DIR(),NAME_ASSEMBLY,sufx) for sufx in suffixes]
+    cmd = (
+        'python {0!s}/annot_table_main.py --fasta {1!s} --outfile {2!s}/{3!s} '
+        '--ko2path {4!s}/orthology_pathway.list --sp2enzyme '
+        '{4!s}/swiss_enzyme.list --enzyme2path {4!s}/enzyme_pathway.list '
+        '--pfam2enzyme {4!s}/pfam_enzyme.list --go2path {4!s}/go_pathway.txt '
+        '--nog2function {4!s}/allKOG_functional_info.txt --contig2closest '
+        '{4!s}/contig2closest --go2slim {4!s}/goslim_generic.obo '
+        '--contig2blastnr {4!s}/contig2blastnr.txt --sp2ko {4!s}/idmapping.KO '
+        '--sp2nog {4!s}/idmapping.eggNOG --sp2ortho {4!s}/idmapping.orthodb '
+        '--sp2bioc {4!s}/idmapping.biocyc --sp2goentrez '
+        '{4!s}/idmapping_selected.tab ').format(
+        PATH_SCRIPTS, GEN_PATH_ASSEMBLY(), GEN_PATH_DIR(), NAME_ASSEMBLY,
+        PATH_DATABASES)
+    cmd += ' '.join(['--'+k+' '+opts[k] for k in opts])
     name = 'build_annotation_table'
-    out,err = GEN_LOGS(name)
+    out, err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
@@ -498,16 +500,16 @@ def pipeplot_task(annotation_table,tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
  
 
-def diamond_task(ref,blast_type,cpu_cap,tasks):
+def diamond_task(ref,blast_type,cpu_cap,tasks,source=GEN_PATH_ASSEMBLY()):
     trgs = ['{0!s}/diamond_{1!s}.{2!s}'.format(GEN_PATH_ANNOTATION_FILES(), ref, blast_type)]
     pseudo_trgs = ['{0!s}/diamond_{1!s}_{2!s}'.format(GEN_PATH_ANNOTATION_FILES(), ref, blast_type)]
     cmd = ('{0!s} {1!s} --db {2!s}/{3!s} --query {4!s} --daa {5!s} --tmpdir '
            '{6!s} --max-target-seqs 20 --index-chunks 1 --sensitive --threads '
            '{7!s} --evalue 0.001; {0!s} view -daa {5!s} --out {8!s}').format(
-           PATH_DIAMOND, blast_type, PATH_DATABASES, ref, GEN_PATH_ASSEMBLY(),
+           PATH_DIAMOND, blast_type, PATH_DATABASES, ref, source,
            pseudo_trgs[0], GEN_PATH_ANNOTATION_FILES(), cpu_cap, trgs[0])
-    name = 'diamond_'+ref
-    out,err = GEN_LOGS()
+    name = 'diamond_'+blast_type+os.path.basename(ref)
+    out,err = GEN_LOGS(name)
     return Task(command=cmd, dependencies=tasks, cpu=cpu_cap, targets=trgs, name=name, stdout=out, stderr=err)
  
 

@@ -4,8 +4,8 @@ import sys
 from tasks_v2 import Supervisor, Task
 import task_functions_v2 as tf
 from assembler import gen_assembly_supervisor
-from annotater import gen_annotation_assembly
-from expression import gen_expression_super
+from annotater import gen_annotation_supervisor
+from expression import gen_expression_supervisor
 from itertools import chain
 import time
 
@@ -40,8 +40,12 @@ def full_args():
     parser.add_argument('-trinity_normalization',action='store_true',help='Use this flag to use the trinity normalization option')
     parser.add_argument('-rnaspades',help='Use this flag to specify that assembly should be performed by rnaSPAdes rather than the default Trinity.',action='store_true')
     parser.add_argument('-cegma',help='Use this flag to run cegma as part of the annotation pipeline. Cegma is an old tool for assesing the quality of assemblies. Normal behavior of the pipeline is to use busco for assesing assemblies. Using this flag will run cegma in addition to Busco.',action='store_true')
-    parser.add_argument('-blast_uniref90',help='Use this flag to enable the uniref-90 blast runs as part of the annotation pipeline.',action='store_true')
-    parser.add_argument('-blast_nr',help='Use this flag to enable the NR (non-redundant protein database) blast runs as part of the annotation pipeline. This could take a very long time to complete.',action='store_true')
+    parser.add_argument('-blastplus',action='store_true',help='Use the blast+ tool suite instead of diamond to align your transcripts to the references.')
+    parser.add_argument('-uniref90',help='Use this flag to enable the uniref-90 blast runs as part of the annotation pipeline.',action='store_true')
+    parser.add_argument('-nr',help='Use this flag to enable the NR (non-redundant protein database) blast runs as part of the annotation pipeline. This could take a very long time to complete.',action='store_true')
+    parser.add_argument('-signalp',action='store_true',help='Use this flag to execute signalP during annotation. Only use if you have installed signalP.')
+    parser.add_argument('-tmhmm',action='store_true',help='Use this flag to execute tmhmm during annotation. Only use if you have installed tmhmm.')
+    parser.add_argument('-rnammer',action='store_true',help='Use this flag to execute rnammer during annotation. Only use if you have installed rnammer.')
     parser.add_argument('--busco_ref',help='Set the reference that busco will use for analysis',default='metazoa')
     parser.add_argument('--transrate_ref',help='A reference that transrate will use to evaluate the quality of your assembly.',default='')
     parser.add_argument('--model', help='An optional list of space seperated values used to run differential expression. This is particularly useful for refining Differential Expression runs as it allow you to use the same input CSV file and perform new comparisons.')
@@ -82,8 +86,12 @@ def annotation_args():
     parser = argparse.ArgumentParser(description='Selected_tool : Annotation. Executing this tool will run asssembly quality assesment along with a series of tools designing to provide information about the assembled transcripts.')
     parser.add_argument('tool_selector',help=argparse.SUPPRESS)
     parser.add_argument('-a','--assembly',help='A fasta transcriptome assembly that will be used for computing expression levels.')
-    parser.add_argument('-blast_uniref90',help='Use this flag to enable the uniref-90 blast runs as part of the annotation pipeline.',action='store_true')
-    parser.add_argument('-blast_nr',help='Use this flag to enable the NR (non-redundant protein database) blast runs as part of the annotation pipeline. This could take a very long time to complete.',action='store_true')
+    parser.add_argument('-blastplus',action='store_true',help='Use the blast+ tool suite instead of diamond to align your transcripts to the references.')
+    parser.add_argument('-uniref90',help='Use this flag to enable the uniref-90 blast runs as part of the annotation pipeline.',action='store_true')
+    parser.add_argument('-nr',help='Use this flag to enable the NR (non-redundant protein database) blast runs as part of the annotation pipeline. This could take a very long time to complete.',action='store_true')
+    parser.add_argument('-signalp',action='store_true',help='Use this flag to execute signalP during annotation. Only use if you have installed signalP.')
+    parser.add_argument('-tmhmm',action='store_true',help='Use this flag to execute tmhmm during annotation. Only use if you have installed tmhmm.')
+    parser.add_argument('-rnammer',action='store_true',help='Use this flag to execute rnammer during annotation. Only use if you have installed rnammer.')
     parser.add_argument('-no_log',help='Pipeline will delete log files.',action='store_true')
     parser.add_argument('-force',help='Use this flag to perform a fresh run of the pipeline. All steps will be executed regradless of what has already been performed.',action='store_true')
     parser.add_argument('--cpu', help='Sets the thread cap for execution. Default is 12. Use 0 to indicate no process cap should be used.',default=12,type=int)
@@ -105,7 +113,6 @@ def expression_args():
     parser.add_argument('--out_dir', help='Path to the ouput location. Defaults to assemblies directory inside pipeline',default=tf.PATH_ASSEMBLIES)
     parser.add_argument('-o','--out_name', help='The name of the output directory to be made in out_dir. If unused, name will be inherited from input file names')    
     return parser.parse_args()
-
 
 
 #####################____Argument_Testers____#####################
@@ -133,6 +140,7 @@ def global_setup(args):
     tf.NAME_ASSEMBLY = tf.NAME_OUT_DIR
     tf.build_dir_task([]).run()
 
+
 def check_full_args(args):
     if(args.test):
         args.out_name = args.out_name if(args.out_name!=None) else 'test_v2'
@@ -143,6 +151,7 @@ def check_full_args(args):
         raise Exception('\n\nERROR : Invalid csv argument. '+args.csv+' does not exist.')
     args.subsample_size = args.subsample_size*10**6
     handle_csv(args)
+
 
 def check_assembly_args(args):
     args.subsample_size = 10**15 if(args.subsample_size<=0) else args.subsample_size*10**6
@@ -158,11 +167,13 @@ def check_assembly_args(args):
         if(not fastq_pair_check(f1,f2)):
             raise Exception('\n\nERROR : '+f1+' cant be paired with '+f2+'.')
 
+
 def check_annotation_args(args):
     if(args.assembly==None):
         raise Exception('\n\nERROR : No input assembly specified. Please specify an input assembly using --assembly.')
     if(not os.path.isfile(args.assembly)):
         raise Exception('\n\nERROR : Invalid assembly argument. '+args.assembly+' does not exist.')
+
 
 def check_expression_args(args):
     if(args.assembly==None):
@@ -174,6 +185,7 @@ def check_expression_args(args):
     if(not os.path.isfile(args.csv)):
         raise Exception('\n\nERROR : Invalid csv argument. '+args.csv+' does not exist.')
     handle_csv(args)
+
 
 def fastq_pair_check(fastq1,fastq2):
     '''
@@ -188,6 +200,7 @@ def fastq_pair_check(fastq1,fastq2):
     return count1==count2
     '''
     return True
+
 
 def handle_csv(args):
     f = open(args.csv)
@@ -216,6 +229,7 @@ def handle_csv(args):
         if(not fastq_pair_check(f1,f2)):
             raise Exception('\n\nERROR : '+f1+' cant be paired with '+f2+'.')
 
+
 def gen_sample_info(args):
     args.sample_info = tf.GEN_PATH_EXPRESSION_FILES()+'/sample_info.tsv'
     si = open(args.sample_info,'w')
@@ -227,6 +241,26 @@ def gen_sample_info(args):
     f.close()
 
 
+######################___go_functions___######################
+def go_assembly(args, dep):
+    return gen_assembly_supervisor(
+        args.fastq1, args.fastq2, args.unpaired, dep, args.busco_ref,
+        args.no_trim, args.rnaspades, args.no_rmdup, args.subsample_size,
+        args.cpu, args.cegma, args.subsample_seed, args.trinity_normalization,
+        args.truncate, args.transrate_ref, args.trimmomatic)
+
+
+def go_annotation(args, dep):
+    return gen_annotation_supervisor(
+        args.cpu, args.uniref90, args.nr, args.blastplus, args.signalp,
+        args.tmhmm, args.rnammer, dep)
+
+
+def go_expression(args, dep):
+    return gen_expression_supervisor(
+        args.fastq1, args.fastq2, args.paired_names, args.unpaired,
+        args.unpaired_names, args.cpu, args.sample_info, args.model, dep)
+
 
 #####################____Main_Modules____#####################
 def run_full(args):
@@ -234,67 +268,69 @@ def run_full(args):
     global_setup(args)
     gen_sample_info(args)
     supers = []
-    assembly_super = gen_assembly_supervisor(args.fastq1,args.fastq2,args.unpaired,[],args.busco_ref,args.no_trim,args.rnaspades,
-                                            args.no_rmdup,args.subsample_size,args.cpu,args.cegma,args.subsample_seed,
-                                            args.trinity_normalization,args.truncate,args.transrate_ref,args.trimmomatic)
+    assembly_super = go_assembly(args, [])
     supers.append(assembly_super)
-    annotion_super = gen_annotation_assembly(args.cpu,args.blast_uniref90,[assembly_super])
-    supers.append(annotion_super)
-    expression_super = gen_expression_super(args.fastq1,args.fastq2,args.paired_names,args.unpaired,args.unpaired_names,args.cpu,args.sample_info,args.model,[assembly_super])
+    annotation_super = go_annotation(args, [assembly_super])
+    supers.append(annotation_super)
+    expression_super = go_expression(args, [assembly_super])
     supers.append(expression_super)
-    run_supers(args,supers)
+    run_supers(args, supers)
+
 
 def run_assembly(args):
     check_assembly_args(args)
     global_setup(args)
     supers = []
-    assembly_super = gen_assembly_supervisor(args.fastq1,args.fastq2,args.unpaired,[],args.busco_ref,args.no_trim,args.rnaspades,
-                                            args.no_rmdup,args.subsample_size,args.cpu,args.cegma,args.subsample_seed,
-                                            args.trinity_normalization,args.truncate,args.transrate_ref,args.trimmomatic)
+    assembly_super = go_assembly(args, [])
     supers.append(assembly_super)
-    run_supers(args,supers)
+    run_supers(args, supers)
+
 
 def run_annotation(args):
     check_annotation_args(args)
     global_setup(args)
     supers = []
-    cp = tf.cp_assembly_task(args.assembly,[])
+    cp = tf.cp_assembly_task(args.assembly, [])
     supers.append(cp)
-    annotion_super = gen_annotation_assembly(args.cpu,args.blast_uniref90,[cp])
-    supers.append(annotion_super)
-    run_supers(args,supers)
+    annotation_super = go_annotation(args, [cp])
+    supers.append(annotation_super)
+    run_supers(args, supers)
+
 
 def run_expression(args):
     check_expression_args(args)
     global_setup(args)
     gen_sample_info(args)
-    supers=[]
-    cp = tf.cp_assembly_task(args.assembly,[])
+    supers = []
+    cp = tf.cp_assembly_task(args.assembly, [])
     supers.append(cp)
-    expression_super = gen_expression_super(args.fastq1,args.fastq2,args.paired_names,args.unpaired,args.unpaired_names,args.cpu,args.sample_info,args.model,[cp])
+    expression_super = go_expression(args, [cp])
     supers.append(expression_super)
-    run_supers(args,supers)
+    run_supers(args, supers)
 
-def run_supers(args,supers):
-    run_log = os.path.join(tf.GEN_PATH_DIR(),'run.log')
-    total = Supervisor(tasks=supers,cpu=args.cpu,force_run=args.force,log=run_log,email=args.email)
+
+def run_supers(args, supers):
+    run_log = os.path.join(tf.GEN_PATH_DIR(), 'run.log')
+    total = Supervisor(tasks=supers, cpu=args.cpu, force_run=args.force, log=run_log, email=args.email)
     try:
         total.run()
     except:
-        build_log(args,total.task_status)
+        build_log(args, total.task_status)
         raise
-    build_log(args,total.task_status)
+    build_log(args, total.task_status)
 
-def build_log(args,task_status):
-    master_log = os.path.join(tf.GEN_PATH_DIR(),'master.log')
-    f = open(master_log,'a')
-    f.write('####################__'+args.tool_selector+'__####################\n')
-    skipped_tasks = {t:task_status[t] for t in task_status if(task_status[t]['state']==Supervisor.STATE_SKIPPED)}
-    completed_tasks = {t:task_status[t] for t in task_status if(task_status[t]['state']==Supervisor.STATE_FINISHED)}
-    failed_tasks = {t:task_status[t] for t in task_status if(task_status[t]['state']==Supervisor.STATE_ERR)}
-    removed_tasks = {t:task_status[t] for t in task_status if(task_status[t]['state']==Supervisor.STATE_REMOVED)}
-    f.write('\nThe following jobs were detected as already having been completed. They '
-        'were not executed as part of this pipeline\'s execution. Output from previous runs was used instead\n')
+
+def build_log(args, task_status):
+    master_log = os.path.join(tf.GEN_PATH_DIR(), 'master.log')
+    f = open(master_log, 'a')
+    f.write('##################__'+args.tool_selector+'__##################\n')
+    skipped_tasks = {t: task_status[t] for t in task_status if(task_status[t]['state'] == Supervisor.STATE_SKIPPED)}
+    completed_tasks = {t: task_status[t] for t in task_status if(task_status[t]['state'] == Supervisor.STATE_FINISHED)}
+    failed_tasks = {t: task_status[t] for t in task_status if(task_status[t]['state'] == Supervisor.STATE_ERR)}
+    removed_tasks = {t: task_status[t] for t in task_status if(task_status[t]['state'] == Supervisor.STATE_REMOVED)}
+    f.write('\nThe following jobs were detected as already having been '
+            'completed. They were not executed as part of this pipeline\'s '
+            'execution. Output from previous runs was used instead\n')
     for t in skipped_tasks:
         f.write('\t'+t.name+'\n')
     f.write('\nThe following jobs were exectued succesfully.\n')
@@ -311,6 +347,9 @@ def build_log(args,task_status):
 
 
 if(__name__ == '__main__'):
+    err_str = ('\n\nError : Unable to identify what tool should be executed. '
+               'Valid arguments are "full", "assembly", "annotation", or "'
+               'expression".')
     args = master_args()
     tool = args.tool_selector.lower()
     if(tool != 'a'):
@@ -330,11 +369,6 @@ if(__name__ == '__main__'):
             args = expression_args()
             args.tool_selector = 'expression'
             run_expression(args)
-        raise Exception('\n\nError : Unable to identify what tool should be executed. Valid arguments are "full", "assembly", "annotation", or "expression".')
+        raise Exception(err_str)
     else:
-        raise Exception('\n\nError : Unable to identify what tool should be executed. Valid arguments are "full", "assembly", "annotation", or "expression".')
-
-
-
-
-
+        raise Exception(err_str)

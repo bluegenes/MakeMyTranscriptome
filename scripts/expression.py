@@ -6,7 +6,7 @@ import task_functions_v2 as tf
 
 
 
-def gen_expression_super(fastq1,fastq2,paired_names,unpaired,unpaired_names,cpu,sample_info,model,dependency_set):
+def gen_expression_supervisor(fastq1,fastq2,paired_names,unpaired,unpaired_names,cpu,sample_info,model,dependency_set):
 	fasta_to_bed = tf.assembly_to_bed_task([])
 	build_bowtie = tf.build_bowtie_task([])
 	express_tasks = []
