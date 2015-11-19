@@ -38,27 +38,27 @@ def main(args):
     annot_table = add_swissprot_top_blastx(annot_table, args.spX)
     annot_table = add_protid(annot_table, args.transdecoder)
     annot_table = add_swissprot_top_blastp(annot_table, args.spP)
-    if args.pfam == 'NONE':
+    if args.pfam == None:
         annot_table = add_space(annot_table)
     else:
         annot_table = add_pfam(annot_table, args.pfam)
-    if args.signalP == 'NONE':
+    if args.signalP == None:
         annot_table = add_space(annot_table)
     else:
         annot_table = add_signalp(annot_table, args.signalP)
-    if args.tmhmm == 'NONE':
+    if args.tmhmm == None:
         annot_table = add_space(annot_table)
     else:
         annot_table = add_tmhmm(annot_table, args.tmhmm)
-    if args.rnammer == 'NONE':
+    if args.rnammer == None:
         annot_table = add_space(annot_table)
     else:
         annot_table = add_rnammer(annot_table, args.rnammer)
-    if args.ur90X == 'NONE':
+    if args.ur90X == None:
         annot_table = add_space(annot_table)
     else:
         annot_table = add_trembl_top_blastx(annot_table, args.ur90X)
-    if args.ur90P == 'NONE':
+    if args.ur90P == None:
         annot_table = add_space(annot_table)
     else:
         annot_table = add_trembl_top_blastp(annot_table, args.ur90P)
