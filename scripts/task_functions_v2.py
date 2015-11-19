@@ -463,9 +463,8 @@ def annot_table_task(opts, tasks):
         '--ko2path {4!s}/orthology_pathway.list --sp2enzyme '
         '{4!s}/swiss_enzyme.list --enzyme2path {4!s}/enzyme_pathway.list '
         '--pfam2enzyme {4!s}/pfam_enzyme.list --go2path {4!s}/go_pathway.txt '
-        '--nog2function {4!s}/allKOG_functional_info.txt --contig2closest '
-        '{4!s}/contig2closest --go2slim {4!s}/goslim_generic.obo '
-        '--contig2blastnr {4!s}/contig2blastnr.txt --sp2ko {4!s}/idmapping.KO '
+        '--nog2function {4!s}/allKOG_functional_info.txt '
+        '--go2slim {4!s}/goslim_generic.obo --sp2ko {4!s}/idmapping.KO '
         '--sp2nog {4!s}/idmapping.eggNOG --sp2ortho {4!s}/idmapping.orthodb '
         '--sp2bioc {4!s}/idmapping.biocyc --sp2goentrez '
         '{4!s}/idmapping_selected.tab ').format(

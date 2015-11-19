@@ -147,6 +147,7 @@ def download_databases(log_table, nr_flag=False, uniref90_flag=False):
     if(nr_flag):
         partial_get('gz', url_nr, nr_target)
     partial_get('gz', url_id_mapping, id_mapping_target)
+    partial_get('gz',url_idmapping_selected,idmapping_selected_target)
     partial_get('gz', url_kog_functional, kog_functional_target)
     partial_get('gz', url_pfam_db, pfam_db_target)
     partial_get('tar', url_busco_metazoa, busco_metazoa_target)
