@@ -328,7 +328,7 @@ def gene_trans_map_task(tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def blastx_task(path_db,cpu_cap,tasks):
+def blastx_task(path_db, cpu_cap, tasks):
     ''' Defines blastx task. Uses PATH_DIR, NAME_ASSEMBLY, PATH_BLASTX.
         Params :
             path_db - a path to a blastx database
@@ -456,7 +456,6 @@ def annot_table_task(opts, tasks):
             trans_map,blastx_sp,blastx_ur90,rnammer_results,pep_path,blastn_sp,blastn_ur90,pfam_results,
             signalp_results,tmhmm_results,PATH_DATABASES,GEN_PATH_DIR(),NAME_ASSEMBLY)
     '''
-    return Task(command='ls',dependencies=tasks,name='dummy',targets=['dummy'])
     suffixes = ['annotation.txt','annotation_by_gene.txt']
     trgs = ['{0!s}/{1!s}_{2!s}'.format(GEN_PATH_DIR(),NAME_ASSEMBLY,sufx) for sufx in suffixes]
     cmd = (
@@ -472,7 +471,9 @@ def annot_table_task(opts, tasks):
         '{4!s}/idmapping_selected.tab ').format(
         PATH_SCRIPTS, GEN_PATH_ASSEMBLY(), GEN_PATH_DIR(), NAME_ASSEMBLY,
         PATH_DATABASES)
-    cmd += ' '.join(['--'+k+' '+opts[k] for k in opts])
+    temp = ' '.join(['--'+k+' '+opts[k] for k in opts])
+    print(temp)
+    cmd += temp 
     name = 'build_annotation_table'
     out, err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
@@ -500,15 +501,17 @@ def pipeplot_task(annotation_table,tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
  
 
-def diamond_task(ref,blast_type,cpu_cap,tasks,source=GEN_PATH_ASSEMBLY()):
-    trgs = ['{0!s}/diamond_{1!s}.{2!s}'.format(GEN_PATH_ANNOTATION_FILES(), ref, blast_type)]
-    pseudo_trgs = ['{0!s}/diamond_{1!s}_{2!s}'.format(GEN_PATH_ANNOTATION_FILES(), ref, blast_type)]
-    cmd = ('{0!s} {1!s} --db {2!s}/{3!s} --query {4!s} --daa {5!s} --tmpdir '
-           '{6!s} --max-target-seqs 20 --index-chunks 1 --sensitive --threads '
-           '{7!s} --evalue 0.001; {0!s} view -daa {5!s} --out {8!s}').format(
+def diamond_task(ref,blast_type,cpu_cap,tasks,source=None):
+    if(source==None):
+        source = GEN_PATH_ASSEMBLY()
+    trgs = ['{0!s}/diamond_{1!s}.{2!s}'.format(GEN_PATH_ANNOTATION_FILES(), os.path.basename(ref), blast_type)]
+    pseudo_trgs = ['{0!s}/diamond_{1!s}_{2!s}'.format(GEN_PATH_ANNOTATION_FILES(), os.path.basename(ref), blast_type)]
+    cmd = ('{0!s} {1!s} --db {3!s} --query {4!s} --daa {5!s} --tmpdir '
+           '{6!s} --max-target-seqs 20 --sensitive --threads '
+           '{7!s} --evalue 0.001; {0!s} view --daa {5!s}.daa --out {8!s};').format(
            PATH_DIAMOND, blast_type, PATH_DATABASES, ref, source,
            pseudo_trgs[0], GEN_PATH_ANNOTATION_FILES(), cpu_cap, trgs[0])
-    name = 'diamond_'+blast_type+os.path.basename(ref)
+    name = 'diamond_'+blast_type+'_'+os.path.basename(ref)
     out,err = GEN_LOGS(name)
     return Task(command=cmd, dependencies=tasks, cpu=cpu_cap, targets=trgs, name=name, stdout=out, stderr=err)
  

@@ -7,7 +7,9 @@ import gzip
 import tarfile
 import os
 import json
+import argparse
 import sys
+import functools
 from tasks_v2 import Supervisor
 if(sys.version[0] == '3'):
     from urllib.request import urlretrieve, ContentTooShortError
@@ -19,11 +21,6 @@ uniref90_folder = os.path.join(PATH_DATABASES, 'uniref90')
 nr_folder = os.path.join(PATH_DATABASES, 'nr')
 pfam_folder = os.path.join(PATH_DATABASES, 'pfam')
 
-'''
-makeblastdb *3
-make daiomond *3
-pfam
-'''
 
 url_sprot = 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz'
 sprot_target = PATH_SWISS_PROT
@@ -104,9 +101,9 @@ def url_unzip(source, target):
 def tar_retrieve(source, target):
     print('getting '+source)
     urlretrieve(source, target+'.tar.gz')
-    tfile = tarfile.open(source, 'r:gz')
+    tfile = tarfile.open(target+'.tar.gz', 'r:gz')
     tfile.extractall(target)
-    os.remove('.tar.gz')
+    os.remove(target+'.tar.gz')
 
 
 def get(log_table, flag, source, target):
@@ -138,15 +135,17 @@ def write_log(log_table):
     log.close()
 
 
-def download_databases(log_table):
-    partial_get = lambda a, b, c: get(log_table, a, b, c)
+def download_databases(log_table, nr_flag=False, uniref90_flag=False):
+    partial_get = functools.partial(get, log_table)
     partial_get('', url_go_pathway, go_pathway_target)
     partial_get('', url_swiss_enzyme, swiss_enzyme_target)
     partial_get('', url_pfam_enzyme, pfam_enzyme_target)
     partial_get('', url_slim_generic, slim_generic_target)
     partial_get('gz', url_sprot, sprot_target)
-    partial_get('gz', url_uniref90, uniref90_target)
-    partial_get('gz', url_nr, nr_target)
+    if(uniref90_flag):
+        partial_get('gz', url_uniref90, uniref90_target)
+    if(nr_flag):
+        partial_get('gz', url_nr, nr_target)
     partial_get('gz', url_id_mapping, id_mapping_target)
     partial_get('gz', url_kog_functional, kog_functional_target)
     partial_get('gz', url_pfam_db, pfam_db_target)
@@ -155,10 +154,12 @@ def download_databases(log_table):
 
 
 def subset_dat(dat_file, key_file_dict, log_table):
-    date = log_table[basename(dat_file)]
+    '''
+    date = log_table[os.path.basename(dat_file)]
     for key in key_file_dict:
-        key = basename(key_file_dict[key])
+        key = os.path.basename(key_file_dict[key])
         log_table[key] = date
+    '''
     dat = open(dat_file)
     key_file = {key: open(key_file_dict[key], 'w') for key in key_file_dict}
     for line in dat:
@@ -184,22 +185,35 @@ def check_database_dir():
         os.mkdir(pfam_folder)
 
 
-def main():
+def main(nr_flag=False, uniref90_flag=False):
     check_database_dir()
     log_table = read_log()
-    log_table = download_databases(log_table)
+    log_table = download_databases(log_table, nr_flag, uniref90_flag)
     log_table = subset_dat(id_mapping_target, idmapping_keys, log_table)
-    nr_task = build_blast_task(nr_target, nr_target, 'prot', [], False)
-    nr_diamond = build_diaimond_task(nr_target, nr_target, [], False)
+    tasks = []
     swissprot_task = build_blast_task(sprot_target, sprot_target, 'prot', [], False)
+    tasks.append(swissprot_task)
     swissprot_diamond = build_diaimond_task(sprot_target, sprot_target, [], False)
-    uniref90_task = build_blast_task(uniref90_target, uniref90_target, 'prot', [], False)
-    uniref90_diamond = build_diaimond_task(uniref90_target, uniref90_target, [], False)
+    tasks.append(swissprot_diamond)
+    if(uniref90_flag):
+        uniref90_task = build_blast_task(uniref90_target, uniref90_target, 'prot', [], False)
+        tasks.append(uniref90_flag)
+        uniref90_diamond = build_diaimond_task(uniref90_target, uniref90_target, [], False)
+        tasks.append(uniref90_diamond)
+    if(nr_flag):
+        nr_task = build_blast_task(nr_target, nr_target, 'prot', [], False)
+        tasks.append(nr_task)
+        nr_diamond = build_diaimond_task(nr_target, nr_target, [], False)
+        tasks.append(nr_diamond)
     pfam_task = pfam_build_task(pfam_db_target, [], False)
-    run_tasks([nr_task, nr_diamond, swissprot_task, swissprot_diamond,
-               uniref90_task, uniref90_diamond, pfam_task])
+    tasks.append(pfam_task)
+    run_tasks(tasks)
     write_log(log_table)
 
 
 if(__name__ == '__main__'):
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--uniref90',action='store_true')
+    parser.add_argument('--nr',action='store_true')
+    args = parser.parse_args()
+    main(args.nr, args.uniref90)

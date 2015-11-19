@@ -17,7 +17,7 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
     tasks.append(predict_orfs)
     pfam = tf.pfam_task(pep_path, cpumod(cpu, 2), [predict_orfs])
     tasks.append(pfam)
-    annot_table_opts = {'gene_trans_map': gene_trans_map.targets,
+    annot_table_opts = {'gene_trans_map': gene_trans_map.targets[0],
                         'predict_orfs': predict_orfs.targets[0],
                         'pfam': pfam.targets[0]}
     annot_table_dep = [gene_trans_map, predict_orfs, pfam]
@@ -61,28 +61,34 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
             annot_table_dep.append(blastx_nr)
             blastp_nr = tf.blastp_task(pep_path, tf.PATH_NR, cpumod(cpu, 2), [predict_orfs])
     else:
-        dmnd_xsprot = tf.diamond_task(tf.PATH_SWISS_PROT, 'blastx', cpumod(cpu, 2), [])
+        dmnd_dependencies = []
+        dmnd_xsprot = tf.diamond_task(tf.PATH_SWISS_PROT, 'blastx', cpumod(cpu, 2), [d for d in dmnd_dependencies])
         tasks.append(dmnd_xsprot)
+        dmnd_dependencies.append(dmnd_xsprot)
         annot_table_opts['blastx_sp'] = dmnd_xsprot.targets[0]
         annot_table_dep.append(dmnd_xsprot)
-        dmnd_psprot = tf.diamond_task(tf.PATH_SWISS_PROT, 'blastp', cpumod(cpu, 2), [predict_orfs], source=pep_path)
+        dmnd_psprot = tf.diamond_task(tf.PATH_SWISS_PROT, 'blastp', cpumod(cpu, 2), dmnd_dependencies+[predict_orfs], source=pep_path)
+        dmnd_dependencies.append(dmnd_psprot)
         tasks.append(dmnd_psprot)
         annot_table_opts['blastx_sp'] = dmnd_psprot.targets[0]
         annot_table_dep.append(dmnd_psprot)
         if(uniref90_flag):
-            dmnd_xur90 = tf.diamond_task(tf.PATH_UNIREF90, 'blastx', cpumod(cpu, 2), [])
+            dmnd_xur90 = tf.diamond_task(tf.PATH_UNIREF90, 'blastx', cpumod(cpu, 2), [d for d in dmnd_dependencies])
+            dmnd_dependencies.append(dmnd_xur90)
             tasks.append(dmnd_xur90)
             annot_table_opts['blastx_ur90'] = dmnd_xur90.targets[0]
             annot_table_dep.append(dmnd_xur90)
-            dmnd_pur90 = tf.diamond_task(tf.PATH_UNIREF90, 'blastp', cpumod(cpu, 2), [predict_orfs], source=pep_path)
+            dmnd_pur90 = tf.diamond_task(tf.PATH_UNIREF90, 'blastp', cpumod(cpu, 2), dmnd_dependencies+[predict_orfs], source=pep_path)
+            dmnd_dependencies.append(dmnd_pur90)
             tasks.append(dmnd_pur90)
             annot_table_opts['blastp_ur90'] = dmnd_pur90.targets[0]
         if(nr_flag):
-            dmnd_xnr = tf.diamond_task(tf.PATH_NR, 'blastx', cpumod(cpu, 2), [])
+            dmnd_xnr = tf.diamond_task(tf.PATH_NR, 'blastx', cpumod(cpu, 2), [d for d in dmnd_dependencies])
             tasks.append(dmnd_xnr)
+            dmnd_dependencies.append(dmnd_xnr)
             annot_table_opts['blastx_nr'] = dmnd_xnr.targets[0]
             annot_table_dep.append(dmnd_xnr)
-            dmnd_pnr = tf.diamond_task(tf.PATH_NR, 'blastp', cpumod(cpu, 2), [predict_orfs], source=pep_path)
+            dmnd_pnr = tf.diamond_task(tf.PATH_NR, 'blastp', cpumod(cpu, 2), dmnd_dependencies+[predict_orfs], source=pep_path)
             tasks.append(dmnd_pnr)
             annot_table_opts['blastp_nr'] = dmnd_pnr.targets[0]
             annot_table_dep.append(dmnd_pnr)
