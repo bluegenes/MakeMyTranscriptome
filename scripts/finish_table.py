@@ -152,13 +152,12 @@ def writeDict(dict, output_file):
     outFile.close()
 
 
-def finish_annot_table(annot_table, args, index_dict, lengths):
-	"""
-	   Description:	Main method to add database conversions
-	   Input:		Annotation Table, Input Args, Column Index Dictionary
-	   Return:		Annotation Table
-	"""
-
+def finish_annot_table(annot_table, args, index_dict, lengths):     
+    """
+       Description: Main method to add database conversions
+       Input:       Annotation Table, Input Args, Column Index Dictionary
+       Return:      Annotation Table
+    """
     # Conversion Files
     ko_to_path = conversion(args.ko2path)
     sp_to_ez = conversion(args.sp2enzyme)

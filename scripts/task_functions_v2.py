@@ -471,9 +471,7 @@ def annot_table_task(opts, tasks):
         '{4!s}/idmapping_selected.tab ').format(
         PATH_SCRIPTS, GEN_PATH_ASSEMBLY(), GEN_PATH_DIR(), NAME_ASSEMBLY,
         PATH_DATABASES)
-    temp = ' '.join(['--'+k+' '+opts[k] for k in opts])
-    print(temp)
-    cmd += temp 
+    cmd += ' '.join(['--'+k+' '+opts[k] for k in opts])
     name = 'build_annotation_table'
     out, err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
