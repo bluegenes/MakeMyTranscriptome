@@ -21,11 +21,11 @@
 import re
 
 def conversion(conversion_file):
-	"""
-	   Description:	Generic dictionary creator for database conversions
-	   Input:		Conversion File
-	   Return:		Dictionary
-	"""
+    """
+       Description:    Generic dictionary creator for database conversions
+       Input:        Conversion File
+       Return:        Dictionary
+    """
     conv_dt = {}
     conversion = open(conversion_file)
     for line in conversion:
@@ -37,12 +37,12 @@ def conversion(conversion_file):
 
 
 def conversion_nogf(conversion_file):
-	"""
-	   Description:	eggNog -> eggNog function dictionary creator for 
-	   				database conversions
-	   Input:		Conversion File
-	   Return:		Dictionary
-	"""
+    """
+       Description:    eggNog -> eggNog function dictionary creator for 
+                       database conversions
+       Input:        Conversion File
+       Return:        Dictionary
+    """
     conv_dt = {}
     conversion = open(conversion_file)
     for line in conversion:
@@ -126,19 +126,19 @@ def find_best_words(contig_blasts, length):
 
 """Question for Tessa: Need to account for duplicate contigs?"""
 def conversion_contig_closest(conversion_file):
-	"""
-	   Description:	Contig -> Closest Hit dictionary creator for 
-	   				database conversions
-	   Input:		Conversion File
-	   Return:		Dictionary
-	"""
+    """
+       Description:    Contig -> Closest Hit dictionary creator for 
+                       database conversions
+       Input:        Conversion File
+       Return:        Dictionary
+    """
     conv_dt = {}
     conversion = open(conversion_file)
     prev = ""
     for line in conversion:
         line = line.strip().split("\t")
         if prev == line[0]:
-        	continue
+            continue
         first = line[0]
         second = line[1]
         ###
@@ -152,12 +152,12 @@ def conversion_contig_closest(conversion_file):
 
 
 def conversion_ez_path(conversion_file):
-	"""
-	   Description:	Enzyme -> Kegg Pathway dictionary creator for
-	   				database conversions
-	   Input:		Conversion File
-	   Return:		Dictionary
-	"""
+    """
+       Description:    Enzyme -> Kegg Pathway dictionary creator for
+                       database conversions
+       Input:        Conversion File
+       Return:        Dictionary
+    """
     conv_dt = {}
     conversion = open(conversion_file)
     for line in conversion:
@@ -170,12 +170,12 @@ def conversion_ez_path(conversion_file):
 
 
 def conversion_goslim(conversion_file):
-	"""
-	   Description:	GO -> GO Slim dictionary creator for database 
-	   				conversions
-	   Input:		Conversion File
-	   Return:		Dictionary
-	"""
+    """
+       Description:    GO -> GO Slim dictionary creator for database 
+                       conversions
+       Input:        Conversion File
+       Return:        Dictionary
+    """
     conv_dt = {}
     conversion = open(conversion_file)
     for line in conversion:
@@ -185,12 +185,12 @@ def conversion_goslim(conversion_file):
 
 
 def conversion_idmap(conversion_file):
-	"""
-	   Description:	Generic dictionary creator for IDMAP database 
-	   				conversions
-	   Input:		Conversion File
-	   Return:		Dictionary
-	"""
+    """
+       Description:    Generic dictionary creator for IDMAP database 
+                       conversions
+       Input:        Conversion File
+       Return:        Dictionary
+    """
     conv_dt = {}
     conversion = open(conversion_file)
     for line in conversion:
@@ -200,12 +200,12 @@ def conversion_idmap(conversion_file):
 
 
 def conversion_go_entrez(conversion_file):
-	"""
-	   Description:	SwissProt -> GO & Entrez dictionary creator for
-	   				database conversions
-	   Input:		Conversion File
-	   Return:		Dictionary
-	"""
+    """
+       Description:    SwissProt -> GO & Entrez dictionary creator for
+                       database conversions
+       Input:        Conversion File
+       Return:        Dictionary
+    """
     conv_dt = {}
     conversion = open(conversion_file)
     for line in conversion:
