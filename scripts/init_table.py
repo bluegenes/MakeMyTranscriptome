@@ -209,7 +209,7 @@ def add_swissprot_top_blastp(annot_table, swissprotp_file):
 		if index == length:
 			break
 		line = line.strip('\n').split('\t')
-		transcriptid = line[0].split('|')[0]
+		transcriptid = line[0].split('|')[0][len('cds.'):]
 		if prev == transcriptid:
 			continue
 		prev = transcriptid
@@ -248,7 +248,7 @@ def add_pfam(annot_table, pfam_file):
 		if '#' == line[0]:
 			continue
 		line = line.strip('\n').split()
-		transcriptid = line[3].split('|')[0]
+		transcriptid = line[3].split('|')[0][len('cds.'):]
 		while (True):
 			if first:
 				error_check(annot_table[index], 8)
@@ -440,35 +440,40 @@ def add_trembl_top_blastp(annot_table, unirefp_file):
 	   Input:		Annotation Table, Uniref90BlastP File
 	   Return:		Annotation Table
 	"""
-	file = open(unirefp_file)
-	index = 0
-	length = len(annot_table)
-	prev = ''
-	for line in file:
-		if index == length:
-			break
-		line = line.strip('\n').split('\t')
-		transcriptid = line[0].split('|')[0]
-		if prev == transcriptid:
-			continue
-		prev = transcriptid
-		while (True):
+	if unirefp_file != None:
+		file = open(unirefp_file)
+		index = 0
+		length = len(annot_table)
+		prev = ''
+		for line in file:
+			if index == length:
+				break
+			line = line.strip('\n').split('\t')
+			transcriptid = line[0].split('|')[0]
+			if prev == transcriptid:
+				continue
+			prev = transcriptid
+			while (True):
+				error_check(annot_table[index], 13)
+				if transcriptid == annot_table[index][0]:
+					annot_table[index].append(line[12])
+					index += 1
+					break
+				if compare(transcriptid, annot_table[index][0]):
+					annot_table[index].append('.')
+					index += 1
+				else:
+					break
+		while (index < length):
 			error_check(annot_table[index], 13)
-			if transcriptid == annot_table[index][0]:
-				annot_table[index].append(line[12])
-				index += 1
-				break
-			if compare(transcriptid, annot_table[index][0]):
-				annot_table[index].append('.')
-				index += 1
-			else:
-				break
-	while (index < length):
-		error_check(annot_table[index], 13)
-		annot_table[index].append('.')
-		index += 1
-	file.close()
-	for index in range(len(annot_table)):
-		error_check(annot_table[index], 14)
-		annot_table[index] += ['.'] * 15
+			annot_table[index].append('.')
+			index += 1
+		file.close()
+		for index in range(len(annot_table)):
+			error_check(annot_table[index], 14)
+			annot_table[index] += ['.'] * 15
+	else:
+		for index in range(len(annot_table)):
+			error_check(annot_table[index], 13)
+			annot_table[index] += ['.'] * 16
 	return annot_table
