@@ -58,10 +58,7 @@ def main(args):
         annot_table = add_space(annot_table)
     else:
         annot_table = add_trembl_top_blastx(annot_table, args.ur90X)
-    if args.ur90P == None:
-        annot_table = add_space(annot_table)
-    else:
-        annot_table = add_trembl_top_blastp(annot_table, args.ur90P)
+    annot_table = add_trembl_top_blastp(annot_table, args.ur90P)
     #INIT_FINISHED
     annot_table = finish_annot_table(annot_table, args, indexDict, lengths)
     #FULL_TABLE_BUILT
