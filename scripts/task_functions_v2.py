@@ -339,7 +339,8 @@ def blastx_task(path_db, cpu_cap, tasks):
     db_name = os.path.basename(path_db).split('.')[0]
     trgs = ["{0!s}/{1!s}_{2!s}.blastx".format(GEN_PATH_ANNOTATION_FILES(), NAME_ASSEMBLY,db_name)]
     cmd = ('{0!s} -query {1!s}/{2!s}.fasta -db {3!s} -num_threads {4!s} -max_target_seqs 1 '
-            '-outfmt 6 -evalue 0.0001 > {5!s}'
+            '-outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart '
+            'send evalue bitscore stitle qcovs slen" -evalue 0.0001 > {5!s}'
             ).format( PATH_BLASTX, GEN_PATH_DIR(), NAME_ASSEMBLY, path_db, cpu_cap, trgs[0])
     name = 'blastx_{0!s}'.format(db_name)
     out,err = GEN_LOGS(name)
@@ -404,7 +405,8 @@ def blastp_task(pep_path,path_db,cpu_cap,tasks):
     db_name = os.path.basename(path_db).split('.')[0]
     trgs = ["{0!s}/{1!s}_{2!s}.blastp".format(GEN_PATH_ANNOTATION_FILES(), NAME_ASSEMBLY,db_name)]
     cmd = ('{0!s} -query {1!s} -db {2!s} -num_threads {3!s} -max_target_seqs 1 '
-            '-outfmt 6 -evalue 0.001 > {4!s}'
+            '-outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart '
+            'send evalue bitscore stitle qcovs slen" -evalue 0.001 > {4!s}'
             ).format(PATH_BLASTP,pep_path,path_db,cpu_cap,trgs[0])
     name = 'blastp_{0!s}'.format(db_name)
     out,err = GEN_LOGS(name)

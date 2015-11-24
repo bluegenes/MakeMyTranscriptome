@@ -209,7 +209,7 @@ def add_swissprot_top_blastp(annot_table, swissprotp_file):
 		if index == length:
 			break
 		line = line.strip('\n').split('\t')
-		transcriptid = line[0].split('|')[0]
+		transcriptid = line[0].split('|')[0][len('cds.'):]
 		if prev == transcriptid:
 			continue
 		prev = transcriptid
@@ -248,7 +248,7 @@ def add_pfam(annot_table, pfam_file):
 		if '#' == line[0]:
 			continue
 		line = line.strip('\n').split()
-		transcriptid = line[3].split('|')[0]
+		transcriptid = line[3].split('|')[0][len('cds.'):]
 		while (True):
 			if first:
 				error_check(annot_table[index], 8)

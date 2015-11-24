@@ -165,9 +165,11 @@ def finish_annot_table(annot_table, args, index_dict, lengths):
     pf_to_ez = conversion(args.pfam2enzyme)
     go_to_path = conversion(args.go2path)
     nog_to_f = conversion_nogf(args.nog2function)
-    contig_to_closest = conversion_contig_closest(args.contig2closest)
+    if args.closest != None:
+        contig_to_closest = conversion_contig_closest(args.closest)
     go_to_goslim = conversion_goslim(args.go2slim)
-    contig_to_blastnr = conversion_contig_blastnr(args.nr, lengths)
+    if args.nr != None:
+        contig_to_blastnr = conversion_contig_blastnr(args.nr, lengths)
     sp_to_ko = conversion_idmap(args.sp2ko)
     sp_to_nog = conversion_idmap(args.sp2nog)
     sp_to_ortho = conversion_idmap(args.sp2ortho)
@@ -186,7 +188,9 @@ def finish_annot_table(annot_table, args, index_dict, lengths):
         annot_table[index] = add_pfam_to_enzyme_to_path(annot_table[index], pf_to_ez, ez_to_path, index_dict)
         annot_table[index] = add_go_to_path(annot_table[index], go_to_path, index_dict)
         annot_table[index] = add_nog_to_func(annot_table[index], nog_to_f, index_dict)
-        annot_table[index] = add_blastnr(annot_table[index], contig_to_blastnr, index_dict)
-        annot_table[index] = add_closest_hit(annot_table[index], contig_to_closest, index_dict)
+        if args.nr != None:
+            annot_table[index] = add_blastnr(annot_table[index], contig_to_blastnr, index_dict)
+        if args.closest != None:
+            annot_table[index] = add_closest_hit(annot_table[index], contig_to_closest, index_dict)
         annot_table[index] = add_goslim(annot_table[index], go_to_goslim, index_dict)
     return annot_table
