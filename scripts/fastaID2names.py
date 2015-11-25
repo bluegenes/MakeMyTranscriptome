@@ -12,26 +12,19 @@ parser.add_argument('--fasta', help='tab-separated database lookup: full name fi
 args = parser.parse_args()
 
 
-outF = open(args.fasta.split('.fa')[0] + '.id2names', 'w')
 
 bp = 0
-name =''
+name =""
 with open(args.fasta) as f:
     for line in f:
         if line.startswith(">"):
-	    if len(name) > 0: # need to write *after* get bp len
-                outF.write( ID + "\t" + name + '\t' + str(bp) + '\n')
-            	bp = 0
-	    entry = line.rstrip().split(" ", 1)
+            if len(name) > 0:  # need to write *after* get bp len
+                print(ID + "\t" + name + "\t" + str(bp))
+                bp = 0
+            entry = line.rstrip().split(" ", 1)
             ID = entry[0][1:]
-	    name = entry[1]
+            name = entry[1]
         else:
             bp = bp + len(line.rstrip())
-    #catch last contig
-    outF.write( ID + "\t" + name + '\t' + str(bp) + '\n')
-
-    outF.close()
-    f.close()
-
-
-
+    # catch last contig
+    print(ID + "\t" + name + "\t" + str(bp))

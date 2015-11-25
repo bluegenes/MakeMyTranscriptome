@@ -12,10 +12,9 @@ blastD = {}
 with open(args.blast, 'r') as f:
     for line in f:
         line = line.rstrip().split('\t')
-    #import pdb; pdb.set_trace()
-    blastOrder.append(line[1])
-    blastD[line[1]] = line
-    f.close()
+        blastOrder.append(line[1])
+        blastD[line[1]] = line
+
 
 #potentially huge file --> don't want this in memory
 with open(args.db2Name, 'r') as f:
@@ -26,9 +25,8 @@ with open(args.db2Name, 'r') as f:
         hitInfo.extend(line[1:])
     f.close()
 
-outExtendedTab = open(args.blast, 'w')
 for hit in blastOrder:
-    outExtendedTab.write('\t'.join(map(str,blastD[hit])) + '\n')
+    print('\t'.join(map(str,blastD[hit])) + '\n')
 
 
 
