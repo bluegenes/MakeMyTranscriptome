@@ -22,7 +22,7 @@
 def error_check(line, length):
 	"""
 	   Description:	Error check to make sure Annotation Table is being filled out
-	   Input:		Annotation Table Line, Line Length 
+	   Input:		Annotation Table Line, Line Length
 	"""
 	errors = {
 		 	   3:'Row length error in init_table.py - add_fasta() TranscriptID: ',
@@ -71,7 +71,7 @@ def conversion_transcriptid_geneid(conversion_file):
 	"""
 	   Description:	Creates dictionary for TranscriptID -> GeneID conversion
 	   Input:		GeneTransMap File
-	   Return:		Dictionary 
+	   Return:		Dictionary
 	"""
 	convDt = {}
 	file = open(conversion_file)
@@ -133,7 +133,7 @@ def add_swissprot_top_blastx(annot_table, swissprotx_file):
 			error_check(annot_table[index], 3)
 			if line[0] == annot_table[index][0]:
 				annot_table[index].append(line[12])
-				annot_table[index].append(line[14])
+				annot_table[index].append(line[13])
 				index += 1
 				break
 			if compare(line[0], annot_table[index][0]):
