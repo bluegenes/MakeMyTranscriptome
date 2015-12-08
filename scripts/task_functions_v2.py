@@ -631,12 +631,34 @@ def build_salmon_task(cpu_cap,tasks):
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
+def salmon_gene_map_task(tasks):
+    '''    Defines gene_trans_map task. Uses NAME_ASSEMBLY, PATH_DIR, PATH_GENE_TRANS_MAP.
+        Params :
+            tasks - a list of tasks that this task is dependant on (trinity_task) 
+    '''
+    trgs = ['{0!s}/{1!s}.trans_gene_map'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
+#    cmd = '{0!s} {1!s}/{2!s}.fasta > {3!s}'.format(PATH_GENE_TRANS_MAP,GEN_PATH_DIR(),NAME_ASSEMBLY,trgs[0])
+    cmd = 'awk \'{ print $2 "\t" $1}\' {0!s}'.format(gene_trans_map) 
+    name = 'trans_gene_map'
+    name = 'salmon_gene_map_task'
+    out,err = GEN_LOGS(name)
+    return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
+
 
 def salmon_task(index,left,right,out_name,gene_map,cpu_cap,tasks):
     trgs = []
-    cmd = '{0!s} quant -i {1!s} -1 {2!s} -2 {3!s} -o {4!s}/{5!s} --geneMap {6!s} -l IU -p {7!s} --extraSensitive'.format(
+    cmd = '{0!s} quant -i {1!s} -l IU -1 {2!s} -2 {3!s} -o {4!s}/{5!s} --geneMap {6!s} -p {7!s} --extraSensitive'.format(
             PATH_SALMON,index,left,right,GEN_PATH_EXPRESSION_FILES(),out_name,gene_map,cpu_cap)
     name = 'salmon'
+    out,err = GEN_LOGS(name)
+    return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
+
+
+def salmon_unpaired_task(index,unpaired,out_name,gene_map,cpu_cap,tasks):
+    trgs = []
+    cmd = '{0!s} quant -i {1!s} -l U -r {2!s} -o {3!s}/{4!s} --geneMap {5!s} -p {6!s} --extraSensitive'.format(
+            PATH_SALMON,index,unpaired,GEN_PATH_EXPRESSION_FILES(),out_name,gene_map,cpu_cap)
+    name = 'salmon_unpaired'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
