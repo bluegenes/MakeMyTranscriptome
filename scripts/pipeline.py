@@ -268,7 +268,7 @@ def go_assembly(args, dep):
 
 def go_quality(args, dep):
     return gen_quality_supervisor(
-        args.cpu,args.fastq1, args.fastq2, args.unpaired, dep)
+        args.cpu, args.fastq1, args.fastq2, args.unpaired, dep)
 
 def go_annotation(args, dep):
     return gen_annotation_supervisor(
@@ -381,8 +381,8 @@ def build_log(args, task_status):
 
 if(__name__ == '__main__'):
     err_str = ('\n\nError : Unable to identify what tool should be executed. '
-               'Valid arguments are "full", "assembly", "annotation", or "'
-               'expression".')
+               'Valid arguments are "full", "assembly", "annotation", "quality" '
+	       'or "expression".')
     args = master_args()
     tool = args.tool_selector.lower()
     if(tool != 'a'):
@@ -402,6 +402,10 @@ if(__name__ == '__main__'):
             args = expression_args()
             args.tool_selector = 'expression'
             run_expression(args)
+        if(tool == 'quality'[:len(tool)]):
+            args = quality_args()
+            args.tool_selector = 'quality'
+            run_quality(args)
         raise Exception(err_str)
     else:
         raise Exception(err_str)
