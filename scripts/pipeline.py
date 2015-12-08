@@ -168,6 +168,22 @@ def check_assembly_args(args):
             raise Exception('\n\nERROR : '+f1+' cant be paired with '+f2+'.')
 
 
+def check_quality_args(args):
+    args.unpaired = [] if(args.unpaired==None) else args.unpaired.split(',')
+    args.fastq1 = [] if(args.fastq1==None) else args.fastq1.split(',')
+    args.fastq2 = [] if(args.fastq2==None) else args.fastq2.split(',')
+    if(args.assembly==None):
+        raise Exception('\n\nERROR : No input assembly specified. Please specify an input assembly using --assembly.')
+    if(not os.path.isfile(args.assembly)):
+        raise Exception('\n\nERROR : Invalid assembly argument. '+args.assembly+' does not exist.')
+    for f in chain(args.fastq1,args.fastq2,args.unpaired):
+        if(not os.path.isfile(f)):
+            raise Exception('\n\nERROR : Unable to find file : '+f)
+    for f1,f2 in zip(args.fastq1,args.fastq2):
+        if(not fastq_pair_check(f1,f2)):
+            raise Exception('\n\nERROR : '+f1+' cant be paired with '+f2+'.')
+
+
 def check_annotation_args(args):
     if(args.assembly==None):
         raise Exception('\n\nERROR : No input assembly specified. Please specify an input assembly using --assembly.')
@@ -250,6 +266,10 @@ def go_assembly(args, dep):
         args.truncate, args.transrate_ref, args.trimmomatic)
 
 
+def go_quality(args, dep):
+    return gen_quality_supervisor(
+        args.cpu,args.fastq1, args.fastq2, args.unpaired, dep)
+
 def go_annotation(args, dep):
     return gen_annotation_supervisor(
         args.cpu, args.uniref90, args.nr, args.blastplus, args.signalp,
@@ -270,6 +290,8 @@ def run_full(args):
     supers = []
     assembly_super = go_assembly(args, [])
     supers.append(assembly_super)
+    quality_super = go_quality(args, [assembly_super])
+    supers.append(quality_super)
     annotation_super = go_annotation(args, [assembly_super])
     supers.append(annotation_super)
     expression_super = go_expression(args, [assembly_super])
@@ -283,6 +305,17 @@ def run_assembly(args):
     supers = []
     assembly_super = go_assembly(args, [])
     supers.append(assembly_super)
+    run_supers(args, supers)
+
+
+def run_quality(args):
+    check_quality_args(args)
+    global_setup(args)
+    supers = []
+    cp = tf.cp_assembly_task(args.assembly, [])
+    supers.append(cp)
+    quality_super = go_quality(args, [cp])
+    supers.append(quality_super)
     run_supers(args, supers)
 
 

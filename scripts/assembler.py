@@ -54,9 +54,9 @@ def gen_assembly_supervisor(fastq1, fastq2, unpaired, dependency_set, busco_ref,
     tasks = []
     tasks.append(tf.fastqc_task(fastq1+fastq2+unpaired, 'pre_trimming', []))
     assembler_dependencies = []
-    transrate_fastq1 = fastq1
-    transrate_fastq2 = fastq2
-    transrate_unpaired = unpaired
+#    transrate_fastq1 = fastq1
+#    transrate_fastq2 = fastq2
+#    transrate_unpaired = unpaired
     if(fastq1 != []):
         if(not no_trim):
             if(trimmomatic_flag):
@@ -65,8 +65,8 @@ def gen_assembly_supervisor(fastq1, fastq2, unpaired, dependency_set, busco_ref,
                 paired_sup = gen_paired_prinseq_supervisor(fastq1, fastq2, unpaired, [], rmdup)
             fastq1 = [paired_sup.targets[x] for x in range(0, len(paired_sup.targets), 2)]
             fastq2 = [paired_sup.targets[x] for x in range(1, len(paired_sup.targets), 2)]
-            transrate_fastq1 = fastq1
-            transrate_fastq2 = fastq2
+ #           transrate_fastq1 = fastq1
+ #           transrate_fastq2 = fastq2
             tasks.append(paired_sup)
             tasks.append(tf.fastqc_task(fastq1+fastq2, 'post_trimming_paired', [paired_sup]))
         subset_dependencies = [paired_sup] if(not no_trim) else []
@@ -90,7 +90,7 @@ def gen_assembly_supervisor(fastq1, fastq2, unpaired, dependency_set, busco_ref,
             else:
                 unpaired_sup = gen_unpaired_prinseq_supervisor(fastq1, fastq2, unpaired, [], rmdup)
             unpaired = unpaired_sup.targets
-            transrate_unpaired = unpaired
+  #          transrate_unpaired = unpaired
             tasks.append(unpaired_sup)
             tasks.append(tf.fastqc_task(unpaired, 'post_trimming_unpaired', [unpaired_sup]))
             assembler_dependencies.append(unpaired_sup)
@@ -100,16 +100,16 @@ def gen_assembly_supervisor(fastq1, fastq2, unpaired, dependency_set, busco_ref,
     else:
         trinity = tf.trinity_task(fastq1, fastq2, unpaired, cpu, int(cpu/2), 120, 120, normalize_flag, assembler_dependencies)
         tasks.append(trinity)
-    assembler_main_task = tasks[-1]
-    cegma = tf.cegma_task(cpu, [assembler_main_task])
-    busco = tf.busco_task(busco_ref, int(cpu/2), [assembler_main_task])
-    assembly_stats = tf.assembly_stats_task([assembler_main_task])
-    transrate = tf.transrate_task(transrate_fastq1, transrate_fastq2, transrate_unpaired, transrate_reference, int(round(float(cpu), 4)), [assembler_main_task])
-    tasks.append(transrate)
-    tasks.append(assembly_stats)
-    tasks.append(busco)
-    if(cegma_flag):
-        tasks.append(cegma)
+    #assembler_main_task = tasks[-1]
+    #cegma = tf.cegma_task(cpu, [assembler_main_task])
+    #busco = tf.busco_task(busco_ref, int(cpu/2), [assembler_main_task])
+    #assembly_stats = tf.assembly_stats_task([assembler_main_task])
+    #transrate = tf.transrate_task(transrate_fastq1, transrate_fastq2, transrate_unpaired, transrate_reference, int(round(float(cpu), 4)), [assembler_main_task])
+    #tasks.append(transrate)
+    #tasks.append(assembly_stats)
+    #tasks.append(busco)
+    #if(cegma_flag):
+    #    tasks.append(cegma)
     return Supervisor(tasks=tasks)
 
 
