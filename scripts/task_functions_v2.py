@@ -89,7 +89,7 @@ def cp_assembly_task(source, tasks):
             tasks - a list of tasks that this task is dependant on.
     '''
     trgs = [GEN_PATH_ASSEMBLY()]
-    cmd = 'cp {0!s} {1!s}'.format(source, trgs[0])
+    cmd = 'cp -n {0!s} {1!s}'.format(source, trgs[0]) # changed to no-clobber to avoid double copy with individ quality super
     name = 'setting_fasta'
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name)
 
