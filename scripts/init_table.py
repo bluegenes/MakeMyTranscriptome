@@ -132,7 +132,7 @@ def add_swissprot_top_blastx(annot_table, swissprotx_file):
 		while (True):
 			error_check(annot_table[index], 3)
 			if line[0] == annot_table[index][0]:
-				annot_table[index].append(line[12])
+				annot_table[index].append(line[1] + ' ' + line[12])
 				annot_table[index].append(line[13])
 				index += 1
 				break
