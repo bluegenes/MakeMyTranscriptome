@@ -50,7 +50,8 @@ def gen_paired_trimmomatic_supervisor(fq1, fq2, unpaired, dependency_set, cpu_ca
     return Supervisor(tasks=tasks)
 
 
-def gen_assembly_supervisor(fastq1, fastq2, unpaired, dependency_set, busco_ref, no_trim=False, rnaSPAdes=False, rmdup=False, subset_size=50000000, cpu=12, cegma_flag=False, subset_seed='I am a seed value', normalize_flag=False, truncate_opt=-1, transrate_reference='', trimmomatic_flag=False):
+#def gen_assembly_supervisor(fastq1, fastq2, unpaired, dependency_set, busco_ref, no_trim=False, rnaSPAdes=False, rmdup=False, subset_size=50000000, cpu=12, cegma_flag=False, subset_seed='I am a seed value', normalize_flag=False, truncate_opt=-1, transrate_reference='', trimmomatic_flag=False):
+def gen_assembly_supervisor(fastq1, fastq2, unpaired, dependency_set, no_trim=False, rnaSPAdes=False, rmdup=False, subset_size=50000000, cpu=12, subset_seed='I am a seed value', normalize_flag=False, truncate_opt=-1, trimmomatic_flag=False):
     tasks = []
     tasks.append(tf.fastqc_task(fastq1+fastq2+unpaired, 'pre_trimming', []))
     assembler_dependencies = []
