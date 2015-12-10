@@ -92,6 +92,7 @@ def quality_args():
     parser.add_argument('-u','--unpaired',help='A comma seperated list of unpaired fastq files.')
     parser.add_argument('-1','--fastq1',help='A comma seperated list of fastq files. Each file should be paired with the same indexed file in fastq2.')
     parser.add_argument('-2','--fastq2',help='A comma seperated list of fastq files. Each file should be paired with the same indexed file in fastq1.')
+    parser.add_argument('-a','--assembly',help='A fasta transcriptome assembly that will be used for computing expression levels.')
     parser.add_argument('-cegma',help='Use this flag to run cegma as part of the annotation pipeline. Cegma is an old tool for assesing the quality of assemblies. Normal behavior of the pipeline is to use busco for assesing assemblies. Using this flag will run cegma in addition to Busco.',action='store_true')
     parser.add_argument('--busco_ref',help='Set the reference that busco will use for analysis',default='metazoa')
     parser.add_argument('--transrate_ref',help='A reference that transrate will use to evaluate the quality of your assembly.',default='')
@@ -308,17 +309,15 @@ def go_assembly(args, dep):
         args.cpu, args.subsample_seed, args.trinity_normalization,
         args.truncate, args.trimmomatic)
 
-
 def go_quality(args, dep):
     return gen_quality_supervisor(
-        args.assembly, args.fastq1, args.fastq2, args.unpaired, dep, args.busco_ref,
-	args.cpu, args.cegma,args.transrate_ref) 
+        args.fastq1, args.fastq2, args.unpaired, dep, args.busco_ref,
+	args.cpu, args.cegma, args.transrate_ref)
 
 def go_annotation(args, dep):
     return gen_annotation_supervisor(
         args.cpu, args.uniref90, args.nr, args.blastplus, args.signalp,
         args.tmhmm, args.rnammer, dep)
-
 
 def go_expression(args, dep):
     return gen_expression_supervisor(
