@@ -12,7 +12,7 @@ args = parser.parse_args()
 
 
 #outF = open(args.fasta.split('.fa')[0] + '.id2names', 'w')
-outF = open(args.fasta.split('.gz')[0] + '.id2names', 'w')
+outF = open(args.fasta.split('.gz')[0] + '.stitle', 'w')
 
 bp = 0
 name =''
