@@ -133,9 +133,11 @@ sumCogPlot.savefig('cogMultiple.png', format='png')
 
 
 ######### WHAT WAS I TRYING TO ACCOMPLISH HERE????? ###########
-observations = pd.DataFrame(cogDF["Category"].value_counts()).sort_index()
-observations = observations.rename(columns={0:"Total #"}, inPlace=True)
-cogsPlusObservations = groupedCogDF.merge(observations,left_on="Category", right_index=True)
+#observations = pd.DataFrame(cogDF["Category"].value_counts()).sort_index()
+#observations = observations.rename(columns={0:"Total #"}, inplace=True)
+#cogsPlusObservations = groupedCogDF.merge(observations,left_on="Category", right_index=True)
+
+#observations = observations.rename(columns={0:"Total #"}, inPlace=True)
 #cogsPlusObservations["% (observations/#genes)"] = 100*(cogsPlusObservations["Total #"]/numGenes)
 #cogsPlusObservations["% (observations/#transcripts)"] = 100*(cogsPlusObservations["Total #"]/numTranscripts)
 #cogsPlusObservations["% (observations/#nog hits)"] = 100*(cogsPlusObservations["Total #"]/numNogHits)
