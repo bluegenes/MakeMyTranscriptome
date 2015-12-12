@@ -130,6 +130,8 @@ def add_swissprot_top_blastx(annot_table, swissprotx_file):
 			continue
 		prev = line[0]
 		while (True):
+			if index == length:
+				break
 			error_check(annot_table[index], 3)
 			if line[0] == annot_table[index][0]:
 				annot_table[index].append(line[1] + ' ' + line[12])
@@ -214,6 +216,8 @@ def add_swissprot_top_blastp(annot_table, swissprotp_file):
 			continue
 		prev = transcriptid
 		while (True):
+			if index == length:
+				break
 			error_check(annot_table[index], 7)
 			if transcriptid == annot_table[index][0]:
 				annot_table[index].append(line[1]) ###could change to 12###
