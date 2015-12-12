@@ -91,7 +91,7 @@ def cp_assembly_task(source, tasks):
             tasks - a list of tasks that this task is dependant on.
     '''
     trgs = [GEN_PATH_ASSEMBLY()]
-    cmd = 'cp -n {0!s} {1!s}'.format(source, trgs[0]) # changed to no-clobber to avoid double copy with individ quality super
+    cmd = 'if [ ! -f "{1!s}" ]; then cp {0!s} {1!s}; fi'.format(source, trgs[0]) # only copy if file does not exist 
     name = 'setting_fasta'
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name)
 
@@ -303,13 +303,26 @@ def busco_task(reference_name, cpu_cap, tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=cpu_cap,stdout=out,stderr=err)
 
 
+#def write_default_transrate_reads(lefts,rights,singles):
+#    trgs= [{0!s}/{1!s}.reads_for_transrate.txt]
+#    cmd=
+#    out, err = GEN_LOGS(name)
+#    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
+
+#def read_default_transrate_reads(lefts,rights,singles):
+#    trgs= []
+#    cmd= [{0!s}/{1!s}.reads_for_transrate.txt]
+#    out, err = GEN_LOGS(name)
+#    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
+
+
 def transrate_task(lefts, rights, singles, reference, cpu_cap, tasks):
     trgs = []
-    reference = '--reference ' + reference if(reference != '') else ''
     lefts = ','.join(lefts+singles)
     rights = ','.join(rights) 
     lefts = '--left '+lefts if(len(lefts) > 0) else ''
     rights = '--right '+rights if(len(rights) > 0) else ''
+    reference = '--reference ' + reference if(reference != '') else ''
     cmd = '{0!s} --assembly {1!s} {4!s} {5!s} --threads {2!s} --output {3!s}/transrate_output {6!s}'.format(
            PATH_TRANSRATE, GEN_PATH_ASSEMBLY(), cpu_cap, GEN_PATH_QUALITY_FILES(), lefts, rights, reference)
     name = 'transrate'
