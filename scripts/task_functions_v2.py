@@ -735,7 +735,7 @@ def pfam_build_task(source, tasks, log_flag=True):
 def db2stitle_task(db, tasks, log_flag=True):
     base_db = os.path.basename(db)
     trgs = ['{0!s}/{1!s}.stitle'.format(PATH_DATABASES, base_db)]
-    cmd = 'python {0!s}/addStitleToBlastTab.py --fasta {1!s} > {2!s}'.format(
+    cmd = 'python {0!s}/fastaID2names --fasta {1!s} > {2!s}'.format(
            PATH_SCRIPTS, db, trgs[0])
     name = 'db2stitle_'+base_db
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)

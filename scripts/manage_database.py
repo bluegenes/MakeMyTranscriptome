@@ -1,7 +1,8 @@
 from task_functions_v2 import (
     PATH_DATABASES, PATH_UNIREF90, PATH_SWISS_PROT,
     PATH_NR, PATH_BUSCO_METAZOA, PATH_PFAM_DATABASE,
-    pfam_build_task, build_diaimond_task, build_blast_task)
+    pfam_build_task, build_diaimond_task, build_blast_task,
+    db2stitle_task)
 from time import strftime
 import gzip
 import tarfile
@@ -20,6 +21,7 @@ swissprot_folder = os.path.join(PATH_DATABASES, 'uniprot_sprot')
 uniref90_folder = os.path.join(PATH_DATABASES, 'uniref90')
 nr_folder = os.path.join(PATH_DATABASES, 'nr')
 pfam_folder = os.path.join(PATH_DATABASES, 'pfam')
+busco_folder = os.path.join(PATH_DATABASES, 'busco') #this means we need to change busco paths elsewhere..
 
 
 url_sprot = 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz'
@@ -31,8 +33,26 @@ uniref90_target = PATH_UNIREF90
 url_nr = 'ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz'
 nr_target = PATH_NR
 
+
+####
 url_busco_metazoa = 'http://busco.ezlab.org/files/metazoa_buscos.tar.gz'
-busco_metazoa_target = PATH_BUSCO_METAZOA
+busco_metazoa_target = os.path.join(busco_folder, 'metazoa_buscos') #PATH_BUSCO_METAZOA
+
+url_busco_arthropoda = 'http://busco.ezlab.org/files/arthropoda_buscos.tar.gz'
+busco_arthropoda_target = os.path.join(busco_folder, 'arthopoda_buscos')
+
+url_busco_vertebrata = 'http://busco.ezlab.org/files/vertebrata_buscos.tar.gz'
+busco_vertebrata_target = os.path.join(busco_folder, 'vertebrata_buscos')
+
+url_busco_eukaryota = 'http://busco.ezlab.org/files/eukaryota_buscos.tar.gz'
+busco_eukaryota_target = os.path.join(busco_folder, 'eukaryota_buscos')
+
+url_busco_fungi = 'http://busco.ezlab.org/files/fungi_buscos.tar.gz'
+busco_fungi_target = os.path.join(busco_folder, 'fungi_buscos')
+
+url_busco_bacteria = 'http://busco.ezlab.org/files/bacteria_buscos.tar.gz'
+busco_bacteria_target = os.path.join(busco_folder, 'bacteria_buscos') 
+####
 
 url_go_pathway = 'http://rest.genome.jp/link/go/pathway'
 go_pathway_target = '{0!s}/go_pathway.txt'.format(PATH_DATABASES)
@@ -65,6 +85,11 @@ idmapping_keys = {'BioCyc': '{0!s}/idmapping.biocyc'.format(PATH_DATABASES),
                   'eggNOG': '{0!s}/idmapping.eggNOG'.format(PATH_DATABASES),
                   'KO': '{0!s}/idmapping.KO'.format(PATH_DATABASES),
                   'OrthoDB': '{0!s}/idmapping.orthodb'.format(PATH_DATABASES)}
+
+
+busco_flags = {'arthropoda': False, 'metazoa': False, 'vertebrata': False,
+               'eukaryota': False, 'fungi': False, 'bacteria': False,
+               'plants': False}
 
 
 def run_tasks(tasks):
@@ -106,7 +131,9 @@ def tar_retrieve(source, target):
     os.remove(target+'.tar.gz')
 
 
-def get(log_table, flag, source, target):
+def get(log_table, flag, source, target, file_check=True):
+    if(file_check and os.path.exists(target)):
+        return
     try:
         if(flag == 'gz'):
             url_unzip(source, target)
@@ -116,27 +143,27 @@ def get(log_table, flag, source, target):
             tar_retrieve(source, target)
         else:
             print('Your shits fucked.')
-        basename = os.path.basename(target)
-        log_table[basename] = strftime('%b-%d-%Y')
     except ContentTooShortError:
         print('failed to install {0!s}'.format(source))
+    basename = os.path.basename(target)
+    log_table[basename] = strftime('%b-%d-%Y')
 
 
 def read_log():
-    log = open(PATH_DATABASES+'/database_log')
+    log = open(os.path.join(PATH_DATABASES, 'database_log'))
     log_table = json.load(log)
     log.close()
     return log_table
 
 
 def write_log(log_table):
-    log = open(PATH_DATABASES+'/database_log', 'w')
+    log = open(os.path.join(PATH_DATABASES, 'database_log'), 'w')
     json.dump(log_table, log, sort_keys=True, indent=4)
     log.close()
 
 
-def download_databases(log_table, nr_flag=False, uniref90_flag=False):
-    partial_get = functools.partial(get, log_table)
+def download_databases(log_table, nr_flag=False, uniref90_flag=False, file_check=True, busco_flags=busco_flags):
+    partial_get = lambda a, b, c : get(log_table, a, b ,c, file_check)
     partial_get('', url_go_pathway, go_pathway_target)
     partial_get('', url_swiss_enzyme, swiss_enzyme_target)
     partial_get('', url_pfam_enzyme, pfam_enzyme_target)
@@ -147,10 +174,21 @@ def download_databases(log_table, nr_flag=False, uniref90_flag=False):
     if(nr_flag):
         partial_get('gz', url_nr, nr_target)
     partial_get('gz', url_id_mapping, id_mapping_target)
-    partial_get('gz',url_idmapping_selected,idmapping_selected_target)
+    partial_get('gz', url_idmapping_selected, idmapping_selected_target)
     partial_get('gz', url_kog_functional, kog_functional_target)
     partial_get('gz', url_pfam_db, pfam_db_target)
-    partial_get('tar', url_busco_metazoa, busco_metazoa_target)
+    if(busco_flags['metazoa']):
+        partial_get('tar', url_busco_metazoa, busco_metazoa_target)
+    if(busco_flags['arthropoda']):
+        partial_get('tar', url_busco_arthropoda , busco_arthropoda_target)
+    if(busco_flags['vertebrata']):
+        partial_get('tar', url_busco_vertebrata, busco_vertebrata_target)
+    if(busco_flags['eukaryota']):
+        partial_get('tar', url_busco_eukaryota, busco_eukaryota_target)
+    if(busco_flags['fungi']):
+        partial_get('tar', url_busco_fungi, busco_fungi_target)
+    if(busco_flags['bacteria']):
+        partial_get('tar', url_busco_bacteria, busco_bacteria_target)
     return log_table
 
 
@@ -175,7 +213,6 @@ def subset_dat(dat_file, key_file_dict, log_table):
 def check_database_dir():
     if(not os.path.isdir(PATH_DATABASES)):
         os.mkdir(PATH_DATABASES)
-        write_log({})
     if(not os.path.isdir(swissprot_folder)):
         os.mkdir(swissprot_folder)
     if(not os.path.isdir(uniref90_folder)):
@@ -184,28 +221,38 @@ def check_database_dir():
         os.mkdir(nr_folder)
     if(not os.path.isdir(pfam_folder)):
         os.mkdir(pfam_folder)
+    if(not os.path.isdir(busco_folder)):
+        os.mkdir(busco_folder)
+    if(not os.path.isfile(os.path.join(PATH_DATABASES, 'database_log'))):
+        write_log({})
 
 
-def main(nr_flag=False, uniref90_flag=False):
+def main(nr_flag=False, uniref90_flag=False, file_check=True, busco_flags=busco_flags):
     check_database_dir()
     log_table = read_log()
-    log_table = download_databases(log_table, nr_flag, uniref90_flag)
+    log_table = download_databases(log_table, nr_flag, uniref90_flag, file_check, busco_flags)
     log_table = subset_dat(id_mapping_target, idmapping_keys, log_table)
     tasks = []
     swissprot_task = build_blast_task(sprot_target, sprot_target, 'prot', [], False)
     tasks.append(swissprot_task)
     swissprot_diamond = build_diaimond_task(sprot_target, sprot_target, [], False)
     tasks.append(swissprot_diamond)
-    if(uniref90_flag):
+    swissprot_table_task = db2stitle_task(sprot_target, [], False)
+    tasks.append(swissprot_table_task)
+    if(uniref90_flag and os.path.exists(uniref90_target)):
         uniref90_task = build_blast_task(uniref90_target, uniref90_target, 'prot', [], False)
         tasks.append(uniref90_flag)
         uniref90_diamond = build_diaimond_task(uniref90_target, uniref90_target, [], False)
         tasks.append(uniref90_diamond)
-    if(nr_flag):
+        uniref90_table_task = db2stitle_task(uniref90_target, [], False)
+        tasks.append(uniref90_table_task)
+    if(nr_flag and os.path.exists(nr_target)):
         nr_task = build_blast_task(nr_target, nr_target, 'prot', [], False)
         tasks.append(nr_task)
         nr_diamond = build_diaimond_task(nr_target, nr_target, [], False)
         tasks.append(nr_diamond)
+        nr_table_task = db2stitle_task(nr_target, [], False)
+        tasks.append(nr_table_task)
     pfam_task = pfam_build_task(pfam_db_target, [], False)
     tasks.append(pfam_task)
     run_tasks(tasks)
@@ -214,7 +261,8 @@ def main(nr_flag=False, uniref90_flag=False):
 
 if(__name__ == '__main__'):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--uniref90',action='store_true')
-    parser.add_argument('--nr',action='store_true')
+    parser.add_argument('--hard', action='store_true')
+    parser.add_argument('--uniref90', action='store_true')
+    parser.add_argument('--nr', action='store_true')
     args = parser.parse_args()
-    main(args.nr, args.uniref90)
+    main(args.nr, args.uniref90, not args.hard)

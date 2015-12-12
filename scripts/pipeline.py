@@ -9,6 +9,7 @@ from annotater import gen_annotation_supervisor
 from expression import gen_expression_supervisor
 from itertools import chain
 import time
+from manage_database import main as db_install
 
 
 #####################____Argument_Parsers____#####################
@@ -39,6 +40,7 @@ def full_args():
     parser.add_argument('--subsample_seed',help='A seed used to initialize the random number generator used during random sampling.')
     parser.add_argument('--truncate',help='snip reads down to this size if longer than this size. Default is no truncations.',type=int,default=-1)    
     parser.add_argument('-trinity_normalization',action='store_true',help='Use this flag to use the trinity normalization option')
+#    parser.add_argument('-a','--assembly',help='A fasta transcriptome assembly that will be used for computing expression levels.')
     parser.add_argument('-rnaspades',help='Use this flag to specify that assembly should be performed by rnaSPAdes rather than the default Trinity.',action='store_true')
     parser.add_argument('-cegma',help='Use this flag to run cegma as part of the annotation pipeline. Cegma is an old tool for assesing the quality of assemblies. Normal behavior of the pipeline is to use busco for assesing assemblies. Using this flag will run cegma in addition to Busco.',action='store_true')
     parser.add_argument('-blastplus',action='store_true',help='Use the blast+ tool suite instead of diamond to align your transcripts to the references.')
@@ -124,6 +126,7 @@ def annotation_args():
     parser.add_argument('-o','--out_name', help='The name of the output directory to be made in out_dir. If unused, name will be inherited from input file names')    
     return parser.parse_args()
 
+
 def expression_args():
     parser = argparse.ArgumentParser(description='Selected_tool : Expression. Executing this tool will run a series of differential expression analyses and sumarize the output.')
     parser.add_argument('tool_selector',help=argparse.SUPPRESS)
@@ -140,18 +143,30 @@ def expression_args():
     return parser.parse_args()
 
 
+def manage_database_args():
+    parser = argparse.ArgumentParser(description='Selected_tool : Database Manager. This tool can be used to initialize MMT and update the databases.')
+    parser.add_argument('tool_selector',help=argparse.SUPPRESS)
+    parser.add_argument('-nr', action='store_true')
+    parser.add_argument('-uniref90', action='store_true')
+    parser.add_argument('-update', action='store_true')
+    # busco_argument
+    return parser.parse_args()
+
+
 #####################____Argument_Testers____#####################
 def global_setup(args):
     if(not os.path.isdir(args.out_dir)):
-	try:
-             os.makedirs(args.out_dir)
-	except:
+        try:
+            os.makedirs(args.out_dir)
+        except:
             raise Exception('\n\nERROR : invalid out_dir argument. Path does not exist.')
     if(args.cpu<=0):
         args.cpu = float('inf')
     tf.PATH_ASSEMBLIES = args.out_dir
     if(args.tool_selector=='full'):
         base = os.path.basename(args.csv)
+    #if args.assembly:
+    #    base = os.path.basename(args.assembly)
         base = base if('.' not in base) else '.'.join(base.split('.')[:-1])
     if(args.tool_selector=='assembly'):
         if(args.unpaired!=[]):
@@ -305,14 +320,14 @@ def gen_sample_info(args):
 def go_assembly(args, dep):
     return gen_assembly_supervisor(
         args.fastq1, args.fastq2, args.unpaired, dep,args.no_trim, 
-	args.rnaspades, args.no_rmdup, args.subsample_size,
+    args.rnaspades, args.no_rmdup, args.subsample_size,
         args.cpu, args.subsample_seed, args.trinity_normalization,
         args.truncate, args.trimmomatic)
 
 def go_quality(args, dep):
     return gen_quality_supervisor(
         args.fastq1, args.fastq2, args.unpaired, dep, args.busco_ref,
-	args.cpu, args.cegma, args.transrate_ref)
+    args.cpu, args.cegma, args.transrate_ref)
 
 def go_annotation(args, dep):
     return gen_annotation_supervisor(
@@ -331,6 +346,7 @@ def run_full(args):
     global_setup(args)
     gen_sample_info(args)
     supers = []
+    deps = []
     assembly_super = go_assembly(args, [])
     supers.append(assembly_super)
     quality_super = go_quality(args, [assembly_super])
@@ -340,6 +356,22 @@ def run_full(args):
     expression_super = go_expression(args, [assembly_super])
     supers.append(expression_super)
     run_supers(args, supers)
+#try to allow assembly arg...
+#if args.assembly:
+#    cp = tf.cp_assembly_task(args.assembly, [])
+#    supers.append(cp)
+#    deps = [cp]
+#    else:
+#        assembly_super = go_assembly(args, [])
+#        supers.append(assembly_super)
+#        deps = [assembly_super]
+ #   quality_super = go_quality(args, deps)
+ #   supers.append(quality_super)
+ #   annotation_super = go_annotation(args, deps)
+ #   supers.append(annotation_super)
+ #   expression_super = go_expression(args, deps)
+ #   supers.append(expression_super)
+ #   run_supers(args, supers)
 
 
 def run_assembly(args):
@@ -348,6 +380,8 @@ def run_assembly(args):
     supers = []
     assembly_super = go_assembly(args, [])
     supers.append(assembly_super)
+    #quality_super = go_quality(args, [assembly_super]) # now we always run quality with assembly
+    #supers.append(quality_super)
     run_supers(args, supers)
 
 
@@ -383,6 +417,13 @@ def run_expression(args):
     expression_super = go_expression(args, [cp])
     supers.append(expression_super)
     run_supers(args, supers)
+
+
+def run_databases(args):
+    busco_opts = {'arthropoda': args.busco_arthopoda, 'metazoa': args.busco_metazoa, 'vertebrata': False,
+                  'eukaryota': False, 'fungi': False, 'bacteria': False,
+                  'plants': False}
+    db_install(args.nr, args.uniref90, not args.update, busco_opts)
 
 
 def run_supers(args, supers):
@@ -425,7 +466,7 @@ def build_log(args, task_status):
 if(__name__ == '__main__'):
     err_str = ('\n\nError : Unable to identify what tool should be executed. '
                'Valid arguments are "full", "assembly", "annotation", "quality" '
-	       'or "expression".')
+               'or "expression".')
     args = master_args()
     tool = args.tool_selector.lower()
     if(tool != 'a'):
@@ -449,6 +490,10 @@ if(__name__ == '__main__'):
             args = quality_args()
             args.tool_selector = 'quality'
             run_quality(args)
+        if(tool == 'databases'[:len(tool)]):
+            args = manage_database_args()
+            args.tool_selector = 'databases'
+            run_databases(args)
         #raise Exception(err_str)
     else:
         raise Exception(err_str)
