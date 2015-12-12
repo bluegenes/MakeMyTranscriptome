@@ -22,8 +22,11 @@ parser.add_option("-c", "--counts", "--inCounts", help = "name of the Input coun
 #parser.add_option("-f", "--fasta", "--fastaReference", help = "reference fasta file" , action="store", type="string", dest="fasta")
 parser.add_option("-g", "--gene-trans-map", "--geneTransMap", help = "reference gene to transcript map" , action="store", type="string", dest="geneTransMap")
 
-# eXpress counts files instead of bedtools
+# rsem, eXpress or salmon counts files instead of bedtools
 parser.add_option("-e", "--eXpress",action="store_true", help = "add this option if the files are from eXpress (false=default)", dest="eXpress", default=False)
+parser.add_option("-s", "--salmon",action="store_true", help = "add this option if the files are from salmon (false=default)", dest="salmon", default=False)
+parser.add_option("-k", "--kallisto",action="store_true", help = "add this option if the files are from kallisto (false=default)", dest="kallisto", default=False)
+parser.add_option("-r", "--rsem",action="store_true", help = "add this option if the files are from rsem (false=default)", dest="rsem", default=False)
 
 (opts, args) = parser.parse_args()
 ###############################
@@ -48,13 +51,54 @@ def countsFromBed(countFile, index, countDt):
 
 def countsFromExpress(countFile,index, countDt):
     with open(countFile, 'r') as f:
-        next(f) #has header 
+	next(f) #has header 
         for line in f: 
 	    line = line.strip().split('\t')	
 	    contig = line[1]
 	    entry = countDt.get(contig)
-            entry[index] = line[7] # EFFECTIVE counts are index 7 in express file
-            #entry[index] = line[6] # ESTIMATED counts are index 6 in express file
+	    entry[index] = line[7] # EFFECTIVE counts are index 7 in express file
+            #entry[index] = line[6] # ESTIMATED counts are index 6 in express file            
+            countDt[contig] = entry
+	f.close()
+    return countDt
+
+def countsFromSalmon(countFile, index, countDt):
+    with open(countFile, 'r') as f:
+        for line in f: 
+#  	    import pdb;pdb.set_trace()
+	    if not line.startswith('#'):
+	        line = line.strip().split('\t')	
+	        contig = line[0]
+	        entry = countDt.get(contig)
+                entry[index] = line[3] # want to use NumReads column for input to DESeq2
+#		entry[index] = line[2] # if want TPM output
+                countDt[contig] = entry
+	f.close()
+    return countDt
+
+def countsFromKallisto(countFile, index, countDt):
+    with open(countFile, 'r') as f:
+	next(f) #has header 
+        for line in f: 
+	    line = line.strip().split('\t')	
+	    contig = line[0]
+	    entry = countDt.get(contig)
+            entry[index] = line[3] # want to use est reads column for input to DESeq2
+#	    entry[index] = line[4] # if want TPM output
+            countDt[contig] = entry
+	f.close()
+    return countDt
+
+def countsFromRSEM(countFile, index, countDt):
+    with open(countFile, 'r') as f:
+	next(f) #has header 
+        for line in f: 
+	    line = line.strip().split('\t')	
+	    contig = line[0] #if isoforms output ... need to check if summing isoforms --> gene file output.
+	    entry = countDt.get(contig)
+            entry[index] = line[4] # want to use estimated counts column for input to DESeq2
+#	    entry[index] = line[5] # if want TPM output
+#	    entry[index] = line[6] # if want FPKM output
             countDt[contig] = entry
 	f.close()
     return countDt
@@ -81,8 +125,17 @@ i = 1 # now that gene is the 0th index of the dict, indexing from counts starts 
 for file in countFiles:
     if opts.eXpress:
         cD = countsFromExpress(file, i, contigD)
-        #countFileNames = [name.split('/')[-2] for name in countFiles] #if haven't pulled results.xprs out of it's well-named directory
-        countFileNames = [name.split('/')[-1] for name in countFiles]
+        countFileNames = [name.split('/')[-2] for name in countFiles] #if haven't pulled results.xprs out of it's well-named directory
+        #countFileNames = [name.split('/')[-1] for name in countFiles]
+    elif opts.salmon:
+    	cD = countsFromSalmon(file, i, contigD)
+        countFileNames = [name.split('/')[-2] for name in countFiles] #if haven't pulled quant.sf out of it's well-named directory
+    elif opts.kallisto:
+    	cD = countsFromKallisto(file, i, contigD)
+        countFileNames = [name.split('/')[-2] for name in countFiles] #if haven't pulled abundance.txt out of it's well-named directory
+    elif opts.rsem:
+    	cD = countsFromRSEM(file, i, contigD)
+        countFileNames = [name.split('/')[-2] for name in countFiles] #if haven't pulled samples.isoforms.results  out of it's well-named directory
     else:
         cD = countsFromBed(file, i, contigD)
 	countFileNames = [name.split('/')[-1] for name in countFiles]
@@ -107,9 +160,9 @@ outThreshTable = open(outName + '_threshold.countsTable', 'w')
 outGeneTable = open(outName + '_byGene.countsTable', 'w')
 
 #print header list
-outCountTable.write('Contig' +'\t' + '\t'.join(countFileNames) + '\n')
-outThreshTable.write('Contig'+ '\t' + '\t'.join(countFileNames) + '\n')
-outGeneTable.write('Contig' + '\t' + '\t'.join(countFileNames) + '\n')
+outCountTable.write('Contig' + '\t' 'Gene' + '\t' + '\t'.join(countFileNames) + '\n')
+outThreshTable.write('Contig'+ '\t' 'Gene' + '\t' + '\t'.join(countFileNames) + '\n')
+outGeneTable.write('Contig'  + '\t' + '\t'.join(countFileNames) + '\n')
 
 #write files
 # also output a GENE version? Collapse transcripts --> genes!  

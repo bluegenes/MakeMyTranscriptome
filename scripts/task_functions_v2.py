@@ -53,6 +53,8 @@ def GEN_PATH_DIR(): return os.path.join(PATH_ASSEMBLIES, NAME_OUT_DIR)
 
 def GEN_PATH_ASSEMBLY_FILES(): return os.path.join(GEN_PATH_DIR(), 'assembly_files')
 
+def GEN_PATH_QUALITY_FILES(): return os.path.join(GEN_PATH_DIR(), 'quality_files')
+
 def GEN_PATH_ANNOTATION_FILES(): return os.path.join(GEN_PATH_DIR(), 'annotation_files')
 
 def GEN_PATH_EXPRESSION_FILES(): return os.path.join(GEN_PATH_DIR(), 'expression_files')
@@ -75,7 +77,7 @@ def GEN_LOGS(x): return (os.path.join(GEN_PATH_LOGS(), x+'.out_log'),
 def build_dir_task(tasks):
     '''
     '''
-    trgs = [GEN_PATH_DIR(), GEN_PATH_ASSEMBLY_FILES(), GEN_PATH_ANNOTATION_FILES(),
+    trgs = [GEN_PATH_DIR(), GEN_PATH_ASSEMBLY_FILES(), GEN_PATH_QUALITY_FILES(), GEN_PATH_ANNOTATION_FILES(),
             GEN_PATH_EXPRESSION_FILES(), GEN_PATH_LOGS()]
     cmd = ' '.join(['mkdir -p {0!s};'.format(d) for d in trgs])
     return Task(command=cmd,dependencies=tasks,targets=trgs,stdout=os.devnull,stderr=os.devnull)
@@ -89,7 +91,7 @@ def cp_assembly_task(source, tasks):
             tasks - a list of tasks that this task is dependant on.
     '''
     trgs = [GEN_PATH_ASSEMBLY()]
-    cmd = 'cp {0!s} {1!s}'.format(source, trgs[0])
+    cmd = 'if [ ! -f "{1!s}" ]; then cp {0!s} {1!s}; fi'.format(source, trgs[0]) # only copy if file does not exist 
     name = 'setting_fasta'
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name)
 
@@ -276,9 +278,9 @@ def cegma_task(cpu_cap, tasks):
             cpu_cap - number of threads to be used by cegma
             tasks - a list of tasks that this task is dependant on (trinity_task)
     '''
-    trgs = ['{0!s}/{1!s}.completeness_report'.format(GEN_PATH_ASSEMBLY_FILES(),NAME_ASSEMBLY)]
+    trgs = ['{0!s}/{1!s}.completeness_report'.format(GEN_PATH_QUALITY_FILES(),NAME_ASSEMBLY)]
     cmd = '{0!s} -g {1!s} -v -o {3!s}/{2!s} -T {4!s}'.format(PATH_CEGMA,
-            GEN_PATH_ASSEMBLY(),NAME_ASSEMBLY,GEN_PATH_ASSEMBLY_FILES(),cpu_cap)
+            GEN_PATH_ASSEMBLY(),NAME_ASSEMBLY,GEN_PATH_QUALITY_FILES(),cpu_cap)
     name = 'cegma'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=cpu_cap,stdout=out,stderr=err)
@@ -291,25 +293,38 @@ def busco_task(reference_name, cpu_cap, tasks):
             cpu_cap - the cpu limit to be gicen to busco.
             tasks - a list of tasks that this task is dependant on.
     '''
-    trgs = ['{0!s}/run_busco_{1!s}'.format(GEN_PATH_ASSEMBLY_FILES(),reference_name)]
+    trgs = ['{0!s}/run_busco_{1!s}'.format(GEN_PATH_QUALITY_FILES(),reference_name)]
     cmd = ('cd {0!s}; {1!s} '
             '-o busco_{2!s} -in {3!s} -l {4!s}/{2!s} -m trans -f -c {5!s}'
-            ).format(GEN_PATH_ASSEMBLY_FILES(),PATH_BUSCO,reference_name,GEN_PATH_ASSEMBLY(),
+            ).format(GEN_PATH_QUALITY_FILES(),PATH_BUSCO,reference_name,GEN_PATH_ASSEMBLY(),
             PATH_BUSCO_REFERENCE,cpu_cap)
-    name = 'busco_'+reference_name
+    name = 'busco_'+ reference_name
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=cpu_cap,stdout=out,stderr=err)
 
 
+#def write_default_transrate_reads(lefts,rights,singles):
+#    trgs= [{0!s}/{1!s}.reads_for_transrate.txt]
+#    cmd=
+#    out, err = GEN_LOGS(name)
+#    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
+
+#def read_default_transrate_reads(lefts,rights,singles):
+#    trgs= []
+#    cmd= [{0!s}/{1!s}.reads_for_transrate.txt]
+#    out, err = GEN_LOGS(name)
+#    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
+
+
 def transrate_task(lefts, rights, singles, reference, cpu_cap, tasks):
     trgs = []
-    reference = '--reference ' + reference if(reference != '') else ''
     lefts = ','.join(lefts+singles)
     rights = ','.join(rights) 
     lefts = '--left '+lefts if(len(lefts) > 0) else ''
     rights = '--right '+rights if(len(rights) > 0) else ''
+    reference = '--reference ' + reference if(reference != '') else ''
     cmd = '{0!s} --assembly {1!s} {4!s} {5!s} --threads {2!s} --output {3!s}/transrate_output {6!s}'.format(
-           PATH_TRANSRATE, GEN_PATH_ASSEMBLY(), cpu_cap, GEN_PATH_ASSEMBLY_FILES(), lefts, rights, reference)
+           PATH_TRANSRATE, GEN_PATH_ASSEMBLY(), cpu_cap, GEN_PATH_QUALITY_FILES(), lefts, rights, reference)
     name = 'transrate'
     out, err = GEN_LOGS(name)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
@@ -320,7 +335,7 @@ def assembly_stats_task(tasks):
         Params :
             tasks - a list of tasks that this task is dependant on (trinity_task)
     '''
-    trgs = ['{0!s}/assembly_stats.json'.format(GEN_PATH_ASSEMBLY_FILES())]
+    trgs = ['{0!s}/assembly_stats.json'.format(GEN_PATH_QUALITY_FILES())]
     cmd = 'python {0!s}/assembly_stats.py {1!s}/{2!s}.fasta > {3!s}'.format(PATH_SCRIPTS,GEN_PATH_DIR(),NAME_ASSEMBLY,trgs[0])
     name = 'assembly_stats'
     out,err = GEN_LOGS(name)
@@ -624,19 +639,45 @@ def deseq2_task(counts_to_table_results,sample_info,basename,model,tasks):
 
 
 def build_salmon_task(cpu_cap,tasks):
-    trgs = []
-    cmd = '{0!s} index -t {1!s} -i {2!s}/{3!s}_salmon -p {4!s}'.format(PATH_SALMON,
-        GEN_PATH_ASSEMBLY(),GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY,cpu_cap)
+    trgs = ['{0!s}/{1!s}_salmon'.format(GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY)]
+    cmd = '{0!s} index -t {1!s} -i {2!s}/{3!s}_salmon -p {4!s} --type quasi'.format(PATH_SALMON,
+        GEN_PATH_ASSEMBLY(),GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY, cpu_cap)
     name = 'build_salmon'
+    out,err = GEN_LOGS(name)
+    return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err, cpu=cpu_cap)
+
+
+def salmon_gene_map_task(gene_trans_map,tasks):
+    '''    Defines gene_trans_map task. Uses NAME_ASSEMBLY, PATH_DIR, PATH_GENE_TRANS_MAP.
+        Params :
+            tasks - a list of tasks that this task is dependant on (trinity_task) 
+    '''
+    trgs = ['{0!s}/{1!s}.trans_gene_map'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
+#    cmd = '{0!s} {1!s}/{2!s}.fasta > {3!s}'.format(PATH_GENE_TRANS_MAP,GEN_PATH_DIR(),NAME_ASSEMBLY,trgs[0])
+    #cmd = 'awk \'{ print $2 "\t" $1}\' {0!s}'.format(gene_trans_map) 
+    #cmd =  'awk -F, "{print $2,$1}" OFS=\t {0!s} > {1!s}'.format(gene_trans_map, trgs[0]) 
+    cmd = 'join -t, -o 1.2,1.1 {0!s} {0!s} > {1!s}'.format(gene_trans_map, trgs[0]) 
+    name = 'trans_gene_map'
+    name = 'salmon_gene_map_task'
+    out,err = GEN_LOGS(name)
+    return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
+
+
+def salmon_task(index,left,right,out_name,gene_map,cpu_cap,tasks):
+    trgs = ['{0!s}/{1!s}/quant.sf'.format(GEN_PATH_EXPRESSION_FILES(),out_name)]
+    cmd = '{0!s} quant -i {1!s} -l IU -1 {2!s} -2 {3!s} -o {4!s}/{5!s} --geneMap {6!s} -p {7!s} --extraSensitive; cp ' \
+        '{4!s}/{5!s}/quant.sf {4!s}/{5!s}_quant.sf; cp {4!s}/{5!s}/quant.genes.sf {4!s}/{5!s}_quant.genes.sf'.format(
+	PATH_SALMON,index,left,right,GEN_PATH_EXPRESSION_FILES(),out_name,gene_map,cpu_cap)
+    name = 'salmon'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
 
-def salmon_task(index,left,right,out_name,gene_map,cpu_cap,tasks):
+def salmon_unpaired_task(index,unpaired,out_name,gene_map,cpu_cap,tasks):
     trgs = []
-    cmd = '{0!s} quant -i {1!s} -1 {2!s} -2 {3!s} -o {4!s}/{5!s} --geneMap {6!s} -l IU -p {7!s} --extraSensitive'.format(
-            PATH_SALMON,index,left,right,GEN_PATH_EXPRESSION_FILES(),out_name,gene_map,cpu_cap)
-    name = 'salmon'
+    cmd = '{0!s} quant -i {1!s} -l U -r {2!s} -o {3!s}/{4!s} --geneMap {5!s} -p {6!s} --extraSensitive'.format(
+            PATH_SALMON,index,unpaired,GEN_PATH_EXPRESSION_FILES(),out_name,gene_map,cpu_cap)
+    name = 'salmon_unpaired'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
@@ -694,7 +735,7 @@ def pfam_build_task(source, tasks, log_flag=True):
 def db2stitle_task(db, tasks, log_flag=True):
     base_db = os.path.basename(db)
     trgs = ['{0!s}/{1!s}.stitle'.format(PATH_DATABASES, base_db)]
-    cmd = 'python {0!s}/addStitleToBlastTab.py --fasta {1!s} > {2!s}'.format(
+    cmd = 'python {0!s}/fastaID2names --fasta {1!s} > {2!s}'.format(
            PATH_SCRIPTS, db, trgs[0])
     name = 'db2stitle_'+base_db
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)

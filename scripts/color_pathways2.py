@@ -16,9 +16,9 @@ psr.add_argument('--output',help='name of output folder', default = './', dest="
 # transcriptome KO (for just presence/absence)
 psr.add_argument('--transcriptomeKO', help='Transcriptome Kegg Orthology', dest='transKO')
 # upregulated KO
-psr.add_argument('--upReg', help='OPTIONAL: upregulated KO', nargs='?', default=None, dest= 'upKO') #os.devnull, dest= 'upKO')
+psr.add_argument('--upReg', help='OPTIONAL: upregulated KO', nargs='?', default=None, dest= 'upKO') 
 # downregulated KO
-psr.add_argument('--downReg', help='OPTIONAL: downregulated KO', nargs='?', default=None, dest= 'downKO') #os.devnull, dest= 'downKO')
+psr.add_argument('--downReg', help='OPTIONAL: downregulated KO', nargs='?', default=None, dest= 'downKO') 
 ##############################
 args = psr.parse_args()
 ##############################
@@ -55,8 +55,9 @@ if args.downKO != None:
     downKOSet = readKOFile(args.downKO, pathway)
     enhanceSet.update(downKOSet)
 
-non_de_list = [e for e in pathway.entries.values() if not len(set(e.name.split()).intersection(enhanceSet)) and e.type != 'map']
-notDE = set(non_de_list)
+notDE = set([e for e in pathway.orthologs if not len(set(e.name.split()).intersection(enhanceSet))])
+#non_de_list = [e for e in pathway.entries.values() if not len(set(e.name.split()).intersection(enhanceSet)) and e.type != 'map']
+#notDE = set(non_de_list)
 
 kgml_map = KGMLCanvas(pathway, show_maps=True)
 kgml_map.import_imagemap = True  # turn this off to allow all elements to go gray!
@@ -66,11 +67,12 @@ kgml_map.draw_relations = False
 kgml_map.show_compounds = False
 kgml_map.show_genes = False
 
-colorMapItems(notDE,'#D3D3D3', 1)
 os.chdir(args.outDir)
+
+colorMapItems(notDE,'#D3D3D3', 1)
+colorMapItems(knownKOSet,'#666666', 10)
 koInMap = open(args.path + '_KO.txt', 'w')
 
-colorMapItems(knownKOSet,'#666666', 10)
 for k in knownKOSet:
     koInMap.write(k.name + '\t' + 'present' + '\n')
 

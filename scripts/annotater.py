@@ -65,7 +65,7 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
             dmnd_task_insert(dmnd_xur90)
             expand = tf.blast_augment_task(tf.PATH_UNIREF90, dmnd_xur90.targets[0], [dmnd_xur90])
             task_insert(expand, 'ur90X')
-            dmnd_pur90 = tf.diamondP_task(tf.PATH_UNIREF90, 'blastp', cpumod(cpu, 2), dmnd_dependencies+[predict_orfs])
+            dmnd_pur90 = tf.diamondP_task(tf.PATH_UNIREF90, cpumod(cpu, 2), dmnd_dependencies+[predict_orfs])
             dmnd_task_insert(dmnd_pur90)
             expand = tf.blast_augment_task(tf.PATH_UNIREF90, dmnd_pur90.targets[0], [dmnd_pur90])
             task_insert(expand, 'ur90P')

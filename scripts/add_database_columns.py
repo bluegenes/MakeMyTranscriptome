@@ -18,6 +18,8 @@
 ###############################################################################
 ###############################################################################
 
+import re
+
 def get_conversion(key, conversion_dt):
     ''' Takes in a conversoin dictionary to convert from one database to another'''
     try:
