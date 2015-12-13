@@ -72,10 +72,12 @@ database_general.add_argument('--reinstall', help= 'download new version of all 
 database_general.add_argument('-m', '--metazoa', help = 'download metazoa BUSCO database',action='store_true',default=True)
 database_general.add_argument('-e', '--eukaryota', help = 'download eukaryote BUSCO database',action='store_true',default=False)
 database_general.add_argument('-v', '--vertebrata', help = 'download vertebrate BUSCO database',action='store_true',default=False)
-database_general.add_argument('--arthopoda', help = 'download arthropod BUSCO database',action='store_true',default=False)
+database_general.add_argument('--arthropoda', help = 'download arthropod BUSCO database',action='store_true',default=False)
 database_general.add_argument('-f', '--fungi', help = 'download fungi BUSCO database',action='store_true',default=False)
 database_general.add_argument('-b', '--bacteria', help = 'download bacteria BUSCO database',action='store_true',default=False)
 database_general.add_argument('-p', '--plants', help = 'download plant BUSCO database',action='store_true',default=False)
+database_general.add_argument('-getUniref90',help='Download Uniref-90.',action='store_true',default=False)
+database_general.add_argument('-buildBlastPlus',help='build blast+ databases.',action='store_true', default=False)
 
 
 subparsers = master_parser.add_subparsers(title='TOOLS', description='Tool Selector', help='Select an available module')
@@ -290,7 +292,7 @@ def go_manage_db(args, dep, log_files=True):
                   'fungi': args.fungi, 'bacteria': args.bacteria,
                   'plants': args.plants}
     busco_args = [k for k in busco_args if(busco_args[k])]
-    return tf.manage_db_task(args.reinstall, args.nr, args.uniref90, busco_args, int(round(args.cpu/4)), dep, log_files)
+    return tf.manage_db_task(args.reinstall, args.getNR, args.getUniref90, busco_args, int(round(args.cpu/4)), dep, log_files)
 
 #####################____Main_Modules____#####################
 def run_full(args):
@@ -378,7 +380,6 @@ def run_expression(args):
 
 
 def run_databases(args):
-    #note: metazoa will always be downloaded
     s = go_manage_db(args, [], False)
     s.run()
 

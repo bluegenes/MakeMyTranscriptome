@@ -25,13 +25,13 @@ busco_folder = os.path.join(PATH_DATABASES, 'busco') #this means we need to chan
 
 
 url_sprot = 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz'
-sprot_target = PATH_SWISS_PROT
+sprot_target = PATH_SWISS_PROT + '.gz'
 
 url_uniref90 = 'ftp://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref90/uniref90.fasta.gz'
-uniref90_target = PATH_UNIREF90
+uniref90_target = PATH_UNIREF90 + '.gz'
 
 url_nr = 'ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz'
-nr_target = PATH_NR
+nr_target = PATH_NR + '.gz'
 
 
 ####
@@ -98,7 +98,7 @@ def run_tasks(tasks, cpu=4):
         t.stdout = t.name+'.stdout'
         t.stderr = t.name+'.stderr'
 
-    s = Supervisor(tasks=tasks, force_run=True, log='database_supervisor_log', cpu=cpu)
+    s = Supervisor(tasks=tasks, force_run=False, log='database_supervisor_log', cpu=cpu)
     s.run()
     for t in tasks:
         os.remove(t.stdout)
@@ -168,11 +168,11 @@ def download_databases(log_table, nr_flag=False, uniref90_flag=False, file_check
     partial_get('', url_swiss_enzyme, swiss_enzyme_target)
     partial_get('', url_pfam_enzyme, pfam_enzyme_target)
     partial_get('', url_slim_generic, slim_generic_target)
-    partial_get('gz', url_sprot, sprot_target)
+    partial_get('', url_sprot, sprot_target)
     if(uniref90_flag):
-        partial_get('gz', url_uniref90, uniref90_target)
+        partial_get('', url_uniref90, uniref90_target)
     if(nr_flag):
-        partial_get('gz', url_nr, nr_target)
+        partial_get('', url_nr, nr_target)
     partial_get('gz', url_id_mapping, id_mapping_target)
     partial_get('gz', url_idmapping_selected, idmapping_selected_target)
     partial_get('gz', url_kog_functional, kog_functional_target)
@@ -199,6 +199,12 @@ def subset_dat(dat_file, key_file_dict, log_table):
         key = os.path.basename(key_file_dict[key])
         log_table[key] = date
     '''
+    flag = True
+    for k in key_file_dict:
+    	if(not os.path.isfile(key_file_dict[k])):
+	   flag = False
+    if(flag):
+        return log_table
     dat = open(dat_file)
     key_file = {key: open(key_file_dict[key], 'w') for key in key_file_dict}
     for line in dat:
@@ -267,7 +273,8 @@ if(__name__ == '__main__'):
     parser.add_argument('--buscos', help='a comma seperated list of busco files that need to be downloaded')
     parser.add_argument('--cpu', type=int)
     args = parser.parse_args()
-    args.buscos = args.buscos.split(',')
-    for b in args.buscos:
-        busco_flags[b] = True
+    if(args.buscos != None):
+    	args.buscos = args.buscos.split(',')
+    	for b in args.buscos:
+        	busco_flags[b] = True
     main(args.nr, args.uniref90, not args.hard, busco_flags, args.cpu)

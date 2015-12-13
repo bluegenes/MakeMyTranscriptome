@@ -702,7 +702,8 @@ def kallisto_task(index,out_name,left,right,tasks):
 
 def build_blast_task(fasta,out_path,dbtype,tasks,log_flag=True):
     trgs = []
-    cmd = 'makeblastdb -in {0!s} -dbtype {2!s} -out {1!s}'.format(fasta,out_path,dbtype)
+    title = os.path.basename(fasta).split('.gz')[0]
+    cmd = 'gunzip -c {0!s} | makeblastdb -in - -dbtype {2!s} -title {3!s} -out {1!s}'.format(fasta,out_path,dbtype,title)
     name = 'build_blast_'+os.path.basename(fasta)
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
@@ -735,7 +736,7 @@ def pfam_build_task(source, tasks, log_flag=True):
 def db2stitle_task(db, tasks, log_flag=True):
     base_db = os.path.basename(db)
     trgs = ['{0!s}/{1!s}.stitle'.format(PATH_DATABASES, base_db)]
-    cmd = 'python {0!s}/fastaID2names --fasta {1!s} > {2!s}'.format(
+    cmd = 'python {0!s}/fastaID2names.py --fasta {1!s} > {2!s}'.format(
            PATH_SCRIPTS, db, trgs[0])
     name = 'db2stitle_'+base_db
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
@@ -746,14 +747,14 @@ def manage_db_task(fresh, nr_flag, uniref90_flag, busco_flags, cpu_cap, tasks, l
     trgs = [PATH_DATABASES]
     cmd = 'python {0!s}/manage_databases.py'
     if(fresh):
-        cmd.append(' --hard')
+        cmd +=' --hard'
     if(nr_flag):
-        cmd.append(' --nr')
+        cmd+=' --nr'
     if(uniref90_flag):
-        cmd.append(' --uniref90')
+        cmd+=' --uniref90'
     if(len(busco_flags) != 0):
-        cmd.append(' --buscos ')
-        cmd.append(','.join(busco_flags))
+        cmd+=' --buscos '
+        cmd+=','.join(busco_flags)
     name = 'db_manage'
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
