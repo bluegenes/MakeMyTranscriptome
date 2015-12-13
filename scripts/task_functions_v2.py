@@ -745,7 +745,7 @@ def db2stitle_task(db, tasks, log_flag=True):
 
 def manage_db_task(fresh, nr_flag, uniref90_flag, busco_flags, cpu_cap, tasks, log_flag=True):
     trgs = [PATH_DATABASES]
-    cmd = 'python {0!s}/manage_databases.py'
+    cmd = 'python {0!s}/manage_database.py'.format(PATH_SCRIPTS)
     if(fresh):
         cmd +=' --hard'
     if(nr_flag):

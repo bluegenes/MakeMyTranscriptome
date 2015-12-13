@@ -77,6 +77,7 @@ database_general.add_argument('-f', '--fungi', help = 'download fungi BUSCO data
 database_general.add_argument('-b', '--bacteria', help = 'download bacteria BUSCO database',action='store_true',default=False)
 database_general.add_argument('-p', '--plants', help = 'download plant BUSCO database',action='store_true',default=False)
 database_general.add_argument('-getUniref90',help='Download Uniref-90.',action='store_true',default=False)
+database_general.add_argument('-getNR',help='Download NR. This may take a while.',action='store_true',default=False)
 database_general.add_argument('-buildBlastPlus',help='build blast+ databases.',action='store_true', default=False)
 
 
