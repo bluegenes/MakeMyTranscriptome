@@ -68,7 +68,7 @@ expression_general.add_argument('--model', help='An optional list of comma seper
 expression_general.add_argument('--csv', help='A CSV file specifying fastq input, basenames for DE, and factors for DE. See online documentation for details on formating the CSV file.',default=None)
 #database_general
 database_general = argparse.ArgumentParser(add_help=False)
-database_general.add_argument('--update', help= 'update databases (download new version of all databases)')
+database_general.add_argument('--reinstall', help= 'download new version of all databases')
 database_general.add_argument('-m', '--metazoa', help = 'download metazoa BUSCO database',action='store_true',default=True)
 database_general.add_argument('-e', '--eukaryota', help = 'download eukaryote BUSCO database',action='store_true',default=False)
 database_general.add_argument('-v', '--vertebrata', help = 'download vertebrate BUSCO database',action='store_true',default=False)
@@ -284,6 +284,13 @@ def go_expression(args, dep):
         args.fastq1, args.fastq2, args.paired_names, args.unpaired,
         args.unpaired_names, args.cpu, args.sample_info, args.model, dep)
 
+def go_manage_db(args, dep, log_files=True):
+    busco_args = {'arthropoda': args.arthropoda, 'metazoa': args.metazoa,
+                  'vertebrata': args.vertebrata, 'eukaryota': args.eukaryota, 
+                  'fungi': args.fungi, 'bacteria': args.bacteria,
+                  'plants': args.plants}
+    busco_args = [k for k in busco_args if(busco_args[k])]
+    return tf.manage_db_task(args.reinstall, args.nr, args.uniref90, busco_args, int(round(args.cpu/4)), dep, log_files)
 
 #####################____Main_Modules____#####################
 def run_full(args):
@@ -292,6 +299,8 @@ def run_full(args):
     gen_sample_info(args)
     supers = []
     deps = []
+    manage_db = go_manage_db(args, [])
+    supers.append(manage_db)
     assembly_super = go_assembly(args, [])
     supers.append(assembly_super)
     quality_super = go_quality(args, [assembly_super])
@@ -370,11 +379,8 @@ def run_expression(args):
 
 def run_databases(args):
     #note: metazoa will always be downloaded
-    busco_opts = {'arthropoda': args.arthopoda, 'metazoa': True, 'vertebrata': args.vertebrata,
-                  'eukaryota': args.eukaryota, 'fungi': args.fungi, 'bacteria': args.bacteria,
-                  'plants': args.plants}
-    db_install(args.nr, args.uniref90, not args.update, busco_opts)
-
+    s = go_manage_db(args, [], False)
+    s.run()
 
 def run_supers(args, supers):
     run_log = os.path.join(tf.GEN_PATH_DIR(), 'run.log')

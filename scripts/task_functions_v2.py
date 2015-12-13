@@ -740,3 +740,20 @@ def db2stitle_task(db, tasks, log_flag=True):
     name = 'db2stitle_'+base_db
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+
+def manage_db_task(fresh, nr_flag, uniref90_flag, busco_flags, cpu_cap, tasks, log_flag=True):
+    trgs = [PATH_DATABASES]
+    cmd = 'python {0!s}/manage_databases.py'
+    if(fresh):
+        cmd.append(' --hard')
+    if(nr_flag):
+        cmd.append(' --nr')
+    if(uniref90_flag):
+        cmd.append(' --uniref90')
+    if(len(busco_flags) != 0):
+        cmd.append(' --buscos ')
+        cmd.append(','.join(busco_flags))
+    name = 'db_manage'
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)

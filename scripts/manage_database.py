@@ -92,13 +92,13 @@ busco_flags = {'arthropoda': False, 'metazoa': False, 'vertebrata': False,
                'plants': False}
 
 
-def run_tasks(tasks):
+def run_tasks(tasks, cpu=4):
     for t in tasks:
         print(t.name)
         t.stdout = t.name+'.stdout'
         t.stderr = t.name+'.stderr'
 
-    s = Supervisor(tasks=tasks, force_run=True, log='database_supervisor_log')
+    s = Supervisor(tasks=tasks, force_run=True, log='database_supervisor_log', cpu=cpu)
     s.run()
     for t in tasks:
         os.remove(t.stdout)
@@ -227,7 +227,7 @@ def check_database_dir():
         write_log({})
 
 
-def main(nr_flag=False, uniref90_flag=False, file_check=True, busco_flags=busco_flags):
+def main(nr_flag=False, uniref90_flag=False, file_check=True, busco_flags=busco_flags, cpu=4):
     check_database_dir()
     log_table = read_log()
     log_table = download_databases(log_table, nr_flag, uniref90_flag, file_check, busco_flags)
@@ -255,7 +255,7 @@ def main(nr_flag=False, uniref90_flag=False, file_check=True, busco_flags=busco_
         tasks.append(nr_table_task)
     pfam_task = pfam_build_task(pfam_db_target, [], False)
     tasks.append(pfam_task)
-    run_tasks(tasks)
+    run_tasks(tasks, 4)
     write_log(log_table)
 
 
@@ -264,5 +264,10 @@ if(__name__ == '__main__'):
     parser.add_argument('--hard', action='store_true')
     parser.add_argument('--uniref90', action='store_true')
     parser.add_argument('--nr', action='store_true')
+    parser.add_argument('--buscos', help='a comma seperated list of busco files that need to be downloaded')
+    parser.add_argument('--cpu', type=int)
     args = parser.parse_args()
-    main(args.nr, args.uniref90, not args.hard)
+    args.buscos = args.buscos.split(',')
+    for b in args.buscos:
+        busco_flags[b] = True
+    main(args.nr, args.uniref90, not args.hard, busco_flags, args.cpu)
