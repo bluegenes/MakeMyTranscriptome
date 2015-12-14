@@ -709,7 +709,7 @@ def build_blast_task(fasta,out_path,dbtype,tasks,log_flag=True):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def build_diaimond_task(fasta,out_path,tasks,log_flag=True):
+def build_diamond_task(fasta,out_path,tasks,log_flag=True):
     trgs = [out_path+'.dmnd']
     cmd = '{0!s} makedb --in {1!s} --db {2!s}'.format(PATH_DIAMOND, fasta, out_path)
     name = 'build_diamond_'+os.path.basename(fasta)
@@ -743,7 +743,7 @@ def db2stitle_task(db, tasks, log_flag=True):
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
 
 
-def manage_db_task(fresh, nr_flag, uniref90_flag, busco_flags, cpu_cap, tasks, log_flag=True):
+def manage_db_task(fresh, nr_flag, uniref90_flag, busco_flags, blastplus_flag, cpu_cap, tasks, log_flag=True):
     trgs = [PATH_DATABASES]
     cmd = 'python {0!s}/manage_database.py'.format(PATH_SCRIPTS)
     if(fresh):
@@ -755,6 +755,8 @@ def manage_db_task(fresh, nr_flag, uniref90_flag, busco_flags, cpu_cap, tasks, l
     if(len(busco_flags) != 0):
         cmd+=' --buscos '
         cmd+=','.join(busco_flags)
+    if blastplus_flag:
+        cmd+= ' --buildBlastPlus'
     name = 'db_manage'
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
