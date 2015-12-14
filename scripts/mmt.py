@@ -82,7 +82,7 @@ database_selector.add_argument('-nr',help='Use this flag to enable the NR (non-r
 #DATABASES ARGS
 database_input = argparse.ArgumentParser(add_help=False)
 database_input.add_argument('--reinstall', help= 'download new version of all databases', default=False)
-database_input.add_argument('--cpu', help= 'cpu cap for database downloads & indexing', default=False)
+database_input.add_argument('--cpu', help= 'cpu cap for database downloads & indexing', default=4, type=int)
 
 ###################################
 subparsers = master_parser.add_subparsers(title='TOOLS', description='Tool Selector', help='Select an available module')
