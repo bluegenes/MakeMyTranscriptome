@@ -58,8 +58,6 @@ annotation_input.add_argument('-rnammer',action='store_true',help='Use this flag
 quality_input = argparse.ArgumentParser(add_help=False)
 quality_input.add_argument('-cegma',help='Use this flag to run cegma as part of the annotation pipeline. Cegma is an old tool for assesing the quality of assemblies. Normal behavior of the pipeline is to use busco for assesing assemblies. Using this flag will run cegma in addition to Busco.',action='store_true')
 quality_input.add_argument('--transrate_ref',help='A reference that transrate will use to evaluate the quality of your assembly.',default='')
-#replace this arg with the database_general args?
-#quality_input.add_argument('--busco_ref',help='Set the reference that busco will use for analysis',default='metazoa')
 
 #EXPRESSION ARGS 
 expression_input = argparse.ArgumentParser(add_help=False)
@@ -68,16 +66,18 @@ expression_input.add_argument('--model', help='An optional list of comma seperat
 #DATABASE SELECTOR ARGS 
 database_selector = argparse.ArgumentParser(add_help=False)
 #need to add no-metazoa arg???? so can turn off busco-metazoa?
-database_selector.add_argument('-m', '--metazoa', help = 'download metazoa BUSCO database',action='store_true',default=True)
-database_selector.add_argument('-e', '--eukaryota', help = 'download eukaryote BUSCO database',action='store_true',default=False)
-database_selector.add_argument('-v', '--vertebrata', help = 'download vertebrate BUSCO database',action='store_true',default=False)
-database_selector.add_argument('--arthropoda', help = 'download arthropod BUSCO database',action='store_true',default=False)
-database_selector.add_argument('-f', '--fungi', help = 'download fungi BUSCO database',action='store_true',default=False)
-database_selector.add_argument('-b', '--bacteria', help = 'download bacteria BUSCO database',action='store_true',default=False)
-database_selector.add_argument('-p', '--plants', help = 'download plant BUSCO database',action='store_true',default=False)
-database_selector.add_argument('-blastplus',action='store_true',help='Use the blast+ tool suite instead of diamond to align your transcripts to the references.')
-database_selector.add_argument('-uniref90',help='Use this flag to enable the uniref-90 blast runs as part of the annotation pipeline.',action='store_true')
-database_selector.add_argument('-nr',help='Use this flag to enable the NR (non-redundant protein database) blast runs as part of the annotation pipeline. This could take a very long time to complete.',action='store_true')
+database_selector.add_argument('-m', '--metazoa', help = 'use metazoa BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=True)
+database_selector.add_argument('-e', '--eukaryota', help = 'use eukaryote BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
+database_selector.add_argument('-v', '--vertebrata', help = 'use vertebrate BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
+database_selector.add_argument('--arthropoda', help = 'use arthropod BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
+database_selector.add_argument('-f', '--fungi', help = 'use fungi BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
+database_selector.add_argument('-b', '--bacteria', help = 'use bacteria BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
+database_selector.add_argument('-p', '--plants', help = 'use plant BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
+
+annot_database_selector = argparse.ArgumentParser(add_help=False)
+annot_database_selector.add_argument('-blastplus',action='store_true',help='Use the blast+ tool suite instead of diamond to align your transcripts to the references. If used with "databases" tool, download this database.')
+annot_database_selector.add_argument('-uniref90',help='Use this flag to enable the uniref-90 diamond-blast runs as part of the annotation pipeline. If used with "databases" tool, download this database.',action='store_true')
+annot_database_selector.add_argument('-nr',help='Use this flag to enable the NR (non-redundant protein database) diamond-blast runs as part of the annotation pipeline. If used with "databases" tool, download this database. FYI, this takes a while.',action='store_true')
 
 #DATABASES ARGS
 database_input = argparse.ArgumentParser(add_help=False)
@@ -90,10 +90,10 @@ subparsers = master_parser.add_subparsers(title='TOOLS', description='Tool Selec
 full_parser = subparsers.add_parser('full', parents=[common_parser, csv_input_parser, read_input_parser, assembly_input_parser, assembler_input, annotation_input, expression_input, quality_input, database_selector], description= "Selected_tool : Full. Executing this tool will run the entire transcriptomics pipeline. This tool requires a specially formatted CSV file to describe the input. Please see the online documentation to learn how to format these files.", add_help=True)
 full_parser.set_defaults(which='full')
 
-assembly_parser = subparsers.add_parser('assembly', parents=[common_parser, csv_input_parser, read_input_parser, assembler_input, quality_input], description='Selected_tool : Assembler. Executing this tool will  clean all provided reads and assemble them.', add_help=True)
+assembly_parser = subparsers.add_parser('assembly', parents=[common_parser, csv_input_parser, read_input_parser, assembler_input], description='Selected_tool : Assembler. Executing this tool will  clean all provided reads and assemble them.', add_help=True)
 assembly_parser.set_defaults(which='assembly')
 
-annotation_parser = subparsers.add_parser("annotation", parents=[common_parser, assembly_input_parser, annotation_input, database_selector], description='Selected_tool : Annotation. Executing this tool will run asssembly quality assesment along with a series of tools designing to provide information about the assembled transcripts.', add_help=True)
+annotation_parser = subparsers.add_parser("annotation", parents=[common_parser, assembly_input_parser, annotation_input, annot_database_selector], description='Selected_tool : Annotation. Executing this tool will run asssembly quality assesment along with a series of tools designing to provide information about the assembled transcripts.', add_help=True)
 annotation_parser.set_defaults(which='annotation')
 
 quality_parser = subparsers.add_parser("quality", parents=[common_parser, csv_input_parser, read_input_parser, assembly_input_parser, quality_input], description='Selected_tool : Quality. Executing this tool will perform a quality assessment of an existing assembly.', add_help=True)
@@ -102,7 +102,7 @@ quality_parser.set_defaults(which='quality')
 expression_parser = subparsers.add_parser("expression", parents=[common_parser, csv_input_parser, expression_input], description='Selected_tool : Expression. Executing this tool will run a series of differential expression analyses and sumarize the output.',add_help=True)
 expression_parser.set_defaults(which='expression')
 
-database_parser = subparsers.add_parser('databases', parents=[database_selector, database_input], description='Selected_tool : Databases. Executing this tool will check that all annotation databases are present and download if necessary. Optional: download new versions of all databases', add_help=True)
+database_parser = subparsers.add_parser('databases', parents=[database_selector, annot_database_selector, database_input], description='Selected_tool : Databases. Executing this tool will check that all annotation databases are present and download if necessary. Optional: download new versions of all databases', add_help=True)
 database_parser.set_defaults(which='databases')
 
 args =  master_parser.parse_args()
