@@ -253,19 +253,21 @@ def main(nr_flag=False, uniref90_flag=False, file_check=True, busco_flags=busco_
     swissprot_table_task = db2stitle_task(sprot_target, [], False)
     tasks.append(swissprot_table_task)
     if(uniref90_flag and os.path.exists(uniref90_target)):
-        uniref90_task = build_blast_task(uniref90_target, uniref90_target, 'prot', [], False)
-        tasks.append(uniref90_flag)
         uniref90_diamond = build_diamond_task(uniref90_target, uniref90_target, [], False)
         tasks.append(uniref90_diamond)
         uniref90_table_task = db2stitle_task(uniref90_target, [], False)
         tasks.append(uniref90_table_task)
+        if blastplus:
+  	    uniref90_task = build_blast_task(uniref90_target, uniref90_target, 'prot', [], False)
+            tasks.append(uniref90_task)
     if(nr_flag and os.path.exists(nr_target)):
-        nr_task = build_blast_task(nr_target, nr_target, 'prot', [], False)
-        tasks.append(nr_task)
         nr_diamond = build_diamond_task(nr_target, nr_target, [], False)
         tasks.append(nr_diamond)
-        nr_table_task = db2stitle_task(nr_target, [], False)
+	nr_table_task = db2stitle_task(nr_target, [], False)
         tasks.append(nr_table_task)
+        if blastplus:
+	    nr_task = build_blast_task(nr_target, nr_target, 'prot', [], False)
+	    tasks.append(nr_task)
     pfam_task = pfam_build_task(pfam_db_target, [], False)
     tasks.append(pfam_task)
     run_tasks(tasks, 4)
@@ -274,9 +276,9 @@ def main(nr_flag=False, uniref90_flag=False, file_check=True, busco_flags=busco_
 
 if(__name__ == '__main__'):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--hard', action='store_true')
-    parser.add_argument('--uniref90', action='store_true')
-    parser.add_argument('--nr', action='store_true')
+    parser.add_argument('--hard', action='store_true', default=False)
+    parser.add_argument('--uniref90', action='store_true', default=False)
+    parser.add_argument('--nr', action='store_true', default=False)
     parser.add_argument('--buscos', help='a comma seperated list of busco files that need to be downloaded')
     parser.add_argument('--cpu', type=int)
     parser.add_argument('--buildBlastPlus', action='store_true', default=False)
@@ -284,5 +286,5 @@ if(__name__ == '__main__'):
     if(args.buscos != None):
     	args.buscos = args.buscos.split(',')
     	for b in args.buscos:
-        	busco_flags[b] = True
+            busco_flags[b] = True
     main(args.nr, args.uniref90, not args.hard, busco_flags, args.buildBlastPlus, args.cpu)
