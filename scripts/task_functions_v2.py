@@ -712,6 +712,7 @@ def kallisto_task(index,out_name,left,right,tasks):
 
 def build_blast_task(fasta,out_path,dbtype,tasks,log_flag=True):
     trgs = []
+    #title doesn't seem to change the out name .. it's still xx.gz.psq, etc
     title = os.path.basename(fasta).split('.gz')[0]
     cmd = 'gunzip -c {0!s} | makeblastdb -in - -dbtype {2!s} -title {3!s} -out {1!s}'.format(fasta,out_path,dbtype,title)
     name = 'build_blast_'+os.path.basename(fasta)
@@ -720,7 +721,9 @@ def build_blast_task(fasta,out_path,dbtype,tasks,log_flag=True):
 
 
 def build_diamond_task(fasta,out_path,tasks,log_flag=True):
-    trgs = [out_path+'.dmnd']
+#    trgs = [out_path+'.dmnd']
+    trgs = ['{0!s}'.format(out_path +'.dmnd')] #might need this --> need to see if can find the .gz.dmnd database...
+    title = os.path.basename(fasta).split('.gz')[0]
     cmd = '{0!s} makedb --in {1!s} --db {2!s}'.format(PATH_DIAMOND, fasta, out_path)
     name = 'build_diamond_'+os.path.basename(fasta)
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)

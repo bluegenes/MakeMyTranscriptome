@@ -270,7 +270,7 @@ def main(nr_flag=False, uniref90_flag=False, file_check=True, busco_flags=busco_
 	    tasks.append(nr_task)
     pfam_task = pfam_build_task(pfam_db_target, [], False)
     tasks.append(pfam_task)
-    run_tasks(tasks, cpu)
+    run_tasks(tasks, cpu=4)
     write_log(log_table)
 
 
