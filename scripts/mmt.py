@@ -320,6 +320,7 @@ def run_full(args):
     supers.append(quality_super)
     annotation_super = go_annotation(args, [assembly_super])
     supers.append(annotation_super)
+#check for csv here --> only add expression if we have csv!
     expression_super = go_expression(args, [assembly_super])
     supers.append(expression_super)
     run_supers(args, supers)
@@ -347,8 +348,6 @@ def run_assembly(args):
     supers = []
     assembly_super = go_assembly(args, [])
     supers.append(assembly_super)
-    #quality_super = go_quality(args, [assembly_super]) # now we always run quality with assembly
-    #supers.append(quality_super)
     run_supers(args, supers)
 
 
@@ -356,9 +355,12 @@ def run_quality(args):
     check_quality_args(args)
     global_setup(args)
     supers = []
-    cp = tf.cp_assembly_task(args.assembly, [])
-    supers.append(cp)
-    quality_super = go_quality(args, [cp])
+    deps = []
+    if not os.path.exists(args.assembly):
+        cp = tf.cp_assembly_task(args.assembly, [])
+        supers.append(cp)
+        deps = [cp] 
+    quality_super = go_quality(args, deps)
     supers.append(quality_super)
     run_supers(args, supers)
 
@@ -368,7 +370,6 @@ def run_annotation(args):
     global_setup(args)
     supers = []
     deps = []
-    #if assembly file does not exist:
     if not os.path.exists(args.assembly):
         cp = tf.cp_assembly_task(args.assembly, [])
         supers.append(cp)
@@ -383,9 +384,12 @@ def run_expression(args):
     global_setup(args)
     gen_sample_info(args)
     supers = []
-    cp = tf.cp_assembly_task(args.assembly, [])
-    supers.append(cp)
-    expression_super = go_expression(args, [cp])
+    deps = []
+    if not os.path.exists(args.assembly):
+        cp = tf.cp_assembly_task(args.assembly, [])
+        supers.append(cp)
+        deps = [cp]
+    expression_super = go_expression(args, deps)
     supers.append(expression_super)
     run_supers(args, supers)
 
