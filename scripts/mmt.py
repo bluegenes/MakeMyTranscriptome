@@ -28,77 +28,81 @@ master_parser = argparse.ArgumentParser(description=('Description: MMT is a powe
         'individually provided appropriate input.'))
 
 #####################____Arguments____#####################
-#assembly_specific
-assembly_specific = argparse.ArgumentParser(add_help=False)
-assembly_specific.add_argument('-u','--unpaired',help='A comma seperated list of unpaired fastq files.')
-assembly_specific.add_argument('-1','--fastq1',help='A comma seperated list of fastq files. Each file should be paired with the same indexed file in fastq2.')
-assembly_specific.add_argument('-2','--fastq2',help='A comma seperated list of fastq files. Each file should be paired with the same indexed file in fastq1.')
-#assembly_general
-assembly_general = argparse.ArgumentParser(add_help=False)
-assembly_general.add_argument('-rnaspades',help='Use this flag to specify that assembly should be performed by rnaSPAdes rather than the default Trinity.',action='store_true')
-assembly_general.add_argument('-trinity_normalization',action='store_true',help='Use this flag to use the trinity normalization option')
-assembly_general.add_argument('-no_rmdup',help='Use thie flag to disable the removing duplicates portion of the pre-assembly read cleaning.',action='store_true')
-assembly_general.add_argument('-no_trim',help='Use this flag to disable all trimming portions of pre-assembly read cleaning. Duplicate and low quality reads will not be removed. Subsampling will still be executed.',action='store_true')
-assembly_general.add_argument('-trimmomatic',help='Use trimmomatic instead of prinseq to trime reads',action='store_true')
-assembly_general.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The default value is 50.', default=50,type=float)
-assembly_general.add_argument('--subsample_seed',help='A seed used to initialize the random number generator used during random sampling.')
-assembly_general.add_argument('--truncate',help='snip reads down to this size if longer than this size. Default is no truncations.',type=int,default=-1)
-#annotation_specific
-annotation_specific = argparse.ArgumentParser(add_help=False)
-annotation_specific.add_argument('-a','--assembly',help='A fasta transcriptome assembly that will be used for computing expression levels.', required=True)
-#annotation_general
-annotation_general = argparse.ArgumentParser(add_help=False)
-annotation_general.add_argument('-blastplus',action='store_true',help='Use the blast+ tool suite instead of diamond to align your transcripts to the references.')
-annotation_general.add_argument('-uniref90',help='Use this flag to enable the uniref-90 blast runs as part of the annotation pipeline.',action='store_true')
-annotation_general.add_argument('-nr',help='Use this flag to enable the NR (non-redundant protein database) blast runs as part of the annotation pipeline. This could take a very long time to complete.',action='store_true')
-annotation_general.add_argument('-signalp',action='store_true',help='Use this flag to execute signalP during annotation. Only use if you have installed signalP.')
-annotation_general.add_argument('-tmhmm',action='store_true',help='Use this flag to execute tmhmm during annotation. Only use if you have installed tmhmm.')
-annotation_general.add_argument('-rnammer',action='store_true',help='Use this flag to execute rnammer during annotation. Only use if you have installed rnammer.')
-#quality_specific
-quality_specific = argparse.ArgumentParser(add_help=False)
-quality_specific.add_argument('-a','--assembly',help='A fasta transcriptome assembly that needs to be annotated.', required=True)
-#quality_general
-quality_general = argparse.ArgumentParser(add_help=False)
-quality_general.add_argument('-cegma',help='Use this flag to run cegma as part of the annotation pipeline. Cegma is an old tool for assesing the quality of assemblies. Normal behavior of the pipeline is to use busco for assesing assemblies. Using this flag will run cegma in addition to Busco.',action='store_true')
-quality_general.add_argument('--busco_ref',help='Set the reference that busco will use for analysis',default='metazoa')
-quality_general.add_argument('--transrate_ref',help='A reference that transrate will use to evaluate the quality of your assembly.',default='')
-#expression_general
-expression_general = argparse.ArgumentParser(add_help=False)
-expression_general.add_argument('--model', help='An optional list of comma seperated values used to run differential expression. This is particularly useful for refining Differential Expression runs as it allow you to use the same input CSV file and perform new comparisons.')
-expression_general.add_argument('--csv', help='A CSV file specifying fastq input, basenames for DE, and factors for DE. See online documentation for details on formating the CSV file.',default=None)
-#database_general
-database_general = argparse.ArgumentParser(add_help=False)
-database_general.add_argument('--reinstall', help= 'download new version of all databases')
-database_general.add_argument('-m', '--metazoa', help = 'download metazoa BUSCO database',action='store_true',default=True)
-database_general.add_argument('-e', '--eukaryota', help = 'download eukaryote BUSCO database',action='store_true',default=False)
-database_general.add_argument('-v', '--vertebrata', help = 'download vertebrate BUSCO database',action='store_true',default=False)
-database_general.add_argument('--arthropoda', help = 'download arthropod BUSCO database',action='store_true',default=False)
-database_general.add_argument('-f', '--fungi', help = 'download fungi BUSCO database',action='store_true',default=False)
-database_general.add_argument('-b', '--bacteria', help = 'download bacteria BUSCO database',action='store_true',default=False)
-database_general.add_argument('-p', '--plants', help = 'download plant BUSCO database',action='store_true',default=False)
-database_general.add_argument('-getUniref90',help='Download Uniref-90.',action='store_true',default=False)
-database_general.add_argument('-getNR',help='Download NR. This may take a while.',action='store_true',default=False)
-database_general.add_argument('-buildBlastPlus',help='build blast+ databases.',action='store_true', default=False)
+# support assembly input
+assembly_input_parser = argparse.ArgumentParser(add_help=False)
+assembly_input_parser.add_argument('-a','--assembly',help='A fasta transcriptome assembly that needs to be annotated.', required=True)
+# support read input 
+read_input_parser = argparse.ArgumentParser(add_help=False)
+read_input_parser.add_argument('-u','--unpaired',help='A comma seperated list of unpaired fastq files.')
+read_input_parser.add_argument('-1','--fastq1',help='A comma seperated list of fastq files. Each file should be paired with the same indexed file in fastq2.')
+read_input_parser.add_argument('-2','--fastq2',help='A comma seperated list of fastq files. Each file should be paired with the same indexed file in fastq1.')
+# support csv input
+csv_input_parser = argparse.ArgumentParser(add_help=False)
+csv_input_parser.add_argument('--csv', help='A CSV file specifying fastq input, basenames for DE, and factors for DE. See online documentation for details on formating the CSV file.',default=None)
+#ASSEMBLER ARGS
+assembler_input = argparse.ArgumentParser(add_help=False)
+assembler_input.add_argument('-rnaspades',help='Use this flag to specify that assembly should be performed by rnaSPAdes rather than the default Trinity.',action='store_true')
+assembler_input.add_argument('-trinity_normalization',action='store_true',help='Use this flag to use the trinity normalization option')
+assembler_input.add_argument('-no_rmdup',help='Use thie flag to disable the removing duplicates portion of the pre-assembly read cleaning.',action='store_true')
+assembler_input.add_argument('-no_trim',help='Use this flag to disable all trimming portions of pre-assembly read cleaning. Duplicate and low quality reads will not be removed. Subsampling will still be executed.',action='store_true')
+assembler_input.add_argument('-trimmomatic',help='Use trimmomatic instead of prinseq to trime reads',action='store_true')
+assembler_input.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The default value is 50.', default=50,type=float)
+assembler_input.add_argument('--subsample_seed',help='A seed used to initialize the random number generator used during random sampling.')
+assembler_input.add_argument('--truncate',help='snip reads down to this size if longer than this size. Default is no truncations.',type=int,default=-1)
+#ANNOTATION ARGS
+annotation_input = argparse.ArgumentParser(add_help=False)
+annotation_input.add_argument('-signalp',action='store_true',help='Use this flag to execute signalP during annotation. Only use if you have installed signalP.')
+annotation_input.add_argument('-tmhmm',action='store_true',help='Use this flag to execute tmhmm during annotation. Only use if you have installed tmhmm.')
+annotation_input.add_argument('-rnammer',action='store_true',help='Use this flag to execute rnammer during annotation. Only use if you have installed rnammer.')
+#QUALITY ARGS
+quality_input = argparse.ArgumentParser(add_help=False)
+quality_input.add_argument('-cegma',help='Use this flag to run cegma as part of the annotation pipeline. Cegma is an old tool for assesing the quality of assemblies. Normal behavior of the pipeline is to use busco for assesing assemblies. Using this flag will run cegma in addition to Busco.',action='store_true')
+quality_input.add_argument('--transrate_ref',help='A reference that transrate will use to evaluate the quality of your assembly.',default='')
+#replace this arg with the database_general args?
+#quality_input.add_argument('--busco_ref',help='Set the reference that busco will use for analysis',default='metazoa')
 
+#EXPRESSION ARGS 
+expression_input = argparse.ArgumentParser(add_help=False)
+expression_input.add_argument('--model', help='An optional list of comma seperated values used to run differential expression. This is particularly useful for refining Differential Expression runs as it allow you to use the same input CSV file and perform new comparisons.')
 
+#DATABASE SELECTOR ARGS 
+database_selector = argparse.ArgumentParser(add_help=False)
+#need to add no-metazoa arg???? so can turn off busco-metazoa?
+database_selector.add_argument('-m', '--metazoa', help = 'download metazoa BUSCO database',action='store_true',default=True)
+database_selector.add_argument('-e', '--eukaryota', help = 'download eukaryote BUSCO database',action='store_true',default=False)
+database_selector.add_argument('-v', '--vertebrata', help = 'download vertebrate BUSCO database',action='store_true',default=False)
+database_selector.add_argument('--arthropoda', help = 'download arthropod BUSCO database',action='store_true',default=False)
+database_selector.add_argument('-f', '--fungi', help = 'download fungi BUSCO database',action='store_true',default=False)
+database_selector.add_argument('-b', '--bacteria', help = 'download bacteria BUSCO database',action='store_true',default=False)
+database_selector.add_argument('-p', '--plants', help = 'download plant BUSCO database',action='store_true',default=False)
+database_selector.add_argument('-blastplus',action='store_true',help='Use the blast+ tool suite instead of diamond to align your transcripts to the references.')
+database_selector.add_argument('-uniref90',help='Use this flag to enable the uniref-90 blast runs as part of the annotation pipeline.',action='store_true')
+database_selector.add_argument('-nr',help='Use this flag to enable the NR (non-redundant protein database) blast runs as part of the annotation pipeline. This could take a very long time to complete.',action='store_true')
+
+#DATABASES ARGS
+database_input = argparse.ArgumentParser(add_help=False)
+database_input.add_argument('--reinstall', help= 'download new version of all databases', default=False)
+database_input.add_argument('--cpu', help= 'cpu cap for database downloads & indexing', default=False)
+
+###################################
 subparsers = master_parser.add_subparsers(title='TOOLS', description='Tool Selector', help='Select an available module')
 
-full_parser = subparsers.add_parser('full', parents=[common_parser, assembly_general, annotation_general, expression_general, quality_general, database_general], description=     "Selected_tool : Full. Executing this tool will run the entire transcriptomics pipeline. This tool requires a specially formatted CSV file to describe the input. Please see the   online documentation to learn how to format these files.", add_help=True)
+full_parser = subparsers.add_parser('full', parents=[common_parser, csv_input_parser, read_input_parser, assembly_input_parser, assembler_input, annotation_input, expression_input, quality_input, database_selector], description= "Selected_tool : Full. Executing this tool will run the entire transcriptomics pipeline. This tool requires a specially formatted CSV file to describe the input. Please see the online documentation to learn how to format these files.", add_help=True)
 full_parser.set_defaults(which='full')
 
-assembly_parser = subparsers.add_parser('assembly', parents=[common_parser,assembly_specific, assembly_general], description='Selected_tool : Assembler. Executing this tool will  clean all provided reads and assemble them.',  add_help=True)
+assembly_parser = subparsers.add_parser('assembly', parents=[common_parser, csv_input_parser, read_input_parser, assembler_input, quality_input], description='Selected_tool : Assembler. Executing this tool will  clean all provided reads and assemble them.', add_help=True)
 assembly_parser.set_defaults(which='assembly')
 
-annotation_parser = subparsers.add_parser("annotation", parents=[common_parser, annotation_specific, annotation_general], description='Selected_tool : Annotation. Executing this  tool will run asssembly quality assesment along with a series of tools designing to provide information about the assembled transcripts.', add_help=True)
+annotation_parser = subparsers.add_parser("annotation", parents=[common_parser, assembly_input_parser, annotation_input, database_selector], description='Selected_tool : Annotation. Executing this tool will run asssembly quality assesment along with a series of tools designing to provide information about the assembled transcripts.', add_help=True)
 annotation_parser.set_defaults(which='annotation')
 
-quality_parser = subparsers.add_parser("quality", parents=[common_parser, quality_general], description='Selected_tool : Quality. Executing this tool will perform a quality       assessment of an existing assembly.', add_help=True)
+quality_parser = subparsers.add_parser("quality", parents=[common_parser, csv_input_parser, read_input_parser, assembly_input_parser, quality_input], description='Selected_tool : Quality. Executing this tool will perform a quality assessment of an existing assembly.', add_help=True)
 quality_parser.set_defaults(which='quality')
 
-expression_parser = subparsers.add_parser("expression", parents=[common_parser, expression_general], description='Selected_tool : Expression. Executing this tool will run a       series of differential expression analyses and sumarize the output.',add_help=True)
+expression_parser = subparsers.add_parser("expression", parents=[common_parser, csv_input_parser, expression_input], description='Selected_tool : Expression. Executing this tool will run a series of differential expression analyses and sumarize the output.',add_help=True)
 expression_parser.set_defaults(which='expression')
 
-database_parser = subparsers.add_parser('databases', parents=[common_parser, database_general], description='Selected_tool : Annotation. Executing this tool will check that all   annotation databases are present and download if necessary. Optional: download new versions of all databases', add_help=True)
+database_parser = subparsers.add_parser('databases', parents=[database_selector, database_input], description='Selected_tool : Databases. Executing this tool will check that all annotation databases are present and download if necessary. Optional: download new versions of all databases', add_help=True)
 database_parser.set_defaults(which='databases')
 
 args =  master_parser.parse_args()
@@ -137,6 +141,7 @@ def check_full_args(args):
         args.out_name = args.out_name if(args.out_name!=None) else 'test_v2'
         args.csv = tf.PATH_SCRIPTS+'/test_data/sample_info2.csv'
     if(args.csv==None):
+        #JUST DON'T RUN EXPRESSION! -> handle this somehow.
         raise Exception('\n\nERROR : csv input is required for full execution of pipeline.')
     if(not os.path.isfile(args.csv)):
         raise Exception('\n\nERROR : Invalid csv argument. '+args.csv+' does not exist.')
@@ -273,8 +278,13 @@ def go_assembly(args, dep):
         args.truncate, args.trimmomatic)
 
 def go_quality(args, dep):
+    busco_args = {'arthropoda': args.arthropoda, 'metazoa': args.metazoa,
+                  'vertebrata': args.vertebrata, 'eukaryota': args.eukaryota,
+                  'fungi': args.fungi, 'bacteria': args.bacteria,
+                  'plants': args.plants}
+    busco_args = [k for k in busco_args if(busco_args[k])]
     return gen_quality_supervisor(
-        args.fastq1, args.fastq2, args.unpaired, dep, args.busco_ref,
+        args.fastq1, args.fastq2, args.unpaired, dep, busco_args,
     args.cpu, args.cegma, args.transrate_ref)
 
 def go_annotation(args, dep):
@@ -293,7 +303,7 @@ def go_manage_db(args, dep, log_files=True):
                   'fungi': args.fungi, 'bacteria': args.bacteria,
                   'plants': args.plants}
     busco_args = [k for k in busco_args if(busco_args[k])]
-    return tf.manage_db_task(args.reinstall, args.getNR, args.getUniref90, busco_args, int(round(args.cpu/4)), dep, log_files)
+    return tf.manage_db_task(args.reinstall, args.nr, args.uniref90, busco_args, args.blastplus, int(round(args.cpu/4)), dep, log_files)
 
 #####################____Main_Modules____#####################
 def run_full(args):
