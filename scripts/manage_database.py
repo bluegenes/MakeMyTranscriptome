@@ -1,7 +1,7 @@
 from task_functions_v2 import (
     PATH_DATABASES, PATH_UNIREF90, PATH_SWISS_PROT,
     PATH_NR, PATH_BUSCO_METAZOA, PATH_PFAM_DATABASE,
-    pfam_build_task, build_diaimond_task, build_blast_task,
+    pfam_build_task, build_diamond_task, build_blast_task,
     db2stitle_task)
 from time import strftime
 import gzip
@@ -52,6 +52,10 @@ busco_fungi_target = os.path.join(busco_folder, 'fungi_buscos')
 
 url_busco_bacteria = 'http://busco.ezlab.org/files/bacteria_buscos.tar.gz'
 busco_bacteria_target = os.path.join(busco_folder, 'bacteria_buscos') 
+
+#NEED TO GET PLANT BUSCOS
+url_busco_plant = 'http://busco.ezlab.org/files/bacteria_buscos.tar.gz'
+busco_plant_target = os.path.join(busco_folder, 'plant_buscos') 
 ####
 
 url_go_pathway = 'http://rest.genome.jp/link/go/pathway'
@@ -189,6 +193,8 @@ def download_databases(log_table, nr_flag=False, uniref90_flag=False, file_check
         partial_get('tar', url_busco_fungi, busco_fungi_target)
     if(busco_flags['bacteria']):
         partial_get('tar', url_busco_bacteria, busco_bacteria_target)
+    if(busco_flags['plants']):
+        partial_get('tar', url_busco_plant, busco_plant_target)
     return log_table
 
 
@@ -233,29 +239,30 @@ def check_database_dir():
         write_log({})
 
 
-def main(nr_flag=False, uniref90_flag=False, file_check=True, busco_flags=busco_flags, cpu=4):
+def main(nr_flag=False, uniref90_flag=False, file_check=True, busco_flags=busco_flags, blastplus=False, cpu=4):
     check_database_dir()
     log_table = read_log()
     log_table = download_databases(log_table, nr_flag, uniref90_flag, file_check, busco_flags)
     log_table = subset_dat(id_mapping_target, idmapping_keys, log_table)
     tasks = []
-    swissprot_task = build_blast_task(sprot_target, sprot_target, 'prot', [], False)
-    tasks.append(swissprot_task)
-    swissprot_diamond = build_diaimond_task(sprot_target, sprot_target, [], False)
+    if blastplus:
+        swissprot_task = build_blast_task(sprot_target, sprot_target, 'prot', [], False)
+        tasks.append(swissprot_task)
+    swissprot_diamond = build_diamond_task(sprot_target, sprot_target, [], False)
     tasks.append(swissprot_diamond)
     swissprot_table_task = db2stitle_task(sprot_target, [], False)
     tasks.append(swissprot_table_task)
     if(uniref90_flag and os.path.exists(uniref90_target)):
         uniref90_task = build_blast_task(uniref90_target, uniref90_target, 'prot', [], False)
         tasks.append(uniref90_flag)
-        uniref90_diamond = build_diaimond_task(uniref90_target, uniref90_target, [], False)
+        uniref90_diamond = build_diamond_task(uniref90_target, uniref90_target, [], False)
         tasks.append(uniref90_diamond)
         uniref90_table_task = db2stitle_task(uniref90_target, [], False)
         tasks.append(uniref90_table_task)
     if(nr_flag and os.path.exists(nr_target)):
         nr_task = build_blast_task(nr_target, nr_target, 'prot', [], False)
         tasks.append(nr_task)
-        nr_diamond = build_diaimond_task(nr_target, nr_target, [], False)
+        nr_diamond = build_diamond_task(nr_target, nr_target, [], False)
         tasks.append(nr_diamond)
         nr_table_task = db2stitle_task(nr_target, [], False)
         tasks.append(nr_table_task)
@@ -272,9 +279,10 @@ if(__name__ == '__main__'):
     parser.add_argument('--nr', action='store_true')
     parser.add_argument('--buscos', help='a comma seperated list of busco files that need to be downloaded')
     parser.add_argument('--cpu', type=int)
+    parser.add_argument('--buildBlastPlus', action='store_true', default=False)
     args = parser.parse_args()
     if(args.buscos != None):
     	args.buscos = args.buscos.split(',')
     	for b in args.buscos:
         	busco_flags[b] = True
-    main(args.nr, args.uniref90, not args.hard, busco_flags, args.cpu)
+    main(args.nr, args.uniref90, not args.hard, busco_flags, args.buildBlastPlus, args.cpu)
