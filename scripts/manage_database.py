@@ -89,6 +89,8 @@ idmapping_keys = {'BioCyc': '{0!s}/idmapping.biocyc'.format(PATH_DATABASES),
                   'OrthoDB': '{0!s}/idmapping.orthodb'.format(PATH_DATABASES)}
 
 
+database_supervisor_log = '{0!s}/database_supervisor_log'.format(PATH_DATABASES)
+
 busco_flags = {'arthropoda': False, 'metazoa': False, 'vertebrata': False,
                'eukaryota': False, 'fungi': False, 'bacteria': False,
                'plants': False}
@@ -100,7 +102,7 @@ def run_tasks(tasks, cpu=4):
         t.stdout = t.name+'.stdout'
         t.stderr = t.name+'.stderr'
 
-    s = Supervisor(tasks=tasks, force_run=False, log='database_supervisor_log', cpu=cpu)
+    s = Supervisor(tasks=tasks, force_run=False, log=database_supervisor_log, cpu=cpu)
     s.run()
     for t in tasks:
         os.remove(t.stdout)
