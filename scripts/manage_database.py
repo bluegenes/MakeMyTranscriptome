@@ -1,8 +1,7 @@
 from task_functions_v2 import (
     PATH_DATABASES, PATH_UNIREF90, PATH_SWISS_PROT,
-    PATH_NR, PATH_BUSCO_METAZOA, PATH_PFAM_DATABASE,
-    pfam_build_task, build_diamond_task, build_blast_task,
-    db2stitle_task)
+    PATH_NR, PATH_PFAM_DATABASE, pfam_build_task, 
+    build_diamond_task, build_blast_task, db2stitle_task)
 from time import strftime
 import gzip
 import tarfile
@@ -21,8 +20,7 @@ swissprot_folder = os.path.join(PATH_DATABASES, 'uniprot_sprot')
 uniref90_folder = os.path.join(PATH_DATABASES, 'uniref90')
 nr_folder = os.path.join(PATH_DATABASES, 'nr')
 pfam_folder = os.path.join(PATH_DATABASES, 'pfam')
-busco_folder = os.path.join(PATH_DATABASES, 'busco') #this means we need to change busco paths elsewhere..
-
+busco_folder = os.path.join(PATH_DATABASES, 'busco') 
 
 url_sprot = 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz'
 sprot_target = PATH_SWISS_PROT + '.gz'
@@ -36,7 +34,7 @@ nr_target = PATH_NR + '.gz'
 
 ####
 url_busco_metazoa = 'http://busco.ezlab.org/files/metazoa_buscos.tar.gz'
-busco_metazoa_target = os.path.join(busco_folder, 'metazoa_buscos') #PATH_BUSCO_METAZOA
+busco_metazoa_target = os.path.join(busco_folder, 'metazoa_buscos') 
 
 url_busco_arthropoda = 'http://busco.ezlab.org/files/arthropoda_buscos.tar.gz'
 busco_arthropoda_target = os.path.join(busco_folder, 'arthopoda_buscos')
@@ -53,7 +51,7 @@ busco_fungi_target = os.path.join(busco_folder, 'fungi_buscos')
 url_busco_bacteria = 'http://busco.ezlab.org/files/bacteria_buscos.tar.gz'
 busco_bacteria_target = os.path.join(busco_folder, 'bacteria_buscos') 
 
-#NEED TO GET PLANT BUSCOS
+#NEED TO GET PLANT BUSCOS --> currently bacteria = placeholder
 url_busco_plant = 'http://busco.ezlab.org/files/bacteria_buscos.tar.gz'
 busco_plant_target = os.path.join(busco_folder, 'plant_buscos') 
 ####
@@ -146,7 +144,7 @@ def get(log_table, flag, source, target, file_check=True):
         elif(flag == 'tar'):
             tar_retrieve(source, target)
         else:
-            print('Your shits fucked.')
+            print('Can\'t retrieve database.')
     except ContentTooShortError:
         print('failed to install {0!s}'.format(source))
     basename = os.path.basename(target)
@@ -270,7 +268,7 @@ def main(nr_flag=False, uniref90_flag=False, file_check=True, busco_flags=busco_
 	    tasks.append(nr_task)
     pfam_task = pfam_build_task(pfam_db_target, [], False)
     tasks.append(pfam_task)
-    run_tasks(tasks, cpu=4)
+    run_tasks(tasks, 4) # NEED TO FIX CPU HERE?
     write_log(log_table)
 
 
