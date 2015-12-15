@@ -27,7 +27,7 @@ PATH_EXPRESS = 'express'
 PATH_FASTQC = 'fastqc'
 PATH_GENE_TRANS_MAP = 'get_Trinity_gene_to_trans_map.pl'
 PATH_KALLISTO = 'kallisto'
-PATH_NR = os.path.join(PATH_DATABASES, 'nr', 'nr.fasta')
+PATH_NR = os.path.join(PATH_DATABASES, 'nr', 'nr')
 PATH_PFAM = 'hmmscan'
 PATH_PFAM_DATABASE = '{0!s}/pfam/Pfam-A.hmm'.format(PATH_DATABASES)
 PATH_PRINSEQ = 'prinseq-lite.pl'
@@ -43,8 +43,8 @@ PATH_TRIMMOMATIC = '/matta1/biotools/redhat/Trimmomatic-0.33/trimmomatic-0.33.ja
 PATH_TRIMMOMATIC_ADAPTERS_SINGLE = '/matta1/biotools/redhat/Trimmomatic-0.33/adapters/TruSeq3-SE.fa'
 PATH_TRIMMOMATIC_ADAPTERS_PAIRED = '/matta1/biotools/redhat/Trimmomatic-0.33/adapters/TruSeq3-PE.fa'
 PATH_TRINITY = 'Trinity'
-PATH_SWISS_PROT = os.path.join(PATH_DATABASES, 'uniprot_sprot', 'uniprot_sprot.fasta')
-PATH_UNIREF90 = os.path.join(PATH_DATABASES, 'uniref90', 'uniref90.fasta')
+PATH_SWISS_PROT = os.path.join(PATH_DATABASES, 'uniprot_sprot', 'uniprot_sprot')
+PATH_UNIREF90 = os.path.join(PATH_DATABASES, 'uniref90', 'uniref90')
 PATH_NOG_CATEGORIES = os.path.join(PATH_DATABASES, 'nog_categories')
 
 
@@ -712,20 +712,19 @@ def kallisto_task(index,out_name,left,right,tasks):
 
 def build_blast_task(fasta,out_path,dbtype,tasks,log_flag=True):
     trgs = []
-    #title doesn't seem to change the out name .. it's still xx.gz.psq, etc
-    title = os.path.basename(fasta).split('.gz')[0]
+    #title doesn't seem to change the out name .. it's still xx.gz.psq, etc? CHECK.
+    title = os.path.basename(fasta).split('.')[0]
     cmd = 'gunzip -c {0!s} | makeblastdb -in - -dbtype {2!s} -title {3!s} -out {1!s}'.format(fasta,out_path,dbtype,title)
-    name = 'build_blast_'+os.path.basename(fasta)
+    name = 'build_blast_'+title
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
 def build_diamond_task(fasta,out_path,tasks,log_flag=True):
-#    trgs = [out_path+'.dmnd']
-    trgs = ['{0!s}'.format(out_path +'.dmnd')] #might need this --> need to see if can find the .gz.dmnd database...
-    title = os.path.basename(fasta).split('.gz')[0]
-    cmd = '{0!s} makedb --in {1!s} --db {2!s}'.format(PATH_DIAMOND, fasta, out_path)
-    name = 'build_diamond_'+os.path.basename(fasta)
+    title = os.path.basename(fasta).split('.')[0]
+    trgs = ['{0!s}'.format(title + '.dmnd')] 
+    cmd = '{0!s} makedb --in {1!s} --db {2!s}'.format(PATH_DIAMOND, fasta, title)
+    name = 'build_diamond_'+ title
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
  
