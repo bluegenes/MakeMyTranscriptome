@@ -304,19 +304,6 @@ def busco_task(reference_name, cpu_cap, tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=cpu_cap,stdout=out,stderr=err)
 
 
-#def write_default_transrate_reads(lefts,rights,singles):
-#    trgs= [{0!s}/{1!s}.reads_for_transrate.txt]
-#    cmd=
-#    out, err = GEN_LOGS(name)
-#    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
-
-#def read_default_transrate_reads(lefts,rights,singles):
-#    trgs= []
-#    cmd= [{0!s}/{1!s}.reads_for_transrate.txt]
-#    out, err = GEN_LOGS(name)
-#    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
-
-
 def transrate_task(lefts, rights, singles, transrate_name, cpu_cap, tasks): #reference, cpu_cap, tasks):
     trgs = []
     lefts = ','.join(lefts+singles)
@@ -327,7 +314,7 @@ def transrate_task(lefts, rights, singles, transrate_name, cpu_cap, tasks): #ref
     #reference = '--reference ' + reference if(reference != '') else ''
     cmd = '{0!s} --assembly {1!s} {4!s} {5!s} --threads {2!s} --output {3!s}/{6!s}'.format(
            PATH_TRANSRATE, GEN_PATH_ASSEMBLY(), cpu_cap, GEN_PATH_QUALITY_FILES(), lefts, rights, transrate_name) #, reference)
-    name = 'transrate'
+    name = transrate_name
     out, err = GEN_LOGS(name)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
 
@@ -336,7 +323,7 @@ def transrate_to_reference_task(transrate_name, reference, cpu_cap, tasks):
     reference = '--reference ' + reference if(reference != '') else ''
     cmd = '{0!s} --assembly {1!s} --threads {2!s} --output {3!s}/{4!s} {5!s}'.format(
            PATH_TRANSRATE, GEN_PATH_ASSEMBLY(), cpu_cap, GEN_PATH_QUALITY_FILES(), transrate_name, reference)
-    name = transrate_name #'transrate'
+    name = transrate_name 
     out, err = GEN_LOGS(name)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
 
@@ -484,7 +471,7 @@ def annot_table_task(opts, tasks):
 
 
 def kegg_task(tasks):
-    '''    Defines the keg task. Uses PATH_SCRIPTS, 
+    '''    Defines the kegg task. Uses PATH_SCRIPTS, 
         Params : 
     '''
     trgs = ['{0!s}/ko01100.pdf'.format(GEN_PATH_ANNOTATION_FILES()),
@@ -664,9 +651,6 @@ def salmon_gene_map_task(gene_trans_map,tasks):
             tasks - a list of tasks that this task is dependant on (trinity_task) 
     '''
     trgs = ['{0!s}/{1!s}.trans_gene_map'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
-#    cmd = '{0!s} {1!s}/{2!s}.fasta > {3!s}'.format(PATH_GENE_TRANS_MAP,GEN_PATH_DIR(),NAME_ASSEMBLY,trgs[0])
-    #cmd = 'awk \'{ print $2 "\t" $1}\' {0!s}'.format(gene_trans_map) 
-    #cmd =  'awk -F, "{print $2,$1}" OFS=\t {0!s} > {1!s}'.format(gene_trans_map, trgs[0]) 
     cmd = 'join -t, -o 1.2,1.1 {0!s} {0!s} > {1!s}'.format(gene_trans_map, trgs[0]) 
     name = 'trans_gene_map'
     name = 'salmon_gene_map_task'

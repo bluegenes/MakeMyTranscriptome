@@ -64,6 +64,8 @@ quality_input.add_argument('--transrate_ref',help='A reference that transrate wi
 #EXPRESSION ARGS 
 expression_input = argparse.ArgumentParser(add_help=False)
 expression_input.add_argument('--model', help='An optional list of comma seperated values used to run differential expression. This is particularly useful for refining Differential Expression runs as it allow you to use the same input CSV file and perform new comparisons.')
+expression_input.add_argument('-intersectbed', help='run bowtie2 + bedtools intersect in addition to Salmon quantification. MMT will run differential expression analysis separately for each quantification tool.', action='store_true', default=False)
+expression_input.add_argument('-express', help='run bowtie2 + express in addition to Salmon quantification. MMT will run differential expression analysis separately for each quantification tool.', action='store_true', default=False)
 
 #DATABASE SELECTOR ARGS 
 database_selector = argparse.ArgumentParser(add_help=False)
@@ -280,7 +282,7 @@ def go_annotation(args, dep):
 def go_expression(args, dep):
     return gen_expression_supervisor(
         args.fastq1, args.fastq2, args.paired_names, args.unpaired,
-        args.unpaired_names, args.cpu, args.sample_info, args.model, dep)
+        args.unpaired_names, args.cpu, args.sample_info, args.model, dep, args.intersectbed, args.express)
 
 def go_manage_db(args, dep, log_files=True):
     if(args.which=='annotation'): 
