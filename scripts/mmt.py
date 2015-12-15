@@ -14,7 +14,6 @@ import time
 common_parser = argparse.ArgumentParser(add_help=False)
 common_parser.add_argument('-no_log', help='Pipeline will delete log files.',action='store_true')
 common_parser.add_argument('-force', help='Use this flag to perform a fresh run of the pipeline. All steps will be executed regradless of what has already been performed.',action='store_true')
-common_parser.add_argument('--cpu', help='Sets the process cap for execution. Default is 12. Use 0 to indicate no process cap should be used.',default=12,type=int)
 common_parser.add_argument('--email',help='Pipeline will send emails informing you of runstate.')
 common_parser.add_argument('--out_dir', help='Path to the ouput location. Defaults to assemblies directory inside pipeline',default=tf.PATH_ASSEMBLIES)
 common_parser.add_argument('-o','--out_name', help='The name of the output directory to be made in out_dir. If unused, name will be inherited from input file names')
@@ -30,7 +29,7 @@ master_parser = argparse.ArgumentParser(description=('Description: MMT is a powe
 #####################____Arguments____#####################
 # support assembly input
 assembly_input_parser = argparse.ArgumentParser(add_help=False)
-assembly_input_parser.add_argument('-a','--assembly',help='A fasta transcriptome assembly that needs to be annotated.', required=True)
+assembly_input_parser.add_argument('-a','--assembly',help='A fasta transcriptome assembly that needs to be annotated.')
 # support read input 
 read_input_parser = argparse.ArgumentParser(add_help=False)
 read_input_parser.add_argument('-u','--unpaired',help='A comma seperated list of unpaired fastq files.')
@@ -39,6 +38,9 @@ read_input_parser.add_argument('-2','--fastq2',help='A comma seperated list of f
 # support csv input
 csv_input_parser = argparse.ArgumentParser(add_help=False)
 csv_input_parser.add_argument('--csv', help='A CSV file specifying fastq input, basenames for DE, and factors for DE. See online documentation for details on formating the CSV file.',default=None)
+#support cpu input
+cpu_input_parser = argparse.ArgumentParser(add_help=False)
+cpu_input_parser.add_argument('--cpu', help='Sets the process cap for execution. Default is 12. Use 0 to indicate no process cap should be used.',default=12,type=int)
 #ASSEMBLER ARGS
 assembler_input = argparse.ArgumentParser(add_help=False)
 assembler_input.add_argument('-rnaspades',help='Use this flag to specify that assembly should be performed by rnaSPAdes rather than the default Trinity.',action='store_true')
@@ -73,6 +75,7 @@ database_selector.add_argument('--arthropoda', help = 'use arthropod BUSCO datab
 database_selector.add_argument('-f', '--fungi', help = 'use fungi BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
 database_selector.add_argument('-b', '--bacteria', help = 'use bacteria BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
 database_selector.add_argument('-p', '--plants', help = 'use plant BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
+database_selector.add_argument('--reinstall', help= 'download new version of all databases', default=False)
 
 annot_database_selector = argparse.ArgumentParser(add_help=False)
 annot_database_selector.add_argument('-blastplus',action='store_true',help='Use the blast+ tool suite instead of diamond to align your transcripts to the references. If used with "databases" tool, download this database.')
@@ -80,34 +83,66 @@ annot_database_selector.add_argument('-uniref90',help='Use this flag to enable t
 annot_database_selector.add_argument('-nr',help='Use this flag to enable the NR (non-redundant protein database) diamond-blast runs as part of the annotation pipeline. If used with "databases" tool, download this database. FYI, this takes a while.',action='store_true')
 
 #DATABASES ARGS
-database_input = argparse.ArgumentParser(add_help=False)
-database_input.add_argument('--reinstall', help= 'download new version of all databases', default=False)
-database_input.add_argument('--cpu', help= 'cpu cap for database downloads & indexing', default=4, type=int)
+#database_input = argparse.ArgumentParser(add_help=False)
+#database_input.add_argument('--reinstall', help= 'download new version of all databases', default=False)
+#database_input.add_argument('--cpu', help= 'cpu cap for database downloads & indexing', default=4, type=int)
 
 ###################################
 subparsers = master_parser.add_subparsers(title='TOOLS', description='Tool Selector', help='Select an available module')
 
-full_parser = subparsers.add_parser('full', parents=[common_parser, csv_input_parser, read_input_parser, assembly_input_parser, assembler_input, annotation_input, expression_input, quality_input, database_selector], description= "Selected_tool : Full. Executing this tool will run the entire transcriptomics pipeline. This tool requires a specially formatted CSV file to describe the input. Please see the online documentation to learn how to format these files.", add_help=True)
+full_parser = subparsers.add_parser('full', parents=[common_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembly_input_parser, assembler_input, annotation_input, expression_input, quality_input, database_selector, annot_database_selector], description= "Selected_tool : Full. Executing this tool will run the entire transcriptomics pipeline. This tool requires a specially formatted CSV file to describe the input. Please see the online documentation to learn how to format these files.", add_help=True)
 full_parser.set_defaults(which='full')
 
-assembly_parser = subparsers.add_parser('assembly', parents=[common_parser, csv_input_parser, read_input_parser, assembler_input], description='Selected_tool : Assembler. Executing this tool will  clean all provided reads and assemble them.', add_help=True)
+assembly_parser = subparsers.add_parser('assembly', parents=[common_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembler_input], description='Selected_tool : Assembler. Executing this tool will  clean all provided reads and assemble them.', add_help=True)
 assembly_parser.set_defaults(which='assembly')
 
-annotation_parser = subparsers.add_parser("annotation", parents=[common_parser, assembly_input_parser, annotation_input, annot_database_selector], description='Selected_tool : Annotation. Executing this tool will run asssembly quality assesment along with a series of tools designing to provide information about the assembled transcripts.', add_help=True)
+annotation_parser = subparsers.add_parser("annotation", parents=[common_parser, cpu_input_parser, assembly_input_parser, annotation_input, annot_database_selector], description='Selected_tool : Annotation. Executing this tool will run asssembly quality assesment along with a series of tools designing to provide information about the assembled transcripts.', add_help=True)
 annotation_parser.set_defaults(which='annotation')
 
-quality_parser = subparsers.add_parser("quality", parents=[common_parser, csv_input_parser, read_input_parser, assembly_input_parser, quality_input], description='Selected_tool : Quality. Executing this tool will perform a quality assessment of an existing assembly.', add_help=True)
+quality_parser = subparsers.add_parser("quality", parents=[common_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembly_input_parser, quality_input], description='Selected_tool : Quality. Executing this tool will perform a quality assessment of an existing assembly.', add_help=True)
 quality_parser.set_defaults(which='quality')
 
-expression_parser = subparsers.add_parser("expression", parents=[common_parser, csv_input_parser, expression_input], description='Selected_tool : Expression. Executing this tool will run a series of differential expression analyses and sumarize the output.',add_help=True)
+expression_parser = subparsers.add_parser("expression", parents=[common_parser, cpu_input_parser, csv_input_parser, expression_input], description='Selected_tool : Expression. Executing this tool will run a series of differential expression analyses and sumarize the output.',add_help=True)
 expression_parser.set_defaults(which='expression')
 
-database_parser = subparsers.add_parser('databases', parents=[database_selector, annot_database_selector, database_input], description='Selected_tool : Databases. Executing this tool will check that all annotation databases are present and download if necessary. Optional: download new versions of all databases', add_help=True)
+database_parser = subparsers.add_parser('databases', parents=[cpu_input_parser, database_selector, annot_database_selector], description='Selected_tool : Databases. Executing this tool will check that all annotation databases are present and download if necessary. Optional: download new versions of all databases', add_help=True)
 database_parser.set_defaults(which='databases')
 
 args =  master_parser.parse_args()
 
-#####################____Argument_Testers____#####################
+#####################____Helper_Functions____#####################
+
+def inherit_name(filePath):
+    base = os.path.basename(filePath)
+    base = base if('.' not in base) else '.'.join(base.split('.')[:-1])
+    return base
+
+def inherit_name_from_paired(paired_1):
+    base = os.path.basename(paired_1)
+    base = base if('.' not in base) else '.'.join(base.split('.')[:-1])
+    base = base if('1' not in base) else '1'.join(base.split('1')[:-1])
+    return base
+
+def set_test_args(args):
+    args.out_name = args.out_name if(args.out_name!=None) else 'test_v2'
+    if(args.which=='full' or args.which=='assembly' or args.which=='expression' or args.which=='quality'):
+        args.csv = tf.PATH_SCRIPTS+'/test_data/sample_info2.csv'
+    if(args.which=='quality' or args.which=='annotation' or args.which=='expression'):
+        args.assembly = tf.PATH_SCRIPTS+'/test_data/test_v2.fasta'
+
+def set_subsample_size(args):
+    args.subsample_size = 10**15 if(args.subsample_size<=0) else args.subsample_size*10**6
+
+def gen_sample_info(args):
+    args.sample_info = tf.GEN_PATH_EXPRESSION_FILES()+'/sample_info.tsv'
+    si = open(args.sample_info,'w')
+    f = open(args.csv)
+    for line in f:
+        temp = line.split(',')
+        si.write('\t'.join([temp[0]]+temp[3:]))
+    si.close()
+    f.close()
+
 def global_setup(args):
     if(not os.path.isdir(args.out_dir)):
         try:
@@ -118,101 +153,52 @@ def global_setup(args):
         args.cpu = float('inf')
     tf.PATH_ASSEMBLIES = args.out_dir
     if(args.which=='full'):
-        base = os.path.basename(args.csv)
-        base = base if('.' not in base) else '.'.join(base.split('.')[:-1])
+	if(args.assembly!=None):
+	    base = inherit_name(args.assembly)
+        elif(args.csv!=None):
+            base = inherit_name(args.csv)
+	elif(args.fastq1!=[]):
+	    base = inherit_name_from_paired(args.fastq1[0])
+	else:
+	    base = inherit_name(args.unpaired[0])
     if(args.which=='assembly'):
-        if(args.unpaired!=[]):
-            base = os.path.basename(args.unpaired[0])
-            base = base if('.' not in base) else '.'.join(base.split('.')[:-1])
+	if(args.csv!=None):
+	    base = inherit_name(args.csv)
+        elif(args.fastq1!=[]):
+            base = inherit_name_from_paired(args.fastq1[0])
         else:
-            base = os.path.basename(args.fastq1[0])
-            base = base if('.' not in base) else '.'.join(base.split('.')[:-1])
-            base = base if('1' not in base) else '1'.join(base.split('1')[:-1])
+            base = inherit_name(args.unpaired[0])
     if(args.which=='annotation' or args.which=='quality' or args.which=='expression'):
-        base = os.path.basename(args.assembly)
-        base = base if('.' not in base) else '.'.join(base.split('.')[:-1])
+        base = inherit_name(args.assembly)
     tf.NAME_OUT_DIR = args.out_name if(args.out_name!=None) else base
     tf.NAME_ASSEMBLY = tf.NAME_OUT_DIR
     tf.build_dir_task([]).run()
 
 
-def check_full_args(args):
-    if(args.test):
-        args.out_name = args.out_name if(args.out_name!=None) else 'test_v2'
-        args.csv = tf.PATH_SCRIPTS+'/test_data/sample_info2.csv'
-    if(args.csv==None):
-        #JUST DON'T RUN EXPRESSION! -> handle this somehow.
-        raise Exception('\n\nERROR : csv input is required for full execution of pipeline.')
-    if(not os.path.isfile(args.csv)):
-        raise Exception('\n\nERROR : Invalid csv argument. '+args.csv+' does not exist.')
-    args.subsample_size = args.subsample_size*10**6
-    handle_csv(args)
+#####################____Argument_Testers____#####################
 
+def check_csv_input(args, required=True):
+    if(args.csv!=None):
+	if(not os.path.isfile(args.csv)):
+            raise Exception('\n\nERROR : Invalid csv argument. '+args.csv+' does not exist.')
+	else:
+	    handle_csv(args)
+    elif required:
+        raise Exception('\n\nERROR : csv input is required for execution of expression module.')
 
-def check_assembly_args(args):
-    if(args.test):
-        args.out_name = args.out_name if(args.out_name!=None) else 'test_v2'
-        args.csv = tf.PATH_SCRIPTS+'/test_data/sample_info2.csv'
-    args.subsample_size = 10**15 if(args.subsample_size<=0) else args.subsample_size*10**6
-    if(args.csv):
-        handle_csv(args)
-    else:
-        args.unpaired = [] if(args.unpaired==None) else args.unpaired.split(',')
-        args.fastq1 = [] if(args.fastq1==None) else args.fastq1.split(',')
-        args.fastq2 = [] if(args.fastq2==None) else args.fastq2.split(',')
-        if(args.unpaired==[] and args.fastq1==[] and args.fastq2==[] and args.csv==[]):
-            raise Exception('\n\nERROR : No input files specified. Please specify input using either csv, or --fastq1 and --fastq2 or --unpaired.')
-        for f in chain(args.fastq1,args.fastq2,args.unpaired):
-            if(not os.path.isfile(f)):
-                raise Exception('\n\nERROR : Unable to find file : '+f)
-        for f1,f2 in zip(args.fastq1,args.fastq2):
-            if(not fastq_pair_check(f1,f2)):
-                raise Exception('\n\nERROR : '+f1+' cant be paired with '+f2+'.')
+def check_read_inputs(args, required=True):
+    if(args.csv!=None):
+        check_csv_input(args, required)
+    elif(args.fastq1 !=None or args.unpaired!=None):
+	handle_read_input(args)
+    elif required:
+        raise Exception('\n\nERROR : No input files specified. Please specify input using either csv, or --fastq1 and --fastq2 or --unpaired.')
 
-def check_quality_args(args):
-    if(args.test):
-        args.out_name = args.out_name if(args.out_name!=None) else 'test_v2'
-        args.assembly = tf.PATH_SCRIPTS+'/test_data/test_v2.fasta'
-    args.unpaired = [] if(args.unpaired==None) else args.unpaired.split(',')
-    args.fastq1 = [] if(args.fastq1==None) else args.fastq1.split(',')
-    args.fastq2 = [] if(args.fastq2==None) else args.fastq2.split(',')
+def check_fasta_input(args):
     if(args.assembly==None):
         raise Exception('\n\nERROR : No input assembly specified. Please specify an input assembly using --assembly.')
     if(not os.path.isfile(args.assembly)):
         raise Exception('\n\nERROR : Invalid assembly argument. '+args.assembly+' does not exist.')
-    for f in chain(args.fastq1,args.fastq2,args.unpaired):
-        if(not os.path.isfile(f)):
-            raise Exception('\n\nERROR : Unable to find file : '+f)
-    for f1,f2 in zip(args.fastq1,args.fastq2):
-        if(not fastq_pair_check(f1,f2)):
-            raise Exception('\n\nERROR : '+f1+' cant be paired with '+f2+'.')
-
-
-def check_annotation_args(args):
-    if(args.test):
-        args.out_name = args.out_name if(args.out_name!=None) else 'test_v2'
-        args.assembly = tf.PATH_SCRIPTS+'/test_data/test_v2.fasta'
-    if(args.assembly==None):
-        raise Exception('\n\nERROR : No input assembly specified. Please specify an input assembly using --assembly.')
-    if(not os.path.isfile(args.assembly)):
-        raise Exception('\n\nERROR : Invalid assembly argument. '+args.assembly+' does not exist.')
-
-
-def check_expression_args(args):
-    if(args.test):
-        args.out_name = args.out_name if(args.out_name!=None) else 'test_v2'
-        args.csv = tf.PATH_SCRIPTS+'/test_data/sample_info2.csv'
-        args.assembly = tf.PATH_SCRIPTS+'/test_data/test_v2.fasta'
-    if(args.assembly==None):
-        raise Exception('\n\nERROR : No input assembly specified. Please specify an input assembly using --assembly.')
-    if(not os.path.isfile(args.assembly)):
-        raise Exception('\n\nERROR : Invalid assembly argument. '+args.assembly+' does not exist.')
-    if(args.csv==None):
-        raise Exception('\n\nERROR : csv input is required for full execution of pipeline.')
-    if(not os.path.isfile(args.csv)):
-        raise Exception('\n\nERROR : Invalid csv argument. '+args.csv+' does not exist.')
-    handle_csv(args)
-
 
 def fastq_pair_check(fastq1,fastq2):
     '''
@@ -227,6 +213,21 @@ def fastq_pair_check(fastq1,fastq2):
     return count1==count2
     '''
     return True
+
+
+############## Handle Input Args ##############
+
+def handle_read_input(args):
+    args.unpaired = [] if(args.unpaired==None) else args.unpaired.split(',')
+    args.fastq1 = [] if(args.fastq1==None) else args.fastq1.split(',')
+    args.fastq2 = [] if(args.fastq2==None) else argsfastq2.split(',')
+    if(args.unpaired!=[] or args.fastq1!=[] or args.fastq2!=[] ):
+        for f in chain(args.fastq1,args.fastq2,args.unpaired):
+            if(not os.path.isfile(f)):
+                raise Exception('\n\nERROR : Unable to find file : '+f)
+        for f1,f2 in zip(args.fastq1,args.fastq2):
+            if(not fastq_pair_check(f1,f2)):
+                raise Exception('\n\nERROR : '+f1+' cant be paired with '+f2+'.')
 
 
 def handle_csv(args):
@@ -256,17 +257,6 @@ def handle_csv(args):
     for f1,f2 in zip(args.fastq1,args.fastq2):
         if(not fastq_pair_check(f1,f2)):
             raise Exception('\n\nERROR : '+f1+' cant be paired with '+f2+'.')
-
-
-def gen_sample_info(args):
-    args.sample_info = tf.GEN_PATH_EXPRESSION_FILES()+'/sample_info.tsv'
-    si = open(args.sample_info,'w')
-    f = open(args.csv)
-    for line in f:
-        temp = line.split(',')
-        si.write('\t'.join([temp[0]]+temp[3:]))
-    si.close()
-    f.close()
 
 
 ######################___go_functions___######################
@@ -307,44 +297,41 @@ def go_manage_db(args, dep, log_files=True):
 
 #####################____Main_Modules____#####################
 def run_full(args):
-    check_full_args(args)
-    global_setup(args)
-    gen_sample_info(args)
     supers = []
     deps = []
+    if(args.test):
+	set_test_args(args)
+    if(args.assembly==None): #we run the assembly portion of pipeline
+        check_read_inputs(args, True) #reads are required
+        global_setup(args)
+	set_subsample_size(args)
+        assembly_super = go_assembly(args, [])
+        supers.append(assembly_super)
+	deps.append(assembly_super)
+    else: #run everything else BUT assembly
+	check_fasta_input(args) #fast input is required --> check that it's a proper file
+	check_read_inputs(args, False) # get read input from either the csv or command-line inputs
+	global_setup(args)
     manage_db = go_manage_db(args, [])
     supers.append(manage_db)
-    assembly_super = go_assembly(args, [])
-    supers.append(assembly_super)
-    quality_super = go_quality(args, [assembly_super])
-    supers.append(quality_super)
-    annotation_super = go_annotation(args, [assembly_super])
+    annotation_super = go_annotation(args, deps)
     supers.append(annotation_super)
-#check for csv here --> only add expression if we have csv!
-    expression_super = go_expression(args, [assembly_super])
-    supers.append(expression_super)
+    quality_super = go_quality(args, deps)
+    supers.append(quality_super)
+    if(args.csv !=None): #csv is required so we have metadata
+	check_csv_input(args)# since it wasn't required earlier, we need to check that it exists, is proper file. 
+        gen_sample_info(args)
+        expression_super = go_expression(args, deps)
+        supers.append(expression_super)
     run_supers(args, supers)
-#try to allow assembly arg...
-#if args.assembly:
-#    cp = tf.cp_assembly_task(args.assembly, [])
-#    supers.append(cp)
-#    deps = [cp]
-#    else:
-#        assembly_super = go_assembly(args, [])
-#        supers.append(assembly_super)
-#        deps = [assembly_super]
- #   quality_super = go_quality(args, deps)
- #   supers.append(quality_super)
- #   annotation_super = go_annotation(args, deps)
- #   supers.append(annotation_super)
- #   expression_super = go_expression(args, deps)
- #   supers.append(expression_super)
- #   run_supers(args, supers)
 
 
 def run_assembly(args):
-    check_assembly_args(args)
+    if(args.test):
+	set_test_args(args)
+    check_read_inputs(args, True)
     global_setup(args)
+    set_subsample_size(args) 
     supers = []
     assembly_super = go_assembly(args, [])
     supers.append(assembly_super)
@@ -352,7 +339,10 @@ def run_assembly(args):
 
 
 def run_quality(args):
-    check_quality_args(args)
+    if(args.test):
+	set_test_args(args)
+    check_fasta_input(args)
+    check_read_inputs(args, False)
     global_setup(args)
     supers = []
     deps = []
@@ -366,7 +356,9 @@ def run_quality(args):
 
 
 def run_annotation(args):
-    check_annotation_args(args)
+    if(args.test):
+	set_test_args(args)
+    check_fasta_input(args)
     global_setup(args)
     supers = []
     deps = []
@@ -380,7 +372,10 @@ def run_annotation(args):
 
 
 def run_expression(args):
-    check_expression_args(args)
+    if(args.test):
+	set_test_args(args)
+    check_fasta_input(args)
+    check_csv_input(args, True)
     global_setup(args)
     gen_sample_info(args)
     supers = []
