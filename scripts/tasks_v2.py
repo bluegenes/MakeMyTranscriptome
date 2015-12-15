@@ -228,14 +228,14 @@ class Supervisor:
 					err_str+='\nErrors Reported:\n'
 					for e in self.errors:
 						err_str+=str(e)+'\n'
-				raise Exception(err_str)			
+				                raise Exception(err_str)			
 		except BaseException as inst:
 			self.killRun()
 			self.log_file.write(str(inst))
 			raise
 		finally:
 			self.write_history(history_update)
-			self.send_email('',subject='Pipeline Finished')
+			#self.send_email(self,'',subject='Pipeline Finished')#not working
 
 
 	def __removeTaskPath__(self,task):
@@ -339,7 +339,7 @@ class Supervisor:
 		print(message)
 		if(time.time() > self.last_email+self.email_interval):
 			self.last_email = time.time()
-			#self.send_email(self.log_str,'Pipeline Running Update')
+#			self.send_email(self.log_str,'Pipeline Running Update')
 			self.log_str=''
 
 
