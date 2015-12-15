@@ -99,14 +99,16 @@ busco_flags = {'arthropoda': False, 'metazoa': False, 'vertebrata': False,
 def run_tasks(tasks, cpu=4):
     for t in tasks:
         print(t.name)
-        t.stdout = t.name+'.stdout'
+	t.stdout = t.name+'.stdout'
         t.stderr = t.name+'.stderr'
 
     s = Supervisor(tasks=tasks, force_run=False, log=database_supervisor_log, cpu=cpu)
     s.run()
     for t in tasks:#if everything executes properly, rm the task logs
-        os.remove(t.stdout)
-        os.remove(t.stderr)
+        if os.path.exists(t.stdout):
+	    os.remove(t.stdout)
+        if os.path.exists(t.stderr):
+            os.remove(t.stderr)
 
 
 def safe_retrieve(source, target):

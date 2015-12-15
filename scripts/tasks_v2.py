@@ -235,7 +235,7 @@ class Supervisor:
 			raise
 		finally:
 			self.write_history(history_update)
-			#self.send_email('',subject='Pipeline Finished')
+			self.send_email('',subject='Pipeline Finished')
 
 
 	def __removeTaskPath__(self,task):
