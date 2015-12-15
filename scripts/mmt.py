@@ -82,11 +82,6 @@ annot_database_selector.add_argument('-blastplus',action='store_true',help='Use 
 annot_database_selector.add_argument('-uniref90',help='Use this flag to enable the uniref-90 diamond-blast runs as part of the annotation pipeline. If used with "databases" tool, download this database.',action='store_true')
 annot_database_selector.add_argument('-nr',help='Use this flag to enable the NR (non-redundant protein database) diamond-blast runs as part of the annotation pipeline. If used with "databases" tool, download this database. FYI, this takes a while.',action='store_true')
 
-#DATABASES ARGS
-#database_input = argparse.ArgumentParser(add_help=False)
-#database_input.add_argument('--reinstall', help= 'download new version of all databases', default=False)
-#database_input.add_argument('--cpu', help= 'cpu cap for database downloads & indexing', default=4, type=int)
-
 ###################################
 subparsers = master_parser.add_subparsers(title='TOOLS', description='Tool Selector', help='Select an available module')
 
@@ -99,7 +94,7 @@ assembly_parser.set_defaults(which='assembly')
 annotation_parser = subparsers.add_parser("annotation", parents=[common_parser, cpu_input_parser, assembly_input_parser, annotation_input, annot_database_selector], description='Selected_tool : Annotation. Executing this tool will run asssembly quality assesment along with a series of tools designing to provide information about the assembled transcripts.', add_help=True)
 annotation_parser.set_defaults(which='annotation')
 
-quality_parser = subparsers.add_parser("quality", parents=[common_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembly_input_parser, quality_input], description='Selected_tool : Quality. Executing this tool will perform a quality assessment of an existing assembly.', add_help=True)
+quality_parser = subparsers.add_parser("quality", parents=[common_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembly_input_parser, database_selector, quality_input], description='Selected_tool : Quality. Executing this tool will perform a quality assessment of an existing assembly.', add_help=True)
 quality_parser.set_defaults(which='quality')
 
 expression_parser = subparsers.add_parser("expression", parents=[common_parser, cpu_input_parser, csv_input_parser, expression_input], description='Selected_tool : Expression. Executing this tool will run a series of differential expression analyses and sumarize the output.',add_help=True)
@@ -288,11 +283,18 @@ def go_expression(args, dep):
         args.unpaired_names, args.cpu, args.sample_info, args.model, dep)
 
 def go_manage_db(args, dep, log_files=True):
-    busco_args = {'arthropoda': args.arthropoda, 'metazoa': args.metazoa,
+    if(args.which=='annotation'): 
+        busco_args = {'metazoa':True}
+    else: 
+        busco_args = {'arthropoda': args.arthropoda, 'metazoa': args.metazoa,
                   'vertebrata': args.vertebrata, 'eukaryota': args.eukaryota, 
                   'fungi': args.fungi, 'bacteria': args.bacteria,
                   'plants': args.plants}
     busco_args = [k for k in busco_args if(busco_args[k])]
+    if(args.which=='quality'): 
+        args.nr = False
+	args.uniref90 = False
+	args.blastplus=False
     return tf.manage_db_task(args.reinstall, args.nr, args.uniref90, busco_args, args.blastplus, int(round(args.cpu/4)), dep, log_files)
 
 #####################____Main_Modules____#####################
