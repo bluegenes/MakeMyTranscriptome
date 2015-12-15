@@ -346,7 +346,7 @@ def run_quality(args):
     global_setup(args)
     supers = []
     deps = []
-    if not os.path.exists(args.assembly):
+    if not os.path.exists(os.path.join(tf.NAME_ASSEMBLY,'.fasta')):
         cp = tf.cp_assembly_task(args.assembly, [])
         supers.append(cp)
         deps = [cp] 
@@ -362,7 +362,7 @@ def run_annotation(args):
     global_setup(args)
     supers = []
     deps = []
-    if not os.path.exists(args.assembly):
+    if not os.path.exists(os.path.join(tf.NAME_ASSEMBLY,'.fasta')):
         cp = tf.cp_assembly_task(args.assembly, [])
         supers.append(cp)
         deps = [cp]
@@ -380,7 +380,7 @@ def run_expression(args):
     gen_sample_info(args)
     supers = []
     deps = []
-    if not os.path.exists(args.assembly):
+    if not os.path.exists(os.path.join(tf.NAME_ASSEMBLY,'.fasta')):
         cp = tf.cp_assembly_task(args.assembly, [])
         supers.append(cp)
         deps = [cp]
