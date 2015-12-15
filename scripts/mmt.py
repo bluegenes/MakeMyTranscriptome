@@ -284,6 +284,7 @@ def go_expression(args, dep):
 
 def go_manage_db(args, dep, log_files=True):
     if(args.which=='annotation'): 
+	args.reinstall=False
         busco_args = {'metazoa':True}
     else: 
         busco_args = {'arthropoda': args.arthropoda, 'metazoa': args.metazoa,
