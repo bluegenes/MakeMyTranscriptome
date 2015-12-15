@@ -350,6 +350,8 @@ def run_quality(args):
         cp = tf.cp_assembly_task(args.assembly, [])
         supers.append(cp)
         deps = [cp] 
+    manage_db = go_manage_db(args, [])
+    supers.append(manage_db)
     quality_super = go_quality(args, deps)
     supers.append(quality_super)
     run_supers(args, supers)
@@ -366,6 +368,8 @@ def run_annotation(args):
         cp = tf.cp_assembly_task(args.assembly, [])
         supers.append(cp)
         deps = [cp]
+    manage_db = go_manage_db(args, [])
+    supers.append(manage_db)
     annotation_super = go_annotation(args, deps)
     supers.append(annotation_super)
     run_supers(args, supers)
