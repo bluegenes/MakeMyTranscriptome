@@ -1,0 +1,5 @@
+
+databases/*
+scripts/*.pyc
+scripts/test_data/*
+database_supervisor_log
