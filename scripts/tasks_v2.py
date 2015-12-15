@@ -228,7 +228,7 @@ class Supervisor:
 					err_str+='\nErrors Reported:\n'
 					for e in self.errors:
 						err_str+=str(e)+'\n'
-				 raise Exception(err_str)			
+				raise Exception(err_str)			
 		except BaseException as inst:
 			self.killRun()
 			self.log_file.write(str(inst))
