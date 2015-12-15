@@ -246,25 +246,25 @@ def main(nr_flag=False, uniref90_flag=False, file_check=True, busco_flags=busco_
     if blastplus:
         swissprot_task = build_blast_task(sprot_target, sprot_target, 'prot', [], False)
         tasks.append(swissprot_task)
-    swissprot_diamond = build_diamond_task(sprot_target, sprot_target, [], False)
+    swissprot_diamond = build_diamond_task(sprot_target, PATH_SWISS_PROT, [], False)
     tasks.append(swissprot_diamond)
     swissprot_table_task = db2stitle_task(sprot_target, [], False)
     tasks.append(swissprot_table_task)
     if(uniref90_flag and os.path.exists(uniref90_target)):
-        uniref90_diamond = build_diamond_task(uniref90_target, uniref90_target, [], False)
+        uniref90_diamond = build_diamond_task(uniref90_target, PATH_UNIREF90, [], False)
         tasks.append(uniref90_diamond)
         uniref90_table_task = db2stitle_task(uniref90_target, [], False)
         tasks.append(uniref90_table_task)
         if blastplus:
-  	    uniref90_task = build_blast_task(uniref90_target, uniref90_target, 'prot', [], False)
+  	    uniref90_task = build_blast_task(uniref90_target,  PATH_UNIREF90, 'prot', [], False)
             tasks.append(uniref90_task)
     if(nr_flag and os.path.exists(nr_target)):
-        nr_diamond = build_diamond_task(nr_target, nr_target, [], False)
+        nr_diamond = build_diamond_task(nr_target, PATH_NR, [], False)
         tasks.append(nr_diamond)
 	nr_table_task = db2stitle_task(nr_target, [], False)
         tasks.append(nr_table_task)
         if blastplus:
-	    nr_task = build_blast_task(nr_target, nr_target, 'prot', [], False)
+	    nr_task = build_blast_task(nr_target, PATH_NR, 'prot', [], False)
 	    tasks.append(nr_task)
     pfam_task = pfam_build_task(pfam_db_target, [], False)
     tasks.append(pfam_task)
