@@ -126,9 +126,9 @@ def inherit_name_from_paired(paired_1):
 def set_test_args(args):
     args.out_name = args.out_name if(args.out_name!=None) else 'test_v2'
     if(args.which=='full' or args.which=='assembly' or args.which=='expression' or args.which=='quality'):
-        args.csv = tf.PATH_SCRIPTS+'/test_data/sample_info2.csv'
+        args.csv = tf.PATH_ROOT+'/test_data/sample_info2.csv'
     if(args.which=='quality' or args.which=='annotation' or args.which=='expression'):
-        args.assembly = tf.PATH_SCRIPTS+'/test_data/test_v2.fasta'
+        args.assembly = tf.PATH_ROOT+'/test_data/test_v2.fasta'
 
 def set_subsample_size(args):
     args.subsample_size = 10**15 if(args.subsample_size<=0) else args.subsample_size*10**6

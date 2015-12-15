@@ -29,7 +29,8 @@ PATH_GENE_TRANS_MAP = 'get_Trinity_gene_to_trans_map.pl'
 PATH_KALLISTO = 'kallisto'
 PATH_NR = os.path.join(PATH_DATABASES, 'nr', 'nr')
 PATH_PFAM = 'hmmscan'
-PATH_PFAM_DATABASE = '{0!s}/pfam/Pfam-A.hmm'.format(PATH_DATABASES)
+#PATH_PFAM_DATABASE = '{0!s}/pfam/Pfam-A.hmm'.format(PATH_DATABASES)
+PATH_PFAM_DATABASE = '{0!s}/pfam/Pfam-A'.format(PATH_DATABASES)
 PATH_PRINSEQ = 'prinseq-lite.pl'
 PATH_RNAMMER = '/matta1/biotools/redhat/rnammer-1.2/rnammer'
 PATH_RNAMMER_PL = 'RnammerTranscriptome.pl'
@@ -91,7 +92,8 @@ def cp_assembly_task(source, tasks):
             tasks - a list of tasks that this task is dependant on.
     '''
     trgs = [GEN_PATH_ASSEMBLY()]
-    cmd = 'if [ ! -f "{1!s}" ]; then cp {0!s} {1!s}; fi'.format(source, trgs[0]) # only copy if file does not exist 
+    #cmd = 'if [ ! -f "{1!s}" ]; then cp {0!s} {1!s}; fi'.format(source, trgs[0]) # only copy if file does not exist 
+    cmd = 'cp {0!s} {1!s}'.format(source, trgs[0]) 
     name = 'setting_fasta'
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name)
 
@@ -482,7 +484,7 @@ def annot_table_task(opts, tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def keg_task(tasks):
+def kegg_task(tasks):
     '''    Defines the keg task. Uses PATH_SCRIPTS, 
         Params : 
     '''
@@ -490,7 +492,7 @@ def keg_task(tasks):
             '{0!s}/ko01100_KO.txt'.format(GEN_PATH_ANNOTATION_FILES())]
     cmd = ('python {0!s}/color_pathways2.py --path ko01100 --transcriptomeKO '
             '{1!s}/uniq_ko_annots.txt --output {2!s}').format(PATH_SCRIPTS,PATH_DATABASES,GEN_PATH_ANNOTATION_FILES())
-    name='draw_keg_maps'
+    name='draw_kegg_maps'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 

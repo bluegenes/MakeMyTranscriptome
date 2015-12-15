@@ -89,7 +89,7 @@ idmapping_keys = {'BioCyc': '{0!s}/idmapping.biocyc'.format(PATH_DATABASES),
                   'OrthoDB': '{0!s}/idmapping.orthodb'.format(PATH_DATABASES)}
 
 
-database_supervisor_log = '{0!s}/database_supervisor_log'.format(PATH_DATABASES)
+database_supervisor_log = '{0!s}/.database_supervisor_log'.format(PATH_DATABASES)
 
 busco_flags = {'arthropoda': False, 'metazoa': False, 'vertebrata': False,
                'eukaryota': False, 'fungi': False, 'bacteria': False,
@@ -104,7 +104,7 @@ def run_tasks(tasks, cpu=4):
 
     s = Supervisor(tasks=tasks, force_run=False, log=database_supervisor_log, cpu=cpu)
     s.run()
-    for t in tasks:
+    for t in tasks:#if everything executes properly, rm the task logs
         os.remove(t.stdout)
         os.remove(t.stderr)
 
@@ -235,7 +235,7 @@ def check_database_dir():
         os.mkdir(pfam_folder)
     if(not os.path.isdir(busco_folder)):
         os.mkdir(busco_folder)
-    if(not os.path.isfile(os.path.join(PATH_DATABASES, 'database_log'))):
+    if(not os.path.isfile(os.path.join(PATH_DATABASES, '.database_log'))):
         write_log({})
 
 
