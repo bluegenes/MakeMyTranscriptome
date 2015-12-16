@@ -235,7 +235,7 @@ class Supervisor:
 			raise
 		finally:
 			self.write_history(history_update)
-			#self.send_email('',subject='Pipeline Finished')
+			#self.send_email(self,'',subject='Pipeline Finished')#not working
 
 
 	def __removeTaskPath__(self,task):
@@ -339,7 +339,7 @@ class Supervisor:
 		print(message)
 		if(time.time() > self.last_email+self.email_interval):
 			self.last_email = time.time()
-			#self.send_email(self.log_str,'Pipeline Running Update')
+#			self.send_email(self.log_str,'Pipeline Running Update')
 			self.log_str=''
 
 

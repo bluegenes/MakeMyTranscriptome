@@ -27,7 +27,7 @@ PATH_EXPRESS = 'express'
 PATH_FASTQC = 'fastqc'
 PATH_GENE_TRANS_MAP = 'get_Trinity_gene_to_trans_map.pl'
 PATH_KALLISTO = 'kallisto'
-PATH_NR = os.path.join(PATH_DATABASES, 'nr', 'nr.fasta')
+PATH_NR = os.path.join(PATH_DATABASES, 'nr', 'nr')
 PATH_PFAM = 'hmmscan'
 PATH_PFAM_DATABASE = '{0!s}/pfam/Pfam-A.hmm'.format(PATH_DATABASES)
 PATH_PRINSEQ = 'prinseq-lite.pl'
@@ -43,8 +43,8 @@ PATH_TRIMMOMATIC = '/matta1/biotools/redhat/Trimmomatic-0.33/trimmomatic-0.33.ja
 PATH_TRIMMOMATIC_ADAPTERS_SINGLE = '/matta1/biotools/redhat/Trimmomatic-0.33/adapters/TruSeq3-SE.fa'
 PATH_TRIMMOMATIC_ADAPTERS_PAIRED = '/matta1/biotools/redhat/Trimmomatic-0.33/adapters/TruSeq3-PE.fa'
 PATH_TRINITY = 'Trinity'
-PATH_SWISS_PROT = os.path.join(PATH_DATABASES, 'uniprot_sprot', 'uniprot_sprot.fasta')
-PATH_UNIREF90 = os.path.join(PATH_DATABASES, 'uniref90', 'uniref90.fasta')
+PATH_SWISS_PROT = os.path.join(PATH_DATABASES, 'uniprot_sprot', 'uniprot_sprot')
+PATH_UNIREF90 = os.path.join(PATH_DATABASES, 'uniref90', 'uniref90')
 PATH_NOG_CATEGORIES = os.path.join(PATH_DATABASES, 'nog_categories')
 
 
@@ -91,7 +91,8 @@ def cp_assembly_task(source, tasks):
             tasks - a list of tasks that this task is dependant on.
     '''
     trgs = [GEN_PATH_ASSEMBLY()]
-    cmd = 'if [ ! -f "{1!s}" ]; then cp {0!s} {1!s}; fi'.format(source, trgs[0]) # only copy if file does not exist 
+    #cmd = 'if [ ! -f "{1!s}" ]; then cp {0!s} {1!s}; fi'.format(source, trgs[0]) # only copy if file does not exist 
+    cmd = 'cp {0!s} {1!s}'.format(source, trgs[0]) 
     name = 'setting_fasta'
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name)
 
@@ -303,29 +304,26 @@ def busco_task(reference_name, cpu_cap, tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=cpu_cap,stdout=out,stderr=err)
 
 
-#def write_default_transrate_reads(lefts,rights,singles):
-#    trgs= [{0!s}/{1!s}.reads_for_transrate.txt]
-#    cmd=
-#    out, err = GEN_LOGS(name)
-#    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
-
-#def read_default_transrate_reads(lefts,rights,singles):
-#    trgs= []
-#    cmd= [{0!s}/{1!s}.reads_for_transrate.txt]
-#    out, err = GEN_LOGS(name)
-#    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
-
-
-def transrate_task(lefts, rights, singles, reference, cpu_cap, tasks):
+def transrate_task(lefts, rights, singles, transrate_name, cpu_cap, tasks): #reference, cpu_cap, tasks):
     trgs = []
     lefts = ','.join(lefts+singles)
     rights = ','.join(rights) 
     lefts = '--left '+lefts if(len(lefts) > 0) else ''
     rights = '--right '+rights if(len(rights) > 0) else ''
+    #take out reference functionality from here?
+    #reference = '--reference ' + reference if(reference != '') else ''
+    cmd = '{0!s} --assembly {1!s} {4!s} {5!s} --threads {2!s} --output {3!s}/{6!s}'.format(
+           PATH_TRANSRATE, GEN_PATH_ASSEMBLY(), cpu_cap, GEN_PATH_QUALITY_FILES(), lefts, rights, transrate_name) #, reference)
+    name = transrate_name
+    out, err = GEN_LOGS(name)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
+
+def transrate_to_reference_task(transrate_name, reference, cpu_cap, tasks):
+    trgs = []
     reference = '--reference ' + reference if(reference != '') else ''
-    cmd = '{0!s} --assembly {1!s} {4!s} {5!s} --threads {2!s} --output {3!s}/transrate_output {6!s}'.format(
-           PATH_TRANSRATE, GEN_PATH_ASSEMBLY(), cpu_cap, GEN_PATH_QUALITY_FILES(), lefts, rights, reference)
-    name = 'transrate'
+    cmd = '{0!s} --assembly {1!s} --threads {2!s} --output {3!s}/{4!s} {5!s}'.format(
+           PATH_TRANSRATE, GEN_PATH_ASSEMBLY(), cpu_cap, GEN_PATH_QUALITY_FILES(), transrate_name, reference)
+    name = transrate_name 
     out, err = GEN_LOGS(name)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
 
@@ -472,15 +470,15 @@ def annot_table_task(opts, tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def keg_task(tasks):
-    '''    Defines the keg task. Uses PATH_SCRIPTS, 
+def kegg_task(tasks):
+    '''    Defines the kegg task. Uses PATH_SCRIPTS, 
         Params : 
     '''
     trgs = ['{0!s}/ko01100.pdf'.format(GEN_PATH_ANNOTATION_FILES()),
             '{0!s}/ko01100_KO.txt'.format(GEN_PATH_ANNOTATION_FILES())]
     cmd = ('python {0!s}/color_pathways2.py --path ko01100 --transcriptomeKO '
             '{1!s}/uniq_ko_annots.txt --output {2!s}').format(PATH_SCRIPTS,PATH_DATABASES,GEN_PATH_ANNOTATION_FILES())
-    name='draw_keg_maps'
+    name='draw_kegg_maps'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
@@ -499,7 +497,7 @@ def diamondX_task(ref, cpu_cap, tasks):
     trgs = ['{0!s}/diamond_{1!s}.blastx'.format(GEN_PATH_ANNOTATION_FILES(), base_ref)]
     pseudo_trgs = ['{0!s}/diamond_{1!s}_blastx'.format(GEN_PATH_ANNOTATION_FILES(), base_ref)]
     cmd = ('{0!s} blastx --db {1!s} --query {2!s} --daa {3!s} --tmpdir {4!s} '
-           '--max-target-seqs 20 --threads {5!s} --evalue 0.001; {0!s} view '
+           '--max-target-seqs 20 --sensitive --threads {5!s} --evalue 0.001; {0!s} view '
            '--daa {3!s}.daa --out {6!s};').format(
            PATH_DIAMOND, ref, GEN_PATH_ASSEMBLY(), pseudo_trgs[0], GEN_PATH_ANNOTATION_FILES(),
            cpu_cap, trgs[0])
@@ -513,7 +511,7 @@ def diamondP_task(ref, cpu_cap, tasks):
     trgs = ['{0!s}/diamond_{1!s}.blastp'.format(GEN_PATH_ANNOTATION_FILES(), base_ref)]
     pseudo_trgs = ['{0!s}/diamond_{1!s}_blastp'.format(GEN_PATH_ANNOTATION_FILES(), base_ref)]
     cmd = ('{0!s} blastp --db {1!s} --query {2!s} --daa {3!s} --tmpdir {4!s} '
-           '--max-target-seqs 20 --threads {5!s} --evalue 0.001; {0!s} view '
+           '--max-target-seqs 20 --sensitive --threads {5!s} --evalue 0.001; {0!s} view '
            '--daa {3!s}.daa --out {6!s};').format(
            PATH_DIAMOND, ref, GEN_PATH_PEP(), pseudo_trgs[0], GEN_PATH_ANNOTATION_FILES(),
            cpu_cap, trgs[0])
@@ -653,9 +651,6 @@ def salmon_gene_map_task(gene_trans_map,tasks):
             tasks - a list of tasks that this task is dependant on (trinity_task) 
     '''
     trgs = ['{0!s}/{1!s}.trans_gene_map'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
-#    cmd = '{0!s} {1!s}/{2!s}.fasta > {3!s}'.format(PATH_GENE_TRANS_MAP,GEN_PATH_DIR(),NAME_ASSEMBLY,trgs[0])
-    #cmd = 'awk \'{ print $2 "\t" $1}\' {0!s}'.format(gene_trans_map) 
-    #cmd =  'awk -F, "{print $2,$1}" OFS=\t {0!s} > {1!s}'.format(gene_trans_map, trgs[0]) 
     cmd = 'join -t, -o 1.2,1.1 {0!s} {0!s} > {1!s}'.format(gene_trans_map, trgs[0]) 
     name = 'trans_gene_map'
     name = 'salmon_gene_map_task'
@@ -702,16 +697,19 @@ def kallisto_task(index,out_name,left,right,tasks):
 
 def build_blast_task(fasta,out_path,dbtype,tasks,log_flag=True):
     trgs = []
-    cmd = 'makeblastdb -in {0!s} -dbtype {2!s} -out {1!s}'.format(fasta,out_path,dbtype)
-    name = 'build_blast_'+os.path.basename(fasta)
+    #title doesn't seem to change the out name .. it's still xx.gz.psq, etc? CHECK.
+    title = os.path.basename(out_path).split('.')[0]
+    cmd = 'gunzip -c {0!s} | makeblastdb -in - -dbtype {2!s} -title {3!s} -out {1!s}'.format(fasta,out_path,dbtype,title)
+    name = 'build_blast_'+title
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def build_diaimond_task(fasta,out_path,tasks,log_flag=True):
-    trgs = [out_path+'.dmnd']
+def build_diamond_task(fasta,out_path,tasks,log_flag=True):
+    title = os.path.basename(out_path)
+    trgs = ['{0!s}'.format(out_path + '.dmnd')] 
     cmd = '{0!s} makedb --in {1!s} --db {2!s}'.format(PATH_DIAMOND, fasta, out_path)
-    name = 'build_diamond_'+os.path.basename(fasta)
+    name = 'build_diamond_'+ title
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
  
@@ -735,8 +733,27 @@ def pfam_build_task(source, tasks, log_flag=True):
 def db2stitle_task(db, tasks, log_flag=True):
     base_db = os.path.basename(db)
     trgs = ['{0!s}/{1!s}.stitle'.format(PATH_DATABASES, base_db)]
-    cmd = 'python {0!s}/fastaID2names --fasta {1!s} > {2!s}'.format(
+    cmd = 'python {0!s}/fastaID2names.py --fasta {1!s} > {2!s}'.format(
            PATH_SCRIPTS, db, trgs[0])
     name = 'db2stitle_'+base_db
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+
+def manage_db_task(fresh, nr_flag, uniref90_flag, busco_flags, blastplus_flag, cpu_cap, tasks, log_flag=True):
+    trgs = [PATH_DATABASES]
+    cmd = 'python {0!s}/manage_database.py'.format(PATH_SCRIPTS)
+    if(fresh):
+        cmd +=' --hard'
+    if(nr_flag):
+        cmd+=' --nr'
+    if(uniref90_flag):
+        cmd+=' --uniref90'
+    if(len(busco_flags) != 0):
+        cmd+=' --buscos '
+        cmd+=','.join(busco_flags)
+    if blastplus_flag:
+        cmd+= ' --buildBlastPlus'
+    name = 'db_manage'
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)

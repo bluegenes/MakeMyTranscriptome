@@ -1,8 +1,7 @@
 from task_functions_v2 import (
     PATH_DATABASES, PATH_UNIREF90, PATH_SWISS_PROT,
-    PATH_NR, PATH_BUSCO_METAZOA, PATH_PFAM_DATABASE,
-    pfam_build_task, build_diaimond_task, build_blast_task,
-    db2stitle_task)
+    PATH_NR, PATH_PFAM_DATABASE, pfam_build_task, 
+    build_diamond_task, build_blast_task, db2stitle_task)
 from time import strftime
 import gzip
 import tarfile
@@ -21,22 +20,21 @@ swissprot_folder = os.path.join(PATH_DATABASES, 'uniprot_sprot')
 uniref90_folder = os.path.join(PATH_DATABASES, 'uniref90')
 nr_folder = os.path.join(PATH_DATABASES, 'nr')
 pfam_folder = os.path.join(PATH_DATABASES, 'pfam')
-busco_folder = os.path.join(PATH_DATABASES, 'busco') #this means we need to change busco paths elsewhere..
-
+busco_folder = os.path.join(PATH_DATABASES, 'busco') 
 
 url_sprot = 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz'
-sprot_target = PATH_SWISS_PROT
+sprot_target = PATH_SWISS_PROT + '.gz'
 
 url_uniref90 = 'ftp://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref90/uniref90.fasta.gz'
-uniref90_target = PATH_UNIREF90
+uniref90_target = PATH_UNIREF90 + '.gz'
 
 url_nr = 'ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz'
-nr_target = PATH_NR
+nr_target = PATH_NR + '.gz'
 
 
 ####
 url_busco_metazoa = 'http://busco.ezlab.org/files/metazoa_buscos.tar.gz'
-busco_metazoa_target = os.path.join(busco_folder, 'metazoa_buscos') #PATH_BUSCO_METAZOA
+busco_metazoa_target = os.path.join(busco_folder, 'metazoa_buscos') 
 
 url_busco_arthropoda = 'http://busco.ezlab.org/files/arthropoda_buscos.tar.gz'
 busco_arthropoda_target = os.path.join(busco_folder, 'arthopoda_buscos')
@@ -52,6 +50,10 @@ busco_fungi_target = os.path.join(busco_folder, 'fungi_buscos')
 
 url_busco_bacteria = 'http://busco.ezlab.org/files/bacteria_buscos.tar.gz'
 busco_bacteria_target = os.path.join(busco_folder, 'bacteria_buscos') 
+
+#NEED TO GET PLANT BUSCOS --> currently bacteria = placeholder
+url_busco_plant = 'http://busco.ezlab.org/files/bacteria_buscos.tar.gz'
+busco_plant_target = os.path.join(busco_folder, 'plant_buscos') 
 ####
 
 url_go_pathway = 'http://rest.genome.jp/link/go/pathway'
@@ -87,22 +89,26 @@ idmapping_keys = {'BioCyc': '{0!s}/idmapping.biocyc'.format(PATH_DATABASES),
                   'OrthoDB': '{0!s}/idmapping.orthodb'.format(PATH_DATABASES)}
 
 
+database_supervisor_log = '{0!s}/.database_supervisor_log'.format(PATH_DATABASES)
+
 busco_flags = {'arthropoda': False, 'metazoa': False, 'vertebrata': False,
                'eukaryota': False, 'fungi': False, 'bacteria': False,
                'plants': False}
 
 
-def run_tasks(tasks):
+def run_tasks(tasks, cpu=4):
     for t in tasks:
         print(t.name)
-        t.stdout = t.name+'.stdout'
+	t.stdout = t.name+'.stdout'
         t.stderr = t.name+'.stderr'
 
-    s = Supervisor(tasks=tasks, force_run=True, log='database_supervisor_log')
+    s = Supervisor(tasks=tasks, force_run=False, log=database_supervisor_log, cpu=cpu)
     s.run()
-    for t in tasks:
-        os.remove(t.stdout)
-        os.remove(t.stderr)
+    for t in tasks:#if everything executes properly, rm the task logs
+        if os.path.exists(t.stdout):
+	    os.remove(t.stdout)
+        if os.path.exists(t.stderr):
+            os.remove(t.stderr)
 
 
 def safe_retrieve(source, target):
@@ -142,7 +148,7 @@ def get(log_table, flag, source, target, file_check=True):
         elif(flag == 'tar'):
             tar_retrieve(source, target)
         else:
-            print('Your shits fucked.')
+            print('Can\'t retrieve database.')
     except ContentTooShortError:
         print('failed to install {0!s}'.format(source))
     basename = os.path.basename(target)
@@ -168,11 +174,11 @@ def download_databases(log_table, nr_flag=False, uniref90_flag=False, file_check
     partial_get('', url_swiss_enzyme, swiss_enzyme_target)
     partial_get('', url_pfam_enzyme, pfam_enzyme_target)
     partial_get('', url_slim_generic, slim_generic_target)
-    partial_get('gz', url_sprot, sprot_target)
+    partial_get('', url_sprot, sprot_target)
     if(uniref90_flag):
-        partial_get('gz', url_uniref90, uniref90_target)
+        partial_get('', url_uniref90, uniref90_target)
     if(nr_flag):
-        partial_get('gz', url_nr, nr_target)
+        partial_get('', url_nr, nr_target)
     partial_get('gz', url_id_mapping, id_mapping_target)
     partial_get('gz', url_idmapping_selected, idmapping_selected_target)
     partial_get('gz', url_kog_functional, kog_functional_target)
@@ -189,6 +195,8 @@ def download_databases(log_table, nr_flag=False, uniref90_flag=False, file_check
         partial_get('tar', url_busco_fungi, busco_fungi_target)
     if(busco_flags['bacteria']):
         partial_get('tar', url_busco_bacteria, busco_bacteria_target)
+    if(busco_flags['plants']):
+        partial_get('tar', url_busco_plant, busco_plant_target)
     return log_table
 
 
@@ -199,6 +207,12 @@ def subset_dat(dat_file, key_file_dict, log_table):
         key = os.path.basename(key_file_dict[key])
         log_table[key] = date
     '''
+    flag = True
+    for k in key_file_dict:
+    	if(not os.path.isfile(key_file_dict[k])):
+	   flag = False
+    if(flag):
+        return log_table
     dat = open(dat_file)
     key_file = {key: open(key_file_dict[key], 'w') for key in key_file_dict}
     for line in dat:
@@ -223,46 +237,56 @@ def check_database_dir():
         os.mkdir(pfam_folder)
     if(not os.path.isdir(busco_folder)):
         os.mkdir(busco_folder)
-    if(not os.path.isfile(os.path.join(PATH_DATABASES, 'database_log'))):
+    if(not os.path.isfile(os.path.join(PATH_DATABASES, '.database_log'))):
         write_log({})
 
 
-def main(nr_flag=False, uniref90_flag=False, file_check=True, busco_flags=busco_flags):
+def main(nr_flag=False, uniref90_flag=False, file_check=True, busco_flags=busco_flags, blastplus=False, cpu=4):
     check_database_dir()
     log_table = read_log()
     log_table = download_databases(log_table, nr_flag, uniref90_flag, file_check, busco_flags)
     log_table = subset_dat(id_mapping_target, idmapping_keys, log_table)
     tasks = []
-    swissprot_task = build_blast_task(sprot_target, sprot_target, 'prot', [], False)
-    tasks.append(swissprot_task)
-    swissprot_diamond = build_diaimond_task(sprot_target, sprot_target, [], False)
+    if blastplus:
+        swissprot_task = build_blast_task(sprot_target, sprot_target, 'prot', [], False)
+        tasks.append(swissprot_task)
+    swissprot_diamond = build_diamond_task(sprot_target, PATH_SWISS_PROT, [], False)
     tasks.append(swissprot_diamond)
     swissprot_table_task = db2stitle_task(sprot_target, [], False)
     tasks.append(swissprot_table_task)
     if(uniref90_flag and os.path.exists(uniref90_target)):
-        uniref90_task = build_blast_task(uniref90_target, uniref90_target, 'prot', [], False)
-        tasks.append(uniref90_flag)
-        uniref90_diamond = build_diaimond_task(uniref90_target, uniref90_target, [], False)
+        uniref90_diamond = build_diamond_task(uniref90_target, PATH_UNIREF90, [], False)
         tasks.append(uniref90_diamond)
         uniref90_table_task = db2stitle_task(uniref90_target, [], False)
         tasks.append(uniref90_table_task)
+        if blastplus:
+  	    uniref90_task = build_blast_task(uniref90_target,  PATH_UNIREF90, 'prot', [], False)
+            tasks.append(uniref90_task)
     if(nr_flag and os.path.exists(nr_target)):
-        nr_task = build_blast_task(nr_target, nr_target, 'prot', [], False)
-        tasks.append(nr_task)
-        nr_diamond = build_diaimond_task(nr_target, nr_target, [], False)
+        nr_diamond = build_diamond_task(nr_target, PATH_NR, [], False)
         tasks.append(nr_diamond)
-        nr_table_task = db2stitle_task(nr_target, [], False)
+	nr_table_task = db2stitle_task(nr_target, [], False)
         tasks.append(nr_table_task)
+        if blastplus:
+	    nr_task = build_blast_task(nr_target, PATH_NR, 'prot', [], False)
+	    tasks.append(nr_task)
     pfam_task = pfam_build_task(pfam_db_target, [], False)
     tasks.append(pfam_task)
-    run_tasks(tasks)
+    run_tasks(tasks, 4) # NEED TO FIX CPU HERE?
     write_log(log_table)
 
 
 if(__name__ == '__main__'):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--hard', action='store_true')
-    parser.add_argument('--uniref90', action='store_true')
-    parser.add_argument('--nr', action='store_true')
+    parser.add_argument('--hard', action='store_true', default=False)
+    parser.add_argument('--uniref90', action='store_true', default=False)
+    parser.add_argument('--nr', action='store_true', default=False)
+    parser.add_argument('--buscos', help='a comma seperated list of busco files that need to be downloaded')
+    parser.add_argument('--cpu', type=int)
+    parser.add_argument('--buildBlastPlus', action='store_true', default=False)
     args = parser.parse_args()
-    main(args.nr, args.uniref90, not args.hard)
+    if(args.buscos != None):
+    	args.buscos = args.buscos.split(',')
+    	for b in args.buscos:
+            busco_flags[b] = True
+    main(args.nr, args.uniref90, not args.hard, busco_flags, args.buildBlastPlus, args.cpu)

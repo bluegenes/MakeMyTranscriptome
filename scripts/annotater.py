@@ -82,8 +82,8 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
     tasks.append(annot)
     pipeplot = tf.pipeplot_task(annot.targets[0],[annot])
     tasks.append(pipeplot)
-    keg = tf.keg_task([annot])
-    tasks.append(keg)
+#    kegg = tf.kegg_task([annot])
+#    tasks.append(kegg)
     return Supervisor(tasks=tasks,dependencies=dependency_set)
 
 
