@@ -15,7 +15,7 @@ Each tool can be run individually, or all four can be executed as a single virtu
 
 ### Quick Start Guide:
 
-MMT is a convenience tool that runs a number of bioinformatics tools in an automated fashion. In order to use it, you'll have to download these other tools, and put these into your PATH. If you're working on an Ubuntu Amazon Web Services machine, MMT can download the tools for you (coming soon. temporary instructions [here](Using Amazon EC2)). If not, see the [Installation Guide](Install tools used by MMT) for details.
+MMT is a convenience tool that runs a number of bioinformatics tools in an automated fashion. In order to use it, you'll have to download these other tools, and put these into your PATH. If you're working on an Ubuntu machine with root access, MMT can download the tools for you (coming soon). Instructions [here](Install tools used by MMT)).
 
 Once you have installed the required tools, cd into the MakeMyTranscriptome directory and run:
 ```
