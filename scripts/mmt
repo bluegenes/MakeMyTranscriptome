@@ -318,9 +318,9 @@ def run_full(args):
 	global_setup(args)
     manage_db = go_manage_db(args, [])
     supers.append(manage_db)
-    annotation_super = go_annotation(args, deps)
+    annotation_super = go_annotation(args, deps+[manage_db])
     supers.append(annotation_super)
-    quality_super = go_quality(args, deps)
+    quality_super = go_quality(args, deps+[manage_db])
     supers.append(quality_super)
     if(args.csv !=None): #csv is required so we have metadata
 	check_csv_input(args)# since it wasn't required earlier, we need to check that it exists, is proper file. 
@@ -356,6 +356,7 @@ def run_quality(args):
         deps = [cp] 
     manage_db = go_manage_db(args, [])
     supers.append(manage_db)
+    deps.append(manage_db)
     quality_super = go_quality(args, deps)
     supers.append(quality_super)
     run_supers(args, supers)
@@ -374,6 +375,7 @@ def run_annotation(args):
         deps = [cp]
     manage_db = go_manage_db(args, [])
     supers.append(manage_db)
+    deps.append(manage_db)
     annotation_super = go_annotation(args, deps)
     supers.append(annotation_super)
     run_supers(args, supers)
