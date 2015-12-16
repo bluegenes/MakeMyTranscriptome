@@ -25,4 +25,4 @@ for example,
 ```
 mmt full -test
 ```
-will run a full test on the sample data
+will run a full test on the sample data.
