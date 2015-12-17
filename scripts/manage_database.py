@@ -272,7 +272,7 @@ def main(nr_flag=False, uniref90_flag=False, file_check=True, busco_flags=busco_
 	    tasks.append(nr_task)
     pfam_task = pfam_build_task(pfam_db_target, [], False)
     tasks.append(pfam_task)
-    run_tasks(tasks, 4) # NEED TO FIX CPU HERE?
+    run_tasks(tasks, cpu) # NEED TO FIX CPU HERE?
     write_log(log_table)
 
 
@@ -282,7 +282,7 @@ if(__name__ == '__main__'):
     parser.add_argument('--uniref90', action='store_true', default=False)
     parser.add_argument('--nr', action='store_true', default=False)
     parser.add_argument('--buscos', help='a comma seperated list of busco files that need to be downloaded')
-    parser.add_argument('--cpu', type=int)
+    parser.add_argument('--cpu', type=int, default=4)
     parser.add_argument('--buildBlastPlus', action='store_true', default=False)
     args = parser.parse_args()
     if(args.buscos != None):
