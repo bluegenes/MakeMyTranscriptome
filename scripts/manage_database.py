@@ -99,8 +99,8 @@ busco_flags = {'arthropoda': False, 'metazoa': False, 'vertebrata': False,
 def run_tasks(tasks, cpu=4):
     for t in tasks:
         print(t.name)
-	t.stdout = os.path.join(PATH_DATABASES, t.name, '.stdout')
-        t.stderr = os.path.join(PATH_DATABASES, t.name,'.stderr')
+	t.stdout = os.path.join(PATH_DATABASES, t.name+'.stdout')
+        t.stderr = os.path.join(PATH_DATABASES, t.name+'.stderr')
 
     s = Supervisor(tasks=tasks, force_run=False, log=database_supervisor_log, cpu=cpu)
     s.run()
