@@ -14,6 +14,7 @@ PATH_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PATH_SCRIPTS = os.path.join(PATH_ROOT, 'scripts')
 PATH_DATABASES = os.path.join(PATH_ROOT, 'databases')
 PATH_ASSEMBLIES = os.path.join(PATH_ROOT, 'assemblies')
+PATH_TOOLS = os.path.join(PATH_ROOT, 'external_tools')
 PATH_BEDTOOLS = 'bedtools'
 PATH_BLASTP = 'blastp'
 PATH_BLASTX = 'blastx'
