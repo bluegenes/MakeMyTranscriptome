@@ -20,12 +20,15 @@ tool_supervisor_log = '{0!s}/.tool_supervisor_log'.format(PATH_TOOLS)
 
 # need to change all targets --> what they need to be
 #ASSEMBLY TOOLS#
-#url_trinity = 'https://github.com/trinityrnaseq/trinityrnaseq/archive/v2.1.1.tar.gz'
-#trinity_target = os.path.join(PATH_TOOLS, 'trinity')
-trinity_version_check = 'Trinity --version'
+url_trinity = 'https://github.com/trinityrnaseq/trinityrnaseq/archive/v2.1.1.tar.gz'
+trinity_target = os.path.join(PATH_TOOLS, 'trinity')
+# need to cd into Trinity dir; 'make' 
+#trinity_version_check = 'Trinity --version'
+# both trimmomatic and transdecoder are included as part of trinity --can just link to those versions! 
 
 #url_trimmomatic = 'http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.35.zip'
 #trimmomatic_target = os.path.join(PATH_TOOLS, 'trimmommatic')
+
 trimmomatic_version_check = 
 #url_prinseq = 'http://sourceforge.net/projects/prinseq/files/standalone/prinseq-lite-0.20.4.tar.gz'
 #prinseq_target = os.path.join(PATH_TOOLS, 'prinseq')
@@ -57,8 +60,8 @@ transrate_version_check = 'transrate --version'
 def run_tasks(tasks, cpu=4):
     for t in tasks:
         print(t.name)
-	t.stdout = os.path.join(PATH_DATABASES, t.name, '.stdout')
-        t.stderr = os.path.join(PATH_DATABASES, t.name,'.stderr')
+	t.stdout = os.path.join(PATH_TOOLS, t.name, '.stdout')
+        t.stderr = os.path.join(PATH_TOOLS, t.name,'.stderr')
 
     s = Supervisor(tasks=tasks, force_run=False, log=database_supervisor_log, cpu=cpu)
     s.run()
