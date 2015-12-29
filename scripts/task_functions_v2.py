@@ -758,3 +758,43 @@ def manage_db_task(fresh, nr_flag, uniref90_flag, busco_flags, blastplus_flag, c
     name = 'db_manage'
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
+
+
+def install_trinity_task(trinity_target, trinity_exe,log_flag= True):
+    trgs = [trinity_target]
+    cmd = 'cd {0!s}; make; cd {1!s}'.format(trgs[0], PATH_TOOLS)
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+
+def install_trimmomatic_task(trimmomatic_target, trimmomatic_exe, log_flag= True)
+    trgs = [os.path.join(trimmomatic_target]
+    cmd = 'ln -s {0!s}/{1!s} {2!s}'.format(trgs[0], trimmomatic_jar, PATH_TOOLS)
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+
+def install_prinseq_task(prinseq_target, prinseq_exe, log_flag= True)
+    #softlink prinseq into main TOOLS directory
+    trgs = [prinseq_target]
+    cmd = 'ln -s {0!s}/{1!s} {2!s}'.format(trgs[0],prinseq_exe, PATH_TOOLS)
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+
+def install_transdecoder_task(transdecoder_target, transdecoder_exe, log_flag= True)
+    trgs = [transdecoder_target]
+    cmd = 'cd {0!s}; make'.format(trgs[0])
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+
+def  install_hmmer_task(hmmer_target, hmmer_exe1,hmmer_exe2, log_flag= True)
+    trgs = [hmmer_target]
+    cmd = 'cd {0!s}; make'.format(target)
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+
+
+
