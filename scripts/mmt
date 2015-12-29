@@ -83,6 +83,12 @@ annot_database_selector.add_argument('-blastplus',action='store_true',help='Use 
 annot_database_selector.add_argument('-uniref90',help='Use this flag to enable the uniref-90 diamond-blast runs as part of the annotation pipeline. If used with "databases" tool, download this database.',action='store_true')
 annot_database_selector.add_argument('-nr',help='Use this flag to enable the NR (non-redundant protein database) diamond-blast runs as part of the annotation pipeline. If used with "databases" tool, download this database. FYI, this takes a while.',action='store_true')
 
+tool_args = argparse.ArgumentParser(add_help=False)
+tool_args.add_argument('--install',action='store_true', default =False, help= 'On a linux system, this flag causes mmt to download the required programs and install within \"external_tools\" folder inside the MakeMyTranscriptome directory')
+tool_args.add_argument('--reinstall',action='store_true', default =False, help= 'On a linux system, this flag causes mmt to re-download and try to re-install all the required programs in \"external_tools\" folder inside the MakeMyTranscriptome directory')
+
+
+
 #####################____Subparsers____#####################
 subparsers = master_parser.add_subparsers(title='TOOLS', description='Tool Selector', help='Select an available module')
 
@@ -103,6 +109,9 @@ expression_parser.set_defaults(which='expression')
 
 database_parser = subparsers.add_parser('databases', parents=[cpu_input_parser, database_selector, annot_database_selector], description='Selected_tool : Databases. Executing this tool will check that all annotation databases are present and download if necessary. Optional: download new versions of all databases', add_help=True)
 database_parser.set_defaults(which='databases')
+
+tools_parser = subparsers.add_parser('tools', parents=[cpu_input_parser, tool_args], description='Selected_tool : Tools. Executing this tool will check that all required tools are present in the path, and advise if any are missing. Optional: on a linux system, it can be used to download and install a local copy of these tools.', add_help=True)
+tools_parser.set_defaults(which='tools')
 
 args =  master_parser.parse_args()
 
@@ -298,6 +307,25 @@ def go_manage_db(args, dep, log_files=True):
 	args.uniref90 = False
 	args.blastplus=False
     return tf.manage_db_task(args.reinstall, args.nr, args.uniref90, busco_args, args.blastplus, int(round(args.cpu/4)), dep, log_files)
+
+def go_manage_tools(args, dep, log_files=True):
+    toolsD = {'trinity':False,'trimmomatic':False,'prinseq':False,'transdecoder':False,'diamond':False,'hmmer': False,'transrate':False,'busco':False,'salmon':False}
+    assembly_tools = {'trinity':True,'trimmomatic':True,'prinseq':True,'transrate':True}
+    annotation_tools = {'transdecoder':True,'diamond':True,'hmmer':True}
+    quality_tools = {'transrate':True,'busco':True}
+    expression_tools = {'salmon':True}  
+    if args.which == 'assembly':
+	toolsD.update(assembly_tools)
+    if args.which == 'annotation':
+	toolsD.update(annotation_tools)
+    if args.which == 'quality':
+	toolsD.update(quality_tools)
+    if args.which == 'expression':
+	toolsD.update(expression_tools)
+    if args.which == 'full' or args.which == 'tools':
+	d = {x: True for x in toolsD}
+    tool_checklist = [tool for tool, value in toolsD.items() if value == False]
+    return tf.manage_tools_task(args.install, args.reinstall, int(round(args.cpu/4)), tool_checklist, dep, log_files)
 
 #####################____Main_Modules____#####################
 def run_full(args):
