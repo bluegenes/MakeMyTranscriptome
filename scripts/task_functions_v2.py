@@ -806,8 +806,8 @@ def install_transdecoder_task(transdecoder_target, transdecoder_exe1, transdecod
 
 
 def install_hmmer_task(hmmer_target, hmmer_exe1, hmmer_exe2, tasks, log_flag= True):
-    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,hmmer_exe1),'{0!s}/{1!s}'.format(PATH_TOOLS, hmmer_exe2)]
-    cmd = 'cd {0!s}; make; ln -s {0!s}/{1!s} {2!s}/{1!s}; ln -s {0!s}/{3!s} {2!s}/{3!s}'.format(hmmer_target, hmmer_exe1, PATH_TOOLS, hmmer_exe2)
+    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS, hmmer_exe1),'{0!s}/{1!s}'.format(PATH_TOOLS, hmmer_exe2)]
+    cmd = 'cd {0!s}; ln -s {0!s}/binaries/{1!s} {2!s}/{1!s}; ln -s {0!s}/binaries/{3!s} {2!s}/{3!s}'.format(hmmer_target, hmmer_exe1, PATH_TOOLS, hmmer_exe2)
     name = 'install_hmmer'
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
@@ -821,7 +821,7 @@ def install_salmon_task(salmon_target, salmon_exe, tasks, log_flag=True):
 
 def install_busco_task(busco_target, busco_exe,  tasks, log_flag= True):
     trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,busco_exe)]
-    cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(trgs[0], busco_exe, PATH_TOOLS)
+    cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(busco_target, busco_exe, PATH_TOOLS)
     name = 'install_busco'
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
