@@ -431,6 +431,11 @@ def run_databases(args):
     s = go_manage_db(args, [], False)
     s.run()
 
+def run_tools(args):
+    s = go_manage_tools(args, [], False)
+    s.run()
+
+
 def run_supers(args, supers):
     run_log = os.path.join(tf.GEN_PATH_DIR(), 'run.log')
     total = Supervisor(tasks=supers, cpu=args.cpu, force_run=args.force, log=run_log, email=args.email)
@@ -481,3 +486,5 @@ if(__name__ == '__main__'):
         run_quality(args)
     if(args.which=='databases'):
         run_databases(args)
+    if(args.which=='tools'):
+        run_tools(args)

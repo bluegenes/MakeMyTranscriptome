@@ -3,7 +3,7 @@ import tarfile
 from task_functions_v2 import (PATH_ROOT, PATH_TOOLS,
 install_trinity_task, install_trimmomatic_task, install_prinseq_task,
 install_transdecoder_task, install_hmmer_task, install_salmon_task,
-install_busco_task)
+install_busco_task, install_transrate_task)
 import os
 import json
 import argparse

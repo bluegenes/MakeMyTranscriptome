@@ -789,7 +789,6 @@ def install_trimmomatic_task(trimmomatic_target, trimmomatic_jar,  tasks, log_fl
 
 
 def install_prinseq_task(prinseq_target, prinseq_exe,  tasks, log_flag= True):
-    #softlink prinseq into main TOOLS directory?
     trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,prinseq_exe)]
     cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(prinseq_target, prinseq_exe, PATH_TOOLS)
     name = 'install_prinseq'
@@ -823,6 +822,13 @@ def install_busco_task(busco_target, busco_exe,  tasks, log_flag= True):
     trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,busco_exe)]
     cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(busco_target, busco_exe, PATH_TOOLS)
     name = 'install_busco'
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+def install_transrate_task(transrate_target, transrate_exe,  tasks, log_flag= True):
+    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,transrate_exe)]
+    cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(transrate_target, transrate_exe, PATH_TOOLS)
+    name = 'install_transrate'
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
 
