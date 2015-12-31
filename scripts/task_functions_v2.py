@@ -14,6 +14,7 @@ PATH_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PATH_SCRIPTS = os.path.join(PATH_ROOT, 'scripts')
 PATH_DATABASES = os.path.join(PATH_ROOT, 'databases')
 PATH_ASSEMBLIES = os.path.join(PATH_ROOT, 'assemblies')
+PATH_TOOLS = os.path.join(PATH_ROOT, 'external_tools')
 PATH_BEDTOOLS = 'bedtools'
 PATH_BLASTP = 'blastp'
 PATH_BLASTX = 'blastx'
@@ -715,7 +716,7 @@ def build_diamond_task(fasta,out_path,tasks,log_flag=True):
  
 
 def split_mito_task(blast_mt,tasks):
-    trgs = ['{0!s}/mtDNA_contigs.fasta'.fomat(GEN_PATH_ASSEMBLY_FILES()),'{0!s}/no_mtDNA_contigs.fasta'.format(GEN_PATH_ASSEMBLY_FILES())]
+    trgs = ['{0!s}/mtDNA_contigs.fasta'.format(GEN_PATH_ASSEMBLY_FILES()),'{0!s}/no_mtDNA_contigs.fasta'.format(GEN_PATH_ASSEMBLY_FILES())]
     cmd = '{0!s}/split_fasta.py {1!s} {3!s} {2!s}/mtDNA_contigs.fasta {2!s}/no_mtDNA_contigs.fasta'.format(PATH_SCRIPTS,GEN_PATH_ASSEMBLY(),GEN_PATH_ASSEMBLY_FILES(),blast_mt)
     name = 'split_mito'
     out, err = GEN_LOGS(name) 
@@ -757,3 +758,78 @@ def manage_db_task(fresh, nr_flag, uniref90_flag, busco_flags, blastplus_flag, c
     name = 'db_manage'
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
+
+def manage_tools_task(install, fresh, cpu_cap, tool_list, tasks, log_flag=True):
+    trgs = [PATH_TOOLS]
+    cmd = 'python {0!s}/manage_tools.py'.format(PATH_SCRIPTS)
+    if(install):
+        cmd+=' --install'
+    if(fresh):
+        cmd +=' --hard'
+    cmd+= ' --tool ' + ' --tool '.join(tool_list)
+    name = 'tools_manage'
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
+
+
+def install_trinity_task(trinity_target, trinity_exe, tasks, log_flag= True):
+    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,trinity_exe)]
+    cmd = 'cd {0!s}; make; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(trinity_target, trinity_exe, PATH_TOOLS)
+    name = 'install_trinity'
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+
+def install_trimmomatic_task(trimmomatic_target, trimmomatic_jar,  tasks, log_flag= True):
+    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS, trimmomatic_jar)]
+    cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(trimmomatic_target, trimmomatic_jar, PATH_TOOLS)
+    name = 'install_trimmomatic'
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+
+def install_prinseq_task(prinseq_target, prinseq_exe,  tasks, log_flag= True):
+    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,prinseq_exe)]
+    cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(prinseq_target, prinseq_exe, PATH_TOOLS)
+    name = 'install_prinseq'
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+
+def install_transdecoder_task(transdecoder_target, transdecoder_exe1, transdecoder_exe2,  tasks, log_flag= True):
+    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,transdecoder_exe1), '{0!s}/{1!s}'.format(PATH_TOOLS,transdecoder_exe2)]
+    cmd = 'cd {0!s}; make; ln -s {0!s}/{1!s} {2!s}/{1!s}; ln -s {0!s}/{3!s} {2!s}/{3!s}'.format(transdecoder_target, transdecoder_exe1, PATH_TOOLS, transdecoder_exe2)
+    name = 'install_transdecoder'
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+
+def install_hmmer_task(hmmer_target, hmmer_exe1, hmmer_exe2, tasks, log_flag= True):
+    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS, hmmer_exe1),'{0!s}/{1!s}'.format(PATH_TOOLS, hmmer_exe2)]
+    cmd = 'cd {0!s}; ln -s {0!s}/binaries/{1!s} {2!s}/{1!s}; ln -s {0!s}/binaries/{3!s} {2!s}/{3!s}'.format(hmmer_target, hmmer_exe1, PATH_TOOLS, hmmer_exe2)
+    name = 'install_hmmer'
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+def install_salmon_task(salmon_target, salmon_exe, tasks, log_flag=True):
+    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,salmon_exe)]
+    cmd = 'cd {0!s}; ln -s {0!s}/bin/{1!s} {2!s}/{1!s}'.format(salmon_target, salmon_exe, PATH_TOOLS)
+    name = 'install_salmon'
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+def install_busco_task(busco_target, busco_exe,  tasks, log_flag= True):
+    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,busco_exe)]
+    cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(busco_target, busco_exe, PATH_TOOLS)
+    name = 'install_busco'
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+def install_transrate_task(transrate_target, transrate_exe,  tasks, log_flag= True):
+    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,transrate_exe)]
+    cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(transrate_target, transrate_exe, PATH_TOOLS)
+    name = 'install_transrate'
+    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+
