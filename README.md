@@ -20,8 +20,7 @@ Each tool can be run individually, or all four can be executed as a single virtu
 
 MMT is a convenience tool that runs a number of bioinformatics tools in an automated fashion. In order to use it, you'll have to download these other tools, and put these into your PATH. If you're working on a Linux machine, MMT can download the tools for you; otherwise, it will assess the tools you have available and print recommended installation instructions.
 
-First, download MMT via git or click the "Download ZIP" button.
-via git:
+First, download MMT via git (below) or click the "Download ZIP" button.
 ```
 git clone https://github.com/bluegenes/MakeMyTranscriptome.git
 ```
