@@ -76,7 +76,7 @@ database_selector.add_argument('--arthropoda', help = 'use arthropod BUSCO datab
 database_selector.add_argument('-f', '--fungi', help = 'use fungi BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
 database_selector.add_argument('-b', '--bacteria', help = 'use bacteria BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
 database_selector.add_argument('-p', '--plants', help = 'use plant BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
-database_selector.add_argument('--reinstall', help= 'download new version of all databases', default=False)
+database_selector.add_argument('--fresh', help= 'download new version of all databases', default=False)
 #ANNOTATIOM DATABASE SELECTOR ARGS 
 annot_database_selector = argparse.ArgumentParser(add_help=False)
 annot_database_selector.add_argument('-blastplus',action='store_true',help='Use the blast+ tool suite instead of diamond to align your transcripts to the references. If used with "databases" tool, download this database.')
@@ -92,19 +92,19 @@ tool_args.add_argument('--reinstall',action='store_true', default =False, help= 
 #####################____Subparsers____#####################
 subparsers = master_parser.add_subparsers(title='TOOLS', description='Tool Selector', help='Select an available module')
 
-full_parser = subparsers.add_parser('full', parents=[common_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembly_input_parser, assembler_input, annotation_input, expression_input, quality_input, database_selector, annot_database_selector], description= "Selected_tool : Full. Executing this tool will run the entire transcriptomics pipeline. This tool requires a specially formatted CSV file to describe the input. Please see the online documentation to learn how to format these files.", add_help=True)
+full_parser = subparsers.add_parser('full', parents=[common_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembly_input_parser, assembler_input, annotation_input, expression_input, quality_input, database_selector, annot_database_selector, tool_args], description= "Selected_tool : Full. Executing this tool will run the entire transcriptomics pipeline. This tool requires a specially formatted CSV file to describe the input. Please see the online documentation to learn how to format these files.", add_help=True)
 full_parser.set_defaults(which='full')
 
-assembly_parser = subparsers.add_parser('assembly', parents=[common_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembler_input], description='Selected_tool : Assembler. Executing this tool will  clean all provided reads and assemble them.', add_help=True)
+assembly_parser = subparsers.add_parser('assembly', parents=[common_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembler_input, tool_args], description='Selected_tool : Assembler. Executing this tool will  clean all provided reads and assemble them.', add_help=True)
 assembly_parser.set_defaults(which='assembly')
 
-annotation_parser = subparsers.add_parser("annotation", parents=[common_parser, cpu_input_parser, assembly_input_parser, annotation_input, annot_database_selector], description='Selected_tool : Annotation. Executing this tool will run asssembly quality assesment along with a series of tools designing to provide information about the assembled transcripts.', add_help=True)
+annotation_parser = subparsers.add_parser("annotation", parents=[common_parser, cpu_input_parser, assembly_input_parser, annotation_input, annot_database_selector, tool_args], description='Selected_tool : Annotation. Executing this tool will run asssembly quality assesment along with a series of tools designing to provide information about the assembled transcripts.', add_help=True)
 annotation_parser.set_defaults(which='annotation')
 
-quality_parser = subparsers.add_parser("quality", parents=[common_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembly_input_parser, database_selector, quality_input], description='Selected_tool : Quality. Executing this tool will perform a quality assessment of an existing assembly.', add_help=True)
+quality_parser = subparsers.add_parser("quality", parents=[common_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembly_input_parser, database_selector, quality_input, tool_args], description='Selected_tool : Quality. Executing this tool will perform a quality assessment of an existing assembly.', add_help=True)
 quality_parser.set_defaults(which='quality')
 
-expression_parser = subparsers.add_parser("expression", parents=[common_parser, cpu_input_parser, csv_input_parser, expression_input], description='Selected_tool : Expression. Executing this tool will run a series of differential expression analyses and sumarize the output.',add_help=True)
+expression_parser = subparsers.add_parser("expression", parents=[common_parser, cpu_input_parser, csv_input_parser, expression_input, tool_args], description='Selected_tool : Expression. Executing this tool will run a series of differential expression analyses and sumarize the output.',add_help=True)
 expression_parser.set_defaults(which='expression')
 
 database_parser = subparsers.add_parser('databases', parents=[cpu_input_parser, database_selector, annot_database_selector], description='Selected_tool : Databases. Executing this tool will check that all annotation databases are present and download if necessary. Optional: download new versions of all databases', add_help=True)
@@ -294,7 +294,7 @@ def go_expression(args, dep):
 
 def go_manage_db(args, dep, log_files=True):
     if(args.which=='annotation'): 
-	args.reinstall=False
+	args.fresh=False
         busco_args = {'metazoa':True}
     else: 
         busco_args = {'arthropoda': args.arthropoda, 'metazoa': args.metazoa,
@@ -306,7 +306,7 @@ def go_manage_db(args, dep, log_files=True):
         args.nr = False
 	args.uniref90 = False
 	args.blastplus=False
-    return tf.manage_db_task(args.reinstall, args.nr, args.uniref90, busco_args, args.blastplus, int(round(args.cpu/4)), dep, log_files)
+    return tf.manage_db_task(args.fresh, args.nr, args.uniref90, busco_args, args.blastplus, int(round(args.cpu/4)), dep, log_files)
 
 def go_manage_tools(args, dep, log_files=True):
     toolsD = {'trinity':False,'trimmomatic':False,'prinseq':False,'transdecoder':False,'diamond':False,'hmmer': False,'transrate':False,'busco':False,'salmon':False}
@@ -337,13 +337,17 @@ def run_full(args):
         check_read_inputs(args, True) #reads are required
         global_setup(args)
 	set_subsample_size(args)
-        assembly_super = go_assembly(args, [])
+        manage_tools = go_manage_tools(args, [])
+        supers.append(manage_tools)
+	assembly_super = go_assembly(args, [])
         supers.append(assembly_super)
 	deps.append(assembly_super)
     else: #run everything else BUT assembly
 	check_fasta_input(args) #fast input is required --> check that it's a proper file
 	check_read_inputs(args, False) # get read input from either the csv or command-line inputs
 	global_setup(args)
+        manage_tools = go_manage_tools(args, [])
+        supers.append(manage_tools)
     manage_db = go_manage_db(args, [])
     supers.append(manage_db)
     annotation_super = go_annotation(args, deps+[manage_db])
@@ -365,6 +369,8 @@ def run_assembly(args):
     global_setup(args)
     set_subsample_size(args) 
     supers = []
+    manage_tools = go_manage_tools(args, [])
+    supers.append(manage_tools)
     assembly_super = go_assembly(args, [])
     supers.append(assembly_super)
     run_supers(args, supers)
@@ -382,6 +388,8 @@ def run_quality(args):
         cp = tf.cp_assembly_task(args.assembly, [])
         supers.append(cp)
         deps = [cp] 
+    manage_tools = go_manage_tools(args, [])
+    supers.append(manage_tools)
     manage_db = go_manage_db(args, [])
     supers.append(manage_db)
     deps.append(manage_db)
@@ -401,6 +409,8 @@ def run_annotation(args):
         cp = tf.cp_assembly_task(args.assembly, [])
         supers.append(cp)
         deps = [cp]
+    manage_tools = go_manage_tools(args, [])
+    supers.append(manage_tools)
     manage_db = go_manage_db(args, [])
     supers.append(manage_db)
     deps.append(manage_db)
@@ -422,6 +432,8 @@ def run_expression(args):
         cp = tf.cp_assembly_task(args.assembly, [])
         supers.append(cp)
         deps = [cp]
+    manage_tools = go_manage_tools(args, [])
+    supers.append(manage_tools)
     expression_super = go_expression(args, deps)
     supers.append(expression_super)
     run_supers(args, supers)

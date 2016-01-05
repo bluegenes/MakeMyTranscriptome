@@ -7,7 +7,7 @@ import os
 
 ''' name variables '''
 NAME_ASSEMBLY = 'myassembly'
-NAME_OUT_DIR = 'pipeline_output'
+NAME_OUT_DIR = 'mmt_test_output'
 
 ''' static path variables '''
 PATH_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
