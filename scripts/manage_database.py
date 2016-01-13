@@ -52,7 +52,7 @@ url_busco_bacteria = 'http://busco.ezlab.org/files/bacteria_buscos.tar.gz'
 busco_bacteria_target = os.path.join(busco_folder, 'bacteria_buscos') 
 
 #NEED TO GET PLANT BUSCOS --> currently bacteria = placeholder
-url_busco_plant = 'http://busco.ezlab.org/files/bacteria_buscos.tar.gz'
+url_busco_plant = 'http://buscos.ezlab.org/files/plant_early_release.tar.gz' 
 busco_plant_target = os.path.join(busco_folder, 'plant_buscos') 
 ####
 
