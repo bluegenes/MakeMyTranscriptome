@@ -19,7 +19,8 @@ PATH_BEDTOOLS = 'bedtools'
 PATH_BLASTP = 'blastp'
 PATH_BLASTX = 'blastx'
 PATH_BOWTIE2 = ''
-PATH_BUSCO = 'BUSCO_v1.1b.py'
+#PATH_BUSCO = 'BUSCO_v1.1b.py'
+PATH_BUSCO = os.path.join(PATH_TOOLS,'BUSCO_v1.1b1.py')
 PATH_BUSCO_REFERENCE = '/matta1/hitsdata/reference_files/BUSCO'
 PATH_BUSCO_METAZOA = '{0!s}/metazoa_buscos'.format(PATH_DATABASES)
 PATH_CEGMA = 'cegma'
@@ -296,7 +297,7 @@ def busco_task(reference_name, cpu_cap, tasks):
             tasks - a list of tasks that this task is dependant on.
     '''
     trgs = ['{0!s}/run_busco_{1!s}'.format(GEN_PATH_QUALITY_FILES(),reference_name)]
-    cmd = ('cd {0!s}; {1!s} '
+    cmd = ('cd {0!s}; /matta1/biotools/anaconda/envs/py3k/bin/python {1!s} '
             '-o busco_{2!s} -in {3!s} -l {4!s}/{2!s} -m trans -f -c {5!s}'
             ).format(GEN_PATH_QUALITY_FILES(),PATH_BUSCO,reference_name,GEN_PATH_ASSEMBLY(),
             PATH_BUSCO_REFERENCE,cpu_cap)
@@ -305,12 +306,13 @@ def busco_task(reference_name, cpu_cap, tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=cpu_cap,stdout=out,stderr=err)
 
 
-def transrate_task(lefts, rights, singles, transrate_name, cpu_cap, tasks): #reference, cpu_cap, tasks):
+def transrate_task(lefts, rights, singles, transrate_name, cpu_cap, tasks, reference = ''): #, cpu_cap, tasks):
     trgs = []
     lefts = ','.join(lefts+singles)
     rights = ','.join(rights) 
     lefts = '--left '+lefts if(len(lefts) > 0) else ''
     rights = '--right '+rights if(len(rights) > 0) else ''
+    reference = '--reference ' + reference if(reference != '') else ''
     #take out reference functionality from here?
     #reference = '--reference ' + reference if(reference != '') else ''
     cmd = '{0!s} --assembly {1!s} {4!s} {5!s} --threads {2!s} --output {3!s}/{6!s}'.format(
