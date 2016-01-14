@@ -75,7 +75,7 @@ database_selector.add_argument('-v', '--vertebrata', help = 'use vertebrate BUSC
 database_selector.add_argument('--arthropoda', help = 'use arthropod BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
 database_selector.add_argument('-f', '--fungi', help = 'use fungi BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
 database_selector.add_argument('-b', '--bacteria', help = 'use bacteria BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
-database_selector.add_argument('-p', '--plants', help = 'use plant BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
+database_selector.add_argument('-p', '--plantae', help = 'use plantae BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
 database_selector.add_argument('--fresh', help= 'download new version of all databases', default=False)
 #ANNOTATIOM DATABASE SELECTOR ARGS 
 annot_database_selector = argparse.ArgumentParser(add_help=False)
@@ -276,7 +276,7 @@ def go_quality(args, dep):
     busco_args = {'arthropoda': args.arthropoda, 'metazoa': args.metazoa,
                   'vertebrata': args.vertebrata, 'eukaryota': args.eukaryota,
                   'fungi': args.fungi, 'bacteria': args.bacteria,
-                  'plants': args.plants}
+                  'plantae': args.plantae}
     busco_args = [k for k in busco_args if(busco_args[k])]
     return gen_quality_supervisor(
         args.fastq1, args.fastq2, args.unpaired, dep, busco_args,
@@ -300,7 +300,7 @@ def go_manage_db(args, dep, log_files=True):
         busco_args = {'arthropoda': args.arthropoda, 'metazoa': args.metazoa,
                   'vertebrata': args.vertebrata, 'eukaryota': args.eukaryota, 
                   'fungi': args.fungi, 'bacteria': args.bacteria,
-                  'plants': args.plants}
+                  'plantae': args.plantae}
     busco_args = [k for k in busco_args if(busco_args[k])]
     if(args.which=='quality'): 
         args.nr = False
