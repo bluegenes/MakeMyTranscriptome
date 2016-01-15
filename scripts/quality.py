@@ -11,11 +11,11 @@ def gen_quality_supervisor(transrate_fastq1, transrate_fastq2, transrate_unpaire
     for busco_ref in busco_refs:
         tasks.append(tf.busco_task(busco_ref, int(cpu/2), []))
     assembly_stats = tf.assembly_stats_task([])
-    transrate = tf.transrate_task(transrate_fastq1, transrate_fastq2, transrate_unpaired, "transrate_quality", int(round(float(cpu), 4)), [])
+    transrate = tf.transrate_task(transrate_fastq1, transrate_fastq2, transrate_unpaired, "transrate_quality", int(round(float(cpu), 4)), [], transrate_reference)
     reference_name = os.path.basename(transrate_reference)
-    transrateRef = tf.transrate_to_reference_task("transrate_" + reference_name, transrate_reference, int(round(float(cpu), 4)), [])
+#    transrateRef = tf.transrate_to_reference_task("transrate_" + reference_name, transrate_reference, int(round(float(cpu), 4)), [])
     tasks.append(transrate)
-    tasks.append(transrateRef)
+    #tasks.append(transrateRef)
     tasks.append(assembly_stats)
     if(cegma_flag):
         tasks.append(cegma)

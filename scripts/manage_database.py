@@ -37,7 +37,7 @@ url_busco_metazoa = 'http://busco.ezlab.org/files/metazoa_buscos.tar.gz'
 busco_metazoa_target = os.path.join(busco_folder, 'metazoa_buscos') 
 
 url_busco_arthropoda = 'http://busco.ezlab.org/files/arthropoda_buscos.tar.gz'
-busco_arthropoda_target = os.path.join(busco_folder, 'arthopoda_buscos')
+busco_arthropoda_target = os.path.join(busco_folder, 'arthropoda_buscos')
 
 url_busco_vertebrata = 'http://busco.ezlab.org/files/vertebrata_buscos.tar.gz'
 busco_vertebrata_target = os.path.join(busco_folder, 'vertebrata_buscos')
@@ -51,9 +51,9 @@ busco_fungi_target = os.path.join(busco_folder, 'fungi_buscos')
 url_busco_bacteria = 'http://busco.ezlab.org/files/bacteria_buscos.tar.gz'
 busco_bacteria_target = os.path.join(busco_folder, 'bacteria_buscos') 
 
-#NEED TO GET PLANT BUSCOS --> currently bacteria = placeholder
-url_busco_plant = 'http://busco.ezlab.org/files/bacteria_buscos.tar.gz'
-busco_plant_target = os.path.join(busco_folder, 'plant_buscos') 
+#early release --> folder structure is different!
+url_busco_plant = 'http://buscos.ezlab.org/files/plant_early_release.tar.gz' 
+busco_plant_target = os.path.join(busco_folder, 'plantae_buscos') 
 ####
 
 url_go_pathway = 'http://rest.genome.jp/link/go/pathway'
@@ -93,7 +93,7 @@ database_supervisor_log = '{0!s}/.database_supervisor_log'.format(PATH_DATABASES
 
 busco_flags = {'arthropoda': False, 'metazoa': False, 'vertebrata': False,
                'eukaryota': False, 'fungi': False, 'bacteria': False,
-               'plants': False}
+               'plantae': False}
 
 
 def run_tasks(tasks, cpu=4):
@@ -195,8 +195,10 @@ def download_databases(log_table, nr_flag=False, uniref90_flag=False, file_check
         partial_get('tar', url_busco_fungi, busco_fungi_target)
     if(busco_flags['bacteria']):
         partial_get('tar', url_busco_bacteria, busco_bacteria_target)
-    if(busco_flags['plants']):
+    if(busco_flags['plantae']):
         partial_get('tar', url_busco_plant, busco_plant_target)
+        tfile = tarfile.open(os.path.join(busco_plant_target, 'plant_early_release', 'plantae.tar.gz'), 'r:gz')
+        tfile.extractall(busco_plant_target)
     return log_table
 
 
@@ -242,11 +244,11 @@ def check_database_dir():
 
 
 def main(nr_flag=False, uniref90_flag=False, file_check=True, busco_flags=busco_flags, blastplus=False, cpu=4):
+    tasks = []
     check_database_dir()
     log_table = read_log()
     log_table = download_databases(log_table, nr_flag, uniref90_flag, file_check, busco_flags)
     log_table = subset_dat(id_mapping_target, idmapping_keys, log_table)
-    tasks = []
     if blastplus:
         swissprot_task = build_blast_task(sprot_target, sprot_target, 'prot', [], False)
         tasks.append(swissprot_task)
