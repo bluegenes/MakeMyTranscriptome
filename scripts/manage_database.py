@@ -1,8 +1,7 @@
 from task_functions_v2 import (
     PATH_DATABASES, PATH_UNIREF90, PATH_SWISS_PROT,
     PATH_NR, PATH_PFAM_DATABASE, pfam_build_task, 
-    build_diamond_task, build_blast_task, db2stitle_task, 
-    plant_early_release_task)
+    build_diamond_task, build_blast_task, db2stitle_task)
 from time import strftime
 import gzip
 import tarfile
@@ -38,7 +37,7 @@ url_busco_metazoa = 'http://busco.ezlab.org/files/metazoa_buscos.tar.gz'
 busco_metazoa_target = os.path.join(busco_folder, 'metazoa_buscos') 
 
 url_busco_arthropoda = 'http://busco.ezlab.org/files/arthropoda_buscos.tar.gz'
-busco_arthropoda_target = os.path.join(busco_folder, 'arthopoda_buscos')
+busco_arthropoda_target = os.path.join(busco_folder, 'arthropoda_buscos')
 
 url_busco_vertebrata = 'http://busco.ezlab.org/files/vertebrata_buscos.tar.gz'
 busco_vertebrata_target = os.path.join(busco_folder, 'vertebrata_buscos')
