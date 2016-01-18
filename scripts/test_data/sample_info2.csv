@@ -1,3 +1,0 @@
-Basename,Read1,Read2,Condition
-test1_1,/ni2/tessa_projects/build/scripts/test_data/reads.left.fq,/ni2/tessa_projects/build/scripts/test_data/reads.right.fq,control
-test2_1,/ni2/tessa_projects/build/scripts/test_data/reads_v2.left.fastq,/ni2/tessa_projects/build/scripts/test_data/reads_v2.right.fastq,treatment

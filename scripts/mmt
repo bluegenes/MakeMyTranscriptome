@@ -309,22 +309,22 @@ def go_manage_db(args, dep, log_files=True):
     return tf.manage_db_task(args.fresh, args.nr, args.uniref90, busco_args, args.blastplus, int(round(args.cpu/4)), dep, log_files)
 
 def go_manage_tools(args, dep, log_files=True):
-    toolsD = {'trinity':False,'trimmomatic':False,'prinseq':False,'transdecoder':False,'diamond':False,'hmmer': False,'transrate':False,'busco':False,'salmon':False}
+    toolsD = {'trinity':False,'trimmomatic':False,'prinseq':False,'transdecoder':False,'diamond':False,'hmmer': False,'transrate':False,'busco':False,'salmon':False, 'python3':False, 'r':False}
     assembly_tools = {'trinity':True,'trimmomatic':True,'prinseq':True,'transrate':True}
     annotation_tools = {'transdecoder':True,'diamond':True,'hmmer':True}
-    quality_tools = {'transrate':True,'busco':True}
-    expression_tools = {'salmon':True}  
+    quality_tools = {'transrate':True,'busco':True, 'python3':True}
+    expression_tools = {'salmon':True, 'r' : True}  
     if args.which == 'assembly':
-	toolsD.update(assembly_tools)
+        toolsD.update(assembly_tools)
     if args.which == 'annotation':
-	toolsD.update(annotation_tools)
+        toolsD.update(annotation_tools)
     if args.which == 'quality':
-	toolsD.update(quality_tools)
+        toolsD.update(quality_tools)
     if args.which == 'expression':
-	toolsD.update(expression_tools)
+        toolsD.update(expression_tools)
     if args.which == 'full' or args.which == 'tools':
-	d = {x: True for x in toolsD}
-    tool_checklist = [tool for tool, value in toolsD.items() if value == False]
+        toolsD = {x: True for x in toolsD}
+    tool_checklist = [tool for tool, value in toolsD.items() if value == True]
     return tf.manage_tools_task(args.install, args.reinstall, int(round(args.cpu/4)), tool_checklist, dep, log_files)
 
 #####################____Main_Modules____#####################
