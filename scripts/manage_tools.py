@@ -60,8 +60,10 @@ class tool_variables:
     diamond_linux_target = join(PATH_TOOLS, '_diamond')
     diamond_exe = 'diamond'
 
-    salmon_linux_url = 'https://github.com/COMBINE-lab/salmon/releases/download/v0.5.1/SalmonBeta-0.5.1_DebianSqueeze.tar.gz'
-    salmon_linux_target = join(PATH_TOOLS, 'SalmonBeta-0.5.1_DebianSqueeze')
+    #salmon_linux_url = 'https://github.com/COMBINE-lab/salmon/releases/download/v0.5.1/SalmonBeta-0.5.1_DebianSqueeze.tar.gz'
+    #salmon_linux_target = join(PATH_TOOLS, 'SalmonBeta-0.5.1_DebianSqueeze')
+    salmon_linux_url = 'https://github.com/COMBINE-lab/salmon/releases/download/v0.6.0/SalmonBeta-0.6.0_DebianSqueeze.tar.gz'
+    salmon_linux_target = join(PATH_TOOLS, 'SalmonBeta-0.6.1_DebianSqueeze')
     salmon_exe = 'salmon'
 
     # trinity_version_check = 'Trinity --version'

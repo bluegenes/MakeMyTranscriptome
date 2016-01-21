@@ -64,15 +64,17 @@ def countsFromExpress(countFile,index, countDt):
 
 def countsFromSalmon(countFile, index, countDt):
     with open(countFile, 'r') as f:
+        next(f) #has header
         for line in f: 
 #  	    import pdb;pdb.set_trace()
-	    if not line.startswith('#'):
-	        line = line.strip().split('\t')	
-	        contig = line[0]
-	        entry = countDt.get(contig)
-                entry[index] = line[3] # want to use NumReads column for input to DESeq2
+#	    if not line.startswith('#'):
+	    line = line.strip().split('\t')	
+	    contig = line[0]
+	    entry = countDt.get(contig)
+            entry[index] = line[4] # numreads is now fifth col? Salmonv0.6.1
+#                entry[index] = line[3] # want to use NumReads column for input to DESeq2
 #		entry[index] = line[2] # if want TPM output
-                countDt[contig] = entry
+            countDt[contig] = entry
 	f.close()
     return countDt
 

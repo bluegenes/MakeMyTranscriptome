@@ -264,6 +264,15 @@ def handle_csv(args):
             raise Exception('\n\nERROR : '+f1+' cant be paired with '+f2+'.')
 
 
+def update_path_variable():
+    #os.environ["PATH"] = tf.PATH_TOOLS + os.pathsep + os.environ["PATH"]
+#    transratePath = tf.PATH_TOOLS + '/' + 'transrate-1.0.1-linux-x86_64'
+    transratePath = os.path.join(tf.PATH_TOOLS, 'transrate-1.0.1-linux-x86_64')
+    os.environ["PATH"] += os.pathsep + transratePath
+    print(os.environ["PATH"])
+
+
+
 ######################___go_functions___######################
 def go_assembly(args, dep):
     return gen_assembly_supervisor(
@@ -331,23 +340,31 @@ def go_manage_tools(args, dep, log_files=True):
 def run_full(args):
     supers = []
     deps = []
+    assembly_fasta = os.path.join(tf.PATH_ASSEMBLIES,tf.NAME_OUT_DIR,tf.NAME_ASSEMBLY +'.fasta')
     if(args.test):
 	set_test_args(args)
     if(args.assembly==None): #we run the assembly portion of pipeline
         check_read_inputs(args, True) #reads are required
         global_setup(args)
+	update_path_variable()
 	set_subsample_size(args)
         manage_tools = go_manage_tools(args, [])
         supers.append(manage_tools)
 	assembly_super = go_assembly(args, [])
         supers.append(assembly_super)
-	deps.append(assembly_super)
+	deps.append(assembly_super) # if transrate fails, all downstream fails ... need to change the dependency structure here.
     else: #run everything else BUT assembly
 	check_fasta_input(args) #fast input is required --> check that it's a proper file
+#-->	# do we need to add the cp task here?
 	check_read_inputs(args, False) # get read input from either the csv or command-line inputs
 	global_setup(args)
+	update_path_variable()
         manage_tools = go_manage_tools(args, [])
         supers.append(manage_tools)
+        if not os.path.exists(assembly_fasta):
+            cp = tf.cp_assembly_task(args.assembly, [])
+            supers.append(cp)
+            deps.append(cp)
     manage_db = go_manage_db(args, [])
     supers.append(manage_db)
     annotation_super = go_annotation(args, deps+[manage_db])
@@ -367,6 +384,7 @@ def run_assembly(args):
 	set_test_args(args)
     check_read_inputs(args, True)
     global_setup(args)
+    update_path_variable()
     set_subsample_size(args) 
     supers = []
     manage_tools = go_manage_tools(args, [])
@@ -382,6 +400,7 @@ def run_quality(args):
     check_fasta_input(args)
     check_read_inputs(args, False)
     global_setup(args)
+    update_path_variable()
     supers = []
     deps = []
     if not os.path.exists(os.path.join(tf.PATH_ASSEMBLIES,tf.NAME_OUT_DIR,tf.NAME_ASSEMBLY +'.fasta')):
@@ -403,6 +422,7 @@ def run_annotation(args):
 	set_test_args(args)
     check_fasta_input(args)
     global_setup(args)
+    update_path_variable()
     supers = []
     deps = []
     if not os.path.exists(os.path.join(tf.PATH_ASSEMBLIES,tf.NAME_OUT_DIR,tf.NAME_ASSEMBLY +'.fasta')):
@@ -425,6 +445,7 @@ def run_expression(args):
     check_fasta_input(args)
     check_csv_input(args, True)
     global_setup(args)
+    update_path_variable()
     gen_sample_info(args)
     supers = []
     deps = []

@@ -839,6 +839,7 @@ def install_hmmer_task(hmmer_target, hmmer_exe1, hmmer_exe2, tasks, log_flag= Tr
 def install_salmon_task(salmon_target, salmon_exe, tasks, log_flag=True):
     trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,salmon_exe)]
     cmd = 'cd {0!s}; ln -s {0!s}/bin/{1!s} {2!s}/{1!s}'.format(salmon_target, salmon_exe, PATH_TOOLS)
+    #cmd = 'cd {0!s}; ln -s {0!s}/bin/{1!s} {2!s}/{1!s}; ln -s {0!s}/lib/* {2!s}/lib;'.format(salmon_target, salmon_exe, PATH_TOOLS)
     name = 'install_salmon'
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
@@ -851,8 +852,9 @@ def install_busco_task(busco_target, busco_exe,  tasks, log_flag= True):
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
 
 def install_transrate_task(transrate_target, transrate_exe,  tasks, log_flag= True):
-    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,transrate_exe)]
-    cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(transrate_target, transrate_exe, PATH_TOOLS)
+    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,transrate_exe), '{0!s}/bin/snap-aligner'.format(PATH_TOOLS), '{0!s}/lib/libtbb.so.2'.format(PATH_TOOLS)]
+    cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}; ln -s {0!s}/bin/* {2!s}/bin; ln -s {0!s}/lib/* {2!s}/lib'.format(transrate_target, transrate_exe, PATH_TOOLS)
+#    cmd = 'os.environ["PATH"] += os.pathsep + {0!s}/bin; os.environ["LD_LIBRARY_PATH"] += os.pathsep + {0!s}/lib; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(transrate_target, transrate_exe, PATH_TOOLS)
     name = 'install_transrate'
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
