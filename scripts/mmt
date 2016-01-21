@@ -74,9 +74,10 @@ database_selector.add_argument('-e', '--eukaryota', help = 'use eukaryote BUSCO 
 database_selector.add_argument('-v', '--vertebrata', help = 'use vertebrate BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
 database_selector.add_argument('--arthropoda', help = 'use arthropod BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
 database_selector.add_argument('-f', '--fungi', help = 'use fungi BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
-database_selector.add_argument('-b', '--bacteria', help = 'use bacteria BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
-database_selector.add_argument('-p', '--plantae', help = 'use plantae BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
+database_selector.add_argument('-b', '--bacteria', help = 'use bacteria BUSCO database. If used with "databases" tool, download this database.',action='store_false',default=False)
 database_selector.add_argument('--fresh', help= 'download new version of all databases', default=False)
+#currently this option does nothing, bc it requires an updated busco.py
+database_selector.add_argument('-p', '--plantae', help = 'use plantae BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
 #ANNOTATIOM DATABASE SELECTOR ARGS 
 annot_database_selector = argparse.ArgumentParser(add_help=False)
 annot_database_selector.add_argument('-blastplus',action='store_true',help='Use the blast+ tool suite instead of diamond to align your transcripts to the references. If used with "databases" tool, download this database.')
