@@ -84,7 +84,7 @@ annot_database_selector.add_argument('-uniref90',help='Use this flag to enable t
 annot_database_selector.add_argument('-nr',help='Use this flag to enable the NR (non-redundant protein database) diamond-blast runs as part of the annotation pipeline. If used with "databases" tool, download this database. FYI, this takes a while.',action='store_true')
 
 tool_args = argparse.ArgumentParser(add_help=False)
-tool_args.add_argument('--install',action='store_true', default =False, help= 'On a linux system, this flag causes mmt to download the required programs and install within \"external_tools\" folder inside the MakeMyTranscriptome directory')
+tool_args.add_argument('--install',action='store_true', default =True, help= 'On a linux system, this flag causes mmt to download the required programs and install within \"external_tools\" folder inside the MakeMyTranscriptome directory')
 tool_args.add_argument('--reinstall',action='store_true', default =False, help= 'On a linux system, this flag causes mmt to re-download and try to re-install all the required programs in \"external_tools\" folder inside the MakeMyTranscriptome directory')
 
 
