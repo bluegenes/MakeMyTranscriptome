@@ -20,6 +20,8 @@ PATH_SCRIPTS = os.path.join(PATH_ROOT, 'scripts')
 PATH_DATABASES = os.path.join(PATH_ROOT, 'databases')
 PATH_ASSEMBLIES = os.path.join(PATH_ROOT, 'assemblies')
 PATH_TOOLS = os.path.join(PATH_ROOT, 'external_tools')
+PATH_TOOLS_BIN = os.path.join(PATH_TOOLS, 'bin')
+PATH_TOOLS_LIB = os.path.join(PATH_TOOLS, 'lib')
 
 
 ''' static tool variables '''
@@ -853,7 +855,8 @@ def install_busco_task(busco_target, busco_exe,  tasks, log_flag= True):
 
 def install_transrate_task(transrate_target, transrate_exe,  tasks, log_flag= True):
     trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,transrate_exe), '{0!s}/bin/snap-aligner'.format(PATH_TOOLS), '{0!s}/lib/libtbb.so.2'.format(PATH_TOOLS)]
-    cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}; ln -s {0!s}/bin/* {2!s}/bin; ln -s {0!s}/lib/* {2!s}/lib'.format(transrate_target, transrate_exe, PATH_TOOLS)
+    cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(transrate_target, transrate_exe, PATH_TOOLS)
+    #cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}; ln -s {0!s}/bin/* {2!s}/bin; ln -s {0!s}/lib/* {2!s}/lib'.format(transrate_target, transrate_exe, PATH_TOOLS)
 #    cmd = 'os.environ["PATH"] += os.pathsep + {0!s}/bin; os.environ["LD_LIBRARY_PATH"] += os.pathsep + {0!s}/lib; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(transrate_target, transrate_exe, PATH_TOOLS)
     name = 'install_transrate'
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
