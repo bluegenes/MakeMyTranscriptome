@@ -15,12 +15,10 @@ import platform
 from tasks_v2 import Supervisor
 if(sys.version[0] == '3'):
     from urllib.request import urlretrieve, ContentTooShortError
-    import shutil
-    which = shutil.which
+    from shutil import which as which
 else:
     from urllib import urlretrieve, ContentTooShortError
-    from py2_which import which_python2
-    which = which_python2
+    import py2_which as which
 
 
 class tool_variables:
@@ -98,7 +96,7 @@ def check_tools(toolsD):
        all([exists(tools_join(tv.transdecoder_exe1)), exists(tools_join(tv.transdecoder_exe2))])):
         toolsD['transdecoder'] = True
     if(all([which(tv.hmmer_exe1), which(tv.hmmer_exe2)]) or
-       all([exists(tools_join(tv.hmmer_exe1)), exists(tools_join(hmmer_exe2))])):
+       all([exists(tools_join(tv.hmmer_exe1)), exists(tools_join(tv.hmmer_exe2))])):
         toolsD['hmmer'] = True
     return toolsD
 

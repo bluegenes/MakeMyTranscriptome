@@ -265,18 +265,11 @@ def handle_csv(args):
             raise Exception('\n\nERROR : '+f1+' cant be paired with '+f2+'.')
 
 
-def update_path_variable():
-    transratePath = os.path.join(tf.PATH_TOOLS, 'transrate-1.0.1-linux-x86_64')
-    if os.path.exists(transratePath):
-        os.environ["PATH"] += os.pathsep + transratePath
-
-
-
 ######################___go_functions___######################
 def go_assembly(args, dep):
     return gen_assembly_supervisor(
         args.fastq1, args.fastq2, args.unpaired, dep,args.no_trim, 
-    args.rnaspades, args.no_rmdup, args.subsample_size,
+        args.rnaspades, args.no_rmdup, args.subsample_size,
         args.cpu, args.subsample_seed, args.trinity_normalization,
         args.truncate, args.trimmomatic)
 
@@ -288,7 +281,7 @@ def go_quality(args, dep):
     busco_args = [k for k in busco_args if(busco_args[k])]
     return gen_quality_supervisor(
         args.fastq1, args.fastq2, args.unpaired, dep, busco_args,
-    args.cpu, args.cegma, args.transrate_ref)
+        args.cpu, args.cegma, args.transrate_ref)
 
 def go_annotation(args, dep):
     return gen_annotation_supervisor(
@@ -345,10 +338,10 @@ def run_full(args):
     if(args.assembly==None): #we run the assembly portion of pipeline
         check_read_inputs(args, True) #reads are required
         global_setup(args)
-	#update_path_variable()
 	set_subsample_size(args)
         manage_tools = go_manage_tools(args, [])
         supers.append(manage_tools)
+	deps.append(manage_tools)
 	assembly_super = go_assembly(args, [])
         supers.append(assembly_super)
 	deps.append(assembly_super) # if transrate fails, all downstream fails ... need to change the dependency structure here.
@@ -357,11 +350,11 @@ def run_full(args):
 #-->	# do we need to add the cp task here?
 	check_read_inputs(args, False) # get read input from either the csv or command-line inputs
 	global_setup(args)
-	#update_path_variable()
         manage_tools = go_manage_tools(args, [])
         supers.append(manage_tools)
+	deps.append(manage_tools)
         if not os.path.exists(assembly_fasta):
-            cp = tf.cp_assembly_task(args.assembly, [])
+            cp = tf.cp_assembly_task(args.assembly, deps)
             supers.append(cp)
             deps.append(cp)
     manage_db = go_manage_db(args, [])
@@ -383,12 +376,12 @@ def run_assembly(args):
 	set_test_args(args)
     check_read_inputs(args, True)
     global_setup(args)
-    #update_path_variable()
     set_subsample_size(args) 
     supers = []
     manage_tools = go_manage_tools(args, [])
     supers.append(manage_tools)
-    assembly_super = go_assembly(args, [])
+    deps.append(manage_tools)
+    assembly_super = go_assembly(args, deps)
     supers.append(assembly_super)
     run_supers(args, supers)
 
@@ -399,7 +392,6 @@ def run_quality(args):
     check_fasta_input(args)
     check_read_inputs(args, False)
     global_setup(args)
-    #update_path_variable()
     supers = []
     deps = []
     if not os.path.exists(os.path.join(tf.PATH_ASSEMBLIES,tf.NAME_OUT_DIR,tf.NAME_ASSEMBLY +'.fasta')):
@@ -407,6 +399,7 @@ def run_quality(args):
         supers.append(cp)
         deps = [cp] 
     manage_tools = go_manage_tools(args, [])
+    deps.append(manage_tools)
     supers.append(manage_tools)
     manage_db = go_manage_db(args, [])
     supers.append(manage_db)
@@ -421,7 +414,6 @@ def run_annotation(args):
 	set_test_args(args)
     check_fasta_input(args)
     global_setup(args)
-    #update_path_variable()
     supers = []
     deps = []
     if not os.path.exists(os.path.join(tf.PATH_ASSEMBLIES,tf.NAME_OUT_DIR,tf.NAME_ASSEMBLY +'.fasta')):
@@ -430,6 +422,7 @@ def run_annotation(args):
         deps = [cp]
     manage_tools = go_manage_tools(args, [])
     supers.append(manage_tools)
+    deps.append(manage_tools)
     manage_db = go_manage_db(args, [])
     supers.append(manage_db)
     deps.append(manage_db)
@@ -444,7 +437,6 @@ def run_expression(args):
     check_fasta_input(args)
     check_csv_input(args, True)
     global_setup(args)
-    #update_path_variable()
     gen_sample_info(args)
     supers = []
     deps = []
@@ -454,6 +446,7 @@ def run_expression(args):
         deps = [cp]
     manage_tools = go_manage_tools(args, [])
     supers.append(manage_tools)
+    deps.append(manage_tools)
     expression_super = go_expression(args, deps)
     supers.append(expression_super)
     run_supers(args, supers)
