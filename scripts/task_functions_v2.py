@@ -9,7 +9,6 @@ if(sys.version[0] == '3'):
 else:
     from py2_which import which_python2 as which
 
-
 ''' name variables '''
 NAME_ASSEMBLY = 'myassembly'
 NAME_OUT_DIR = 'mmt_test_output'
@@ -20,8 +19,8 @@ PATH_SCRIPTS = os.path.join(PATH_ROOT, 'scripts')
 PATH_DATABASES = os.path.join(PATH_ROOT, 'databases')
 PATH_ASSEMBLIES = os.path.join(PATH_ROOT, 'assemblies')
 PATH_TOOLS = os.path.join(PATH_ROOT, 'external_tools')
-PATH_TOOLS_BIN = os.path.join(PATH_TOOLS, 'bin')
-PATH_TOOLS_LIB = os.path.join(PATH_TOOLS, 'lib')
+#PATH_TOOLS_BIN = os.path.join(PATH_TOOLS, 'bin')
+#PATH_TOOLS_LIB = os.path.join(PATH_TOOLS, 'lib')
 
 
 ''' static tool variables '''
@@ -53,7 +52,8 @@ PATH_SIGNALP = 'signalp'
 PATH_RNASPADES = 'rnaspades.py'
 PATH_TMHMM = 'tmhmm'
 PATH_TRANSDECODER = 'TransDecoder'
-PATH_TRANSRATE = 'transrate'
+#PATH_TRANSRATE = 'transrate'
+PATH_TRANSRATE = os.path.join(PATH_TOOLS, 'transrate-1.0.1-linux-x86_64','transrate')
 PATH_TRIMMOMATIC = '/matta1/biotools/redhat/Trimmomatic-0.33/trimmomatic-0.33.jar'
 PATH_TRIMMOMATIC_ADAPTERS_SINGLE = '/matta1/biotools/redhat/Trimmomatic-0.33/adapters/TruSeq3-SE.fa'
 PATH_TRIMMOMATIC_ADAPTERS_PAIRED = '/matta1/biotools/redhat/Trimmomatic-0.33/adapters/TruSeq3-PE.fa'
