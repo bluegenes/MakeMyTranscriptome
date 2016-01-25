@@ -19,11 +19,10 @@ PATH_SCRIPTS = os.path.join(PATH_ROOT, 'scripts')
 PATH_DATABASES = os.path.join(PATH_ROOT, 'databases')
 PATH_ASSEMBLIES = os.path.join(PATH_ROOT, 'assemblies')
 PATH_TOOLS = os.path.join(PATH_ROOT, 'external_tools')
-#PATH_TOOLS_BIN = os.path.join(PATH_TOOLS, 'bin')
-#PATH_TOOLS_LIB = os.path.join(PATH_TOOLS, 'lib')
-
 
 ''' static tool variables '''
+#to do:  use tool variables class instead
+
 PATH_BEDTOOLS = 'bedtools'
 PATH_BLASTP = 'blastp'
 PATH_BLASTX = 'blastx'
@@ -98,7 +97,6 @@ def tool_path_check(name):
         return name
     else:
         #raise EnvironmentError('MMT has not installed and was unable to detect '+name)
-	#try_to_install(name)
         print('WARNING : MMT has not installed '+name+' and did not find this program in your path variable. Steps requiring '+name+'will not be performed.') 
 
 def build_dir_task(tasks):

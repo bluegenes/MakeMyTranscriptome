@@ -148,38 +148,51 @@ def run_tasks(tasks, cpu=4):
 def safe_retrieve(source, target):
     temp = target+'.temp'
     print('getting ' + source)
-    urlretrieve(source, temp)
-    os.rename(temp, target)
+    try:
+        urlretrieve(source, temp)
+        os.rename(temp, target)
+    except:
+        print("could not retrieve file")
+        #need to do something better here
 
 
 def url_unzip(source, target):
     print('getting '+source)
     gztemp = target+'.gz'
-    urlretrieve(source, gztemp)
-    f = gzip.open(gztemp, 'rb')
-    g = open(target, 'wb')
-    for line in f:
-        g.write(line)
-    f.close()
-    g.close()
-    os.remove(gztemp)
+    try:
+        urlretrieve(source, gztemp)
+        f = gzip.open(gztemp, 'rb')
+        g = open(target, 'wb')
+        for line in f:
+            g.write(line)
+        f.close()
+        g.close()
+        os.remove(gztemp)
+    except:
+        print("could not retrieve file")
 
 
 def zipfile_unzip(source,target):
     print('getting '+ source)
     temp = target + '.zip'
-    urlretrieve(source,temp)
-    z = zipfile.ZipFile(temp)
-    z.extractall(PATH_TOOLS)
-    os.remove(temp)
+    try:
+        urlretrieve(source,temp)
+        z = zipfile.ZipFile(temp)
+        z.extractall(PATH_TOOLS)
+        os.remove(temp)
+    except:
+        print("could not retrieve file")
 
 def tar_retrieve(source, target):
     print('getting '+source)
     tartemp = target+'.tar.gz'
-    urlretrieve(source, tartemp)
-    tfile = tarfile.open(tartemp, 'r:gz')
-    tfile.extractall(PATH_TOOLS)
-    os.remove(tartemp)
+    try:
+        urlretrieve(source, tartemp)
+        tfile = tarfile.open(tartemp, 'r:gz')
+        tfile.extractall(PATH_TOOLS)
+        os.remove(tartemp)
+    except:
+        print("could not retrieve file")
 
 
 def get(log_table, flag, source, target, file_check=True):

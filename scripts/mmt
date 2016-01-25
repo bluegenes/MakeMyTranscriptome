@@ -206,6 +206,7 @@ def check_fasta_input(args):
     if(not os.path.isfile(args.assembly)):
         raise Exception('\n\nERROR : Invalid assembly argument. '+args.assembly+' does not exist.')
 
+#can we make this a task, or otherwise avoid recheck if rerunning? SLOW.
 def fastq_pair_check(fastq1,fastq2):
     if args.test: #skip check for our test data
         return True
