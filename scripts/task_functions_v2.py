@@ -54,9 +54,9 @@ PATH_TMHMM = 'tmhmm'
 PATH_TRANSDECODER = 'TransDecoder'
 #PATH_TRANSRATE = 'transrate'
 PATH_TRANSRATE = os.path.join(PATH_TOOLS, 'transrate-1.0.1-linux-x86_64','transrate')
-PATH_TRIMMOMATIC = '/matta1/biotools/redhat/Trimmomatic-0.33/trimmomatic-0.33.jar'
-PATH_TRIMMOMATIC_ADAPTERS_SINGLE = '/matta1/biotools/redhat/Trimmomatic-0.33/adapters/TruSeq3-SE.fa'
-PATH_TRIMMOMATIC_ADAPTERS_PAIRED = '/matta1/biotools/redhat/Trimmomatic-0.33/adapters/TruSeq3-PE.fa'
+PATH_TRIMMOMATIC = 'trimmomatic-0.35.jar'
+PATH_TRIMMOMATIC_ADAPTERS_SINGLE = os.path.join(PATH_TOOLS,'Trimmomatic-0.35/adapters/TruSeq3-SE.fa')
+PATH_TRIMMOMATIC_ADAPTERS_PAIRED = os.path.join(PATH_TOOLS,'Trimmomatic-0.35/adapters/TruSeq3-PE.fa')
 PATH_TRINITY = 'Trinity'
 PATH_SWISS_PROT = os.path.join(PATH_DATABASES, 'uniprot_sprot', 'uniprot_sprot')
 PATH_UNIREF90 = os.path.join(PATH_DATABASES, 'uniref90', 'uniref90')
@@ -857,7 +857,8 @@ def install_busco_task(busco_target, busco_exes,  tasks, log_flag= True):
 def install_transrate_task(transrate_target, transrate_exes,  tasks, log_flag= True):
     #trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,transrate_exe), '{0!s}/bin/snap-aligner'.format(PATH_TOOLS), '{0!s}/lib/libtbb.so.2'.format(PATH_TOOLS)]
     trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,transrate_exes[0])]
-    cmd = 'cd {0!s}; ln -sf {0!s}/{1!s} {2!s}/{1!s}'.format(transrate_target, transrate_exes[0], PATH_TOOLS)
+    #cmd = 'cd {0!s}; ln -sf {0!s}/{1!s} {2!s}/{1!s}'.format(transrate_target, transrate_exes[0], PATH_TOOLS)
+    cmd = 'cd {0!s}; ln -sf {0!s}/{1!s} {2!s}/{1!s}; {0!s}/{1!s} --install-deps=ref'.format(transrate_target, transrate_exes[0], PATH_TOOLS)
     #cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}; ln -s {0!s}/bin/* {2!s}/bin; ln -s {0!s}/lib/* {2!s}/lib'.format(transrate_target, transrate_exe, PATH_TOOLS)
 #    cmd = 'os.environ["PATH"] += os.pathsep + {0!s}/bin; os.environ["LD_LIBRARY_PATH"] += os.pathsep + {0!s}/lib; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(transrate_target, transrate_exe, PATH_TOOLS)
     name = 'install_transrate'
