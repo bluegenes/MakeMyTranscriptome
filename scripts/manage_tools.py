@@ -223,8 +223,6 @@ def main(install=False, toolList = [], tool_check=True, cpu=4):
         toolsD[t.name] = t
     if tool_check: # --hard option == install all tools, no matter what we already have
         toolsD = check_tools(toolsD) #dict with only tools that need to be installed
-    else:
-        install = True
     log_table = read_log()
     tasks = []
     partial_get = lambda a, b, c : get(log_table, a, b ,c, tool_check)
@@ -248,5 +246,7 @@ if(__name__ == '__main__'):
     parser.add_argument('-t', '--tool', action='append', default=[])
     parser.add_argument('--cpu', type=int, default=4)
     args = parser.parse_args()
+    if args.hard:
+        args.install = True
     main(args.install, args.tool, not args.hard, args.cpu)
 
