@@ -1,5 +1,6 @@
 from time import strftime
 import tarfile
+import zipfile
 from task_functions_v2 import (PATH_ROOT, PATH_TOOLS,
 install_trinity_task, install_trimmomatic_task, install_prinseq_task,
 install_transdecoder_task, install_hmmer_task, install_salmon_task,
@@ -21,13 +22,14 @@ else:
     from  py2_which import which_python2 as which
 
 class tool_variables:
-    def __init__(self, name, url, target, executables, install_task, instructions):
+    def __init__(self, name, url, target, executables, install_task, instructions, urltype='tar'):
         self.name = name
         self.url = url
         self.targets = target
         self.exe = executables
         self.target = target
 	self.instructions = instructions
+	self.urltype = urltype
 	if install_task is not None:
 	    self.install = install_task(self.target, self.exe, [], False)
 	else:
@@ -44,7 +46,7 @@ trinity_instructions = "trinity instructions here"
 
 trimmomatic_url = 'http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.35.zip'
 trimmomatic_target = join(PATH_TOOLS, 'Trimmomatic-0.35')
-trimmomatic_exe = ['Trimmomatic-0.35.jar']
+trimmomatic_exe = ['trimmomatic-0.35.jar']
 #trimmomatic_trinity_target = join(split(which('Trinity'))[0], 'trinity-plugins/Trimmomatic')
 trimmomatic_instructions = "trimmomatic instructions here"
 
@@ -86,7 +88,7 @@ salmon_instructions = "salmon instructions here"
 ############# define tools ##################
 tv = tool_variables
 trinity_tool = tv('trinity', trinity_linux_url, trinity_linux_target, trinity_exe, install_trinity_task, trinity_instructions)
-trimmomatic_tool = tv('trimmomatic', trimmomatic_url, trimmomatic_target, trimmomatic_exe, install_trimmomatic_task, trimmomatic_instructions)
+trimmomatic_tool = tv('trimmomatic', trimmomatic_url, trimmomatic_target, trimmomatic_exe, install_trimmomatic_task, trimmomatic_instructions, 'zip')
 prinseq_tool = tv('prinseq', prinseq_url, prinseq_target, prinseq_exe, install_prinseq_task, prinseq_instructions) 
 transdecoder_tool = tv('transdecoder', transdecoder_url, transdecoder_target, transdecoder_exe, install_transdecoder_task, transdecoder_instructions)
 transrate_tool = tv('transrate', transrate_linux_url, transrate_linux_target, transrate_exe, install_transrate_task, transrate_instructions)
@@ -163,6 +165,14 @@ def url_unzip(source, target):
     os.remove(gztemp)
 
 
+def zipfile_unzip(source,target):
+    print('getting '+ source)
+    temp = target + '.zip'
+    urlretrieve(source,temp)
+    z = zipfile.ZipFile(temp)
+    z.extractall(PATH_TOOLS)
+    os.remove(temp)
+
 def tar_retrieve(source, target):
     print('getting '+source)
     tartemp = target+'.tar.gz'
@@ -182,8 +192,10 @@ def get(log_table, flag, source, target, file_check=True):
             safe_retrieve(source, target)
         elif(flag == 'tar'):
             tar_retrieve(source, target)
+	elif(flag == 'zip'):
+	    zipfile_unzip(source, target)
         else:
-            raise ValueError('The flag used must be "", "gz", or "tar".')
+            raise ValueError('The flag used must be "", "zip", "gz", or "tar".')
     except ContentTooShortError:
         print('failed to install {0!s}'.format(source))
     basename = os.path.basename(target)
@@ -218,7 +230,7 @@ def main(install=False, toolList = [], tool_check=True, cpu=4):
     partial_get = lambda a, b, c : get(log_table, a, b ,c, tool_check)
     if(install and platform.system().lower() == 'linux'):
 	for name, tool in toolsD.items():
-	    partial_get('tar', tool.url, tool.target)
+	    partial_get(tool.urltype, tool.url, tool.target)
 	    install_task = tool.install
 	    if install_task is not None:
 	        tasks.append(install_task)
