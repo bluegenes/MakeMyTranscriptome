@@ -310,11 +310,11 @@ def go_manage_db(args, dep, log_files=True):
     return tf.manage_db_task(args.fresh, args.nr, args.uniref90, busco_args, args.blastplus, int(round(args.cpu/4)), dep, log_files)
 
 def go_manage_tools(args, dep, log_files=True):
-    toolsD = {'trinity':False,'trimmomatic':False,'prinseq':False,'transdecoder':False,'diamond':False,'hmmer': False,'transrate':False,'busco':False,'salmon':False, 'python3':False, 'r':False}
+    toolsD = {'trinity':False,'trimmomatic':False,'prinseq':False,'transdecoder':False,'diamond':False,'hmmer': False,'transrate':False,'busco':False,'salmon':False}
     assembly_tools = {'trinity':True,'trimmomatic':True,'prinseq':True,'transrate':True}
     annotation_tools = {'transdecoder':True,'diamond':True,'hmmer':True}
-    quality_tools = {'transrate':True,'busco':True, 'python3':True}
-    expression_tools = {'salmon':True, 'r' : True}  
+    quality_tools = {'transrate':True,'busco':True}
+    expression_tools = {'salmon':True}  
     if args.which == 'assembly':
         toolsD.update(assembly_tools)
     if args.which == 'annotation':
@@ -378,6 +378,7 @@ def run_assembly(args):
     global_setup(args)
     set_subsample_size(args) 
     supers = []
+    deps = []
     manage_tools = go_manage_tools(args, [])
     supers.append(manage_tools)
     deps.append(manage_tools)

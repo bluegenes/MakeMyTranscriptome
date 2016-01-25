@@ -21,73 +21,79 @@ else:
     from  py2_which import which_python2 as which
 
 class tool_variables:
-
-    def __init__(self, name, url, target, executables, install_task):
+    def __init__(self, name, url, target, executables, install_task, instructions):
         self.name = name
         self.url = url
         self.targets = target
         self.exe = executables
         self.target = target
+	self.instructions = instructions
 	if install_task is not None:
 	    self.install = install_task(self.target, self.exe, [], False)
 	else:
 	    self.install = None
 
-    def add_exe(self, exe):
-        self.executables.append(exe)
-
     def __call__(self):
-        return [self.name, self.url, self.target, self.executables, self.install]
+        return [self.name, self.url, self.target, self.executables, self.install, self.instructions]
 
 ########### links and targets ###########
 trinity_linux_url = 'https://github.com/trinityrnaseq/trinityrnaseq/archive/v2.1.1.tar.gz'
 trinity_linux_target = join(PATH_TOOLS, 'trinityrnaseq-2.1.1')
 trinity_exe = ['Trinity']
+trinity_instructions = "trinity instructions here"
 
 trimmomatic_url = 'http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.35.zip'
 trimmomatic_target = join(PATH_TOOLS, 'Trimmomatic-0.35')
 trimmomatic_exe = ['Trimmomatic-0.35.jar']
 #trimmomatic_trinity_target = join(split(which('Trinity'))[0], 'trinity-plugins/Trimmomatic')
+trimmomatic_instructions = "trimmomatic instructions here"
 
 prinseq_url = 'http://sourceforge.net/projects/prinseq/files/standalone/prinseq-lite-0.20.4.tar.gz'
 prinseq_target = join(PATH_TOOLS, 'prinseq-lite-0.20.4')
 prinseq_exe = ['prinseq-lite.pl']
+prinseq_instructions = "prinseq instructions here"
 
 transdecoder_url = 'https://github.com/TransDecoder/TransDecoder/archive/2.0.1.tar.gz'
 transdecoder_target = join(PATH_TOOLS, 'TransDecoder-2.0.1')
 transdecoder_exe = ['TransDecoder.Predict','TransDecoder.LongOrfs']
+transdecoder_instructions = "transdecoder instructions here"
 
 transrate_linux_url = 'https://bintray.com/artifact/download/blahah/generic/transrate-1.0.1-linux-x86_64.tar.gz'
 transrate_linux_target = join(PATH_TOOLS, 'transrate-1.0.1-linux-x86_64')
 transrate_exe = ['transrate']
+transrate_instructions = "transrate instructions here"
 
 busco_url = 'http://busco.ezlab.org/files/BUSCO_v1.1b1.tar.gz'
 busco_target = join(PATH_TOOLS, 'BUSCO_v1.1b1')
 busco_exe = ['BUSCO_v1.1b1.py']
+busco_instructions = "busco instructions here"
 
 hmmer_linux_url = 'http://selab.janelia.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz'
 hmmer_linux_target = join(PATH_TOOLS, 'hmmer-3.1b2-linux-intel-x86_64')
 hmmer_exe = ['hmmscan','hmmpress']
+hmmer_instructions = "hmmer instructions here"
 
 diamond_linux_url = 'http://github.com/bbuchfink/diamond/releases/download/v0.7.10/diamond-linux64.tar.gz'
 diamond_target = join(PATH_TOOLS, '_diamond')
 diamond_exe = ['diamond']
+diamond_instructions = "diamond instructions here"
 
 salmon_linux_url = 'https://github.com/COMBINE-lab/salmon/releases/download/v0.6.0/SalmonBeta-0.6.0_DebianSqueeze.tar.gz'
 salmon_linux_target = join(PATH_TOOLS, 'SalmonBeta-0.6.1_DebianSqueeze')
 salmon_exe = ['salmon']
+salmon_instructions = "salmon instructions here"
 
-############# define the tools ##################
+############# define tools ##################
 tv = tool_variables
-trinity_tool = tv('trinity', trinity_linux_url, trinity_linux_target, trinity_exe, install_trinity_task)
-trimmomatic_tool = tv('trimmomatic', trimmomatic_url, trimmomatic_target, trimmomatic_exe, install_trimmomatic_task)
-prinseq_tool = tv('prinseq', prinseq_url, prinseq_target, prinseq_exe, install_prinseq_task) 
-transdecoder_tool = tv('transdecoder', transdecoder_url, transdecoder_target, transdecoder_exe, install_transdecoder_task)
-transrate_tool = tv('transrate', transrate_linux_url, transrate_linux_target, transrate_exe, install_transrate_task)
-busco_tool = tv('busco', busco_url, busco_target, busco_exe, install_busco_task)
-hmmer_tool = tv('hmmer',hmmer_linux_url, hmmer_linux_target, hmmer_exe, install_hmmer_task)
-diamond_tool = tv('diamond', diamond_linux_url, diamond_target, diamond_exe, None)
-salmon_tool = tv('salmon', salmon_linux_url, salmon_linux_target, salmon_exe, install_salmon_task)
+trinity_tool = tv('trinity', trinity_linux_url, trinity_linux_target, trinity_exe, install_trinity_task, trinity_instructions)
+trimmomatic_tool = tv('trimmomatic', trimmomatic_url, trimmomatic_target, trimmomatic_exe, install_trimmomatic_task, trimmomatic_instructions)
+prinseq_tool = tv('prinseq', prinseq_url, prinseq_target, prinseq_exe, install_prinseq_task, prinseq_instructions) 
+transdecoder_tool = tv('transdecoder', transdecoder_url, transdecoder_target, transdecoder_exe, install_transdecoder_task, transdecoder_instructions)
+transrate_tool = tv('transrate', transrate_linux_url, transrate_linux_target, transrate_exe, install_transrate_task, transrate_instructions)
+busco_tool = tv('busco', busco_url, busco_target, busco_exe, install_busco_task, busco_instructions)
+hmmer_tool = tv('hmmer',hmmer_linux_url, hmmer_linux_target, hmmer_exe, install_hmmer_task, hmmer_instructions)
+diamond_tool = tv('diamond', diamond_linux_url, diamond_target, diamond_exe, None, diamond_instructions)
+salmon_tool = tv('salmon', salmon_linux_url, salmon_linux_target, salmon_exe, install_salmon_task, salmon_instructions)
 
 tool_list = [trinity_tool, trimmomatic_tool, prinseq_tool, transdecoder_tool, transrate_tool,busco_tool, hmmer_tool, diamond_tool, salmon_tool]
 tvTools = {tool.name:tool for tool in tool_list}
@@ -107,7 +113,7 @@ def tool_check(exe_list, allow_path=False):
     if allow_path:
         if all(which(x) for x in exe_list):
 	    path_var = True
-    return any( [external_tools, path_var]) # just remove the 'any' and return both vals if want to be able to distinguish btwn our installs vs theirs...
+    return any([external_tools, path_var]) # just remove the 'any' and return both vals if want to be able to distinguish btwn our installs vs theirs...
 
 def check_tools(toolsD):
     toolsToInstall = {}
@@ -121,12 +127,6 @@ def check_dir_and_log():
         os.mkdir(PATH_TOOLS)
     if(not os.path.isfile(tools_join('tools_log'))):
         write_log({})
-
-def print_install_instructions(toolsDt):
-    instructions = "some instructions will go here"
-    # how best to print?
-    print(instructions)
-
 
 def run_tasks(tasks, cpu=4):
     for t in tasks:
@@ -167,9 +167,8 @@ def tar_retrieve(source, target):
     print('getting '+source)
     tartemp = target+'.tar.gz'
     urlretrieve(source, tartemp)
-    # safe_retrieve(source, target+'.tar.gz')
     tfile = tarfile.open(tartemp, 'r:gz')
-    tfile.extractall(PATH_TOOLS) #hmmm
+    tfile.extractall(PATH_TOOLS)
     os.remove(tartemp)
 
 
@@ -210,59 +209,22 @@ def main(install=False, toolList = [], tool_check=True, cpu=4):
     for tool in toolList:
         t = tvTools[tool]
         toolsD[t.name] = t
-	print(toolsD)
-	print(t.name, t.url, t.exe, t.target, t.install)
-    if tool_check: # --hard option --> don't want to check if installed
-        toolsD = check_tools(toolsD) #return altered tools dictionary
+    if tool_check: # --hard option == install all tools, no matter what we already have
+        toolsD = check_tools(toolsD) #dict with only tools that need to be installed
     else:
         install = True
     log_table = read_log()
     tasks = []
     partial_get = lambda a, b, c : get(log_table, a, b ,c, tool_check)
     if(install and platform.system().lower() == 'linux'):
-	for tool in toolD:
-	    #name = tool.name
+	for name, tool in toolsD.items():
 	    partial_get('tar', tool.url, tool.target)
-	    install_task = tool.install(tool.target, tool.exe, [], False)
-	    tasks.append(install_task)
-
-#if('trinity' in toolsD):  # if the tool is not in dictionary, we don't want to install
-#            install_trinity = install_trinity_task( tv.trinity_linux_target, tv.trinity_exe, [], False)
-#            partial_get('tar', tv.trinity_linux_url,  tv.trinity_linux_target)
-#            tasks.append(install_trinity)
- #       if('prinseq' in toolsD):
- #           partial_get('tar', tv.prinseq_url, tv.prinseq_target)
- #           install_prinseq = install_prinseq_task(tv.prinseq_target, tv.prinseq_exe, [], False)
- #           tasks.append(install_prinseq)
- #       if('transdecoder' in toolsD):
- #           partial_get('tar', tv.transdecoder_url, tv.transdecoder_target)
-#            install_transdecoder = install_transdecoder_task(tv.transdecoder_target, tv.transdecoder_exe1, tv.transdecoder_exe2, [], False)
-#            tasks.append(install_transdecoder)
-#        if('transrate' in toolsD):
-#            partial_get('tar', tv.transrate_linux_url, tv.transrate_linux_target)
-#            install_transrate = install_transrate_task(tv.transrate_linux_target, tv.transrate_exe, [], False)
-#            tasks.append(install_transrate)
-#        if('busco' in toolsD):
-#            partial_get('tar', tv.busco_url, tv.busco_target)
-#            install_busco = install_busco_task(tv.busco_target, tv.busco_exe, [], False)
-#            tasks.append(install_busco)
-#        if('diamond' in toolsD):
-#            partial_get('tar', tv.diamond_linux_url, tv.diamond_linux_target)
-#        if('hmmer' in toolsD):
-#            partial_get('tar', tv.hmmer_linux_url, tv.hmmer_linux_target)
-#            install_hmmer = install_hmmer_task(tv.hmmer_linux_target, tv.hmmer_exe1, tv.hmmer_exe2, [], False)
-#            tasks.append(install_hmmer)
-#        if('salmon' in toolsD):
-#            partial_get('tar', tv.salmon_linux_url, tv.salmon_linux_target)
-#            install_salmon = install_salmon_task(tv.salmon_linux_target, tv.salmon_exe, [], False)
-#            tasks.append(install_salmon)
-##        if('trimmomatic' in toolsD):
-#            partial_get('tar', tv.trimmomatic_url, tv.trimmomatic_target)
-#            install_trimmomatic = install_trimmomatic_task(tv.trimmomatic_target, tv.trimmomatic_exe, [], False)
-#            tasks.append(install_trimmomatic)
+	    install_task = tool.install
+	    if install_task is not None:
+	        tasks.append(install_task)
     else:
-        for tool in toolsD:
-            print_install_instructions(tool)
+        for name, tool in toolsD.items():
+            print(tool.instructions)
     run_tasks(tasks, cpu)
     write_log(log_table)
 
