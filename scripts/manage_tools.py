@@ -28,12 +28,12 @@ class tool_variables:
         self.targets = target
         self.exe = executables
         self.target = target
-	self.instructions = instructions
-	self.urltype = urltype
-	if install_task is not None:
-	    self.install = install_task(self.target, self.exe, [], False)
-	else:
-	    self.install = None
+        self.instructions = instructions
+        self.urltype = urltype
+        if install_task is not None:
+            self.install = install_task(self.target, self.exe, [], False)
+        else:
+            self.install = None
 
     def __call__(self):
         return [self.name, self.url, self.target, self.executables, self.install, self.instructions]
@@ -111,10 +111,10 @@ def tool_check(exe_list, allow_path=False):
     path_var = False
     et_paths = [tools_join(x) for x in exe_list]
     if all(exists(x) for x in et_paths):
-	external_tools = True
+        external_tools = True
     if allow_path:
         if all(which(x) for x in exe_list):
-	    path_var = True
+            path_var = True
     return any([external_tools, path_var]) # just remove the 'any' and return both vals if want to be able to distinguish btwn our installs vs theirs...
 
 def check_tools(toolsD):
@@ -192,8 +192,8 @@ def get(log_table, flag, source, target, file_check=True):
             safe_retrieve(source, target)
         elif(flag == 'tar'):
             tar_retrieve(source, target)
-	elif(flag == 'zip'):
-	    zipfile_unzip(source, target)
+        elif(flag == 'zip'):
+            zipfile_unzip(source, target)
         else:
             raise ValueError('The flag used must be "", "zip", "gz", or "tar".')
     except ContentTooShortError:
@@ -227,11 +227,11 @@ def main(install=False, toolList = [], tool_check=True, cpu=4):
     tasks = []
     partial_get = lambda a, b, c : get(log_table, a, b ,c, tool_check)
     if(install and platform.system().lower() == 'linux'):
-	for name, tool in toolsD.items():
-	    partial_get(tool.urltype, tool.url, tool.target)
-	    install_task = tool.install
-	    if install_task is not None:
-	        tasks.append(install_task)
+        for name, tool in toolsD.items():
+            partial_get(tool.urltype, tool.url, tool.target)
+            install_task = tool.install
+            if install_task is not None:
+                tasks.append(install_task)
     else:
         for name, tool in toolsD.items():
             print(tool.instructions)
