@@ -1,9 +1,9 @@
+# author: bluegenes
+
 from time import strftime
 import tarfile
 import zipfile
-from external_tools import (PATH_ROOT, PATH_TOOLS, trinity_tool, trimmomatic_tool, prinseq_tool,
-transdecoder_tool, hmmer_tool, diamond_tool, salmon_tool, busco_tool,
-busco_plant_tool, transrate_tool)
+from external_tools import PATH_ROOT, PATH_TOOLS, TOOLS_DICT
 import os
 from os.path import exists, join, split
 import json
@@ -20,11 +20,6 @@ else:
     from urllib import urlretrieve, ContentTooShortError
     from  py2_which import which_python2 as which
 
-############# define tools ##################
-tool_list = [trinity_tool, trimmomatic_tool, prinseq_tool, transdecoder_tool, transrate_tool,busco_tool, hmmer_tool, diamond_tool, salmon_tool, busco_plant_tool]
-tcTools = {tool.name: tool for tool in tool_list}
-##################################################
-
 tool_supervisor_log = '{0!s}/.tool_supervisor_log'.format(PATH_TOOLS)
 
 def tool_check(fullpaths_exe, exe, allow_path=False):
@@ -35,7 +30,7 @@ def tool_check(fullpaths_exe, exe, allow_path=False):
     if allow_path:
         if all(which(x) for x in exe):
             path_var = True
-    return any([external_tools, path_var]) # just remove the 'any' and return both vals if want to be able to distinguish btwn our installs vs theirs...
+    return any([external_tools, path_var]) # return both vals to distinguish btwn our installs vs path installs...
 
 def check_tools(toolsD):
     toolsToInstall = {}
@@ -74,7 +69,6 @@ def safe_retrieve(source, target, urltype):
         urlretrieve(source, temp)
         os.rename(temp, target+extension)
     except:
-    #except ContentTooShortError:
         print("WARNING : could not retrieve " + source)
     try:	
         expand_target(target, extension)
@@ -94,7 +88,7 @@ def expand_target(target, extension):
         f.close()
         g.close()
         os.remove(target+extension)
-   elif extension == '.zip':
+   elif (extension == '.zip'):
         z = zipfile.ZipFile((target+extension))
         z.extractall(PATH_TOOLS)
         os.remove(target+extension)
@@ -125,10 +119,10 @@ def write_log(log_table):
 def main(install=False, toolList = [], tool_check=True, cpu=4):
     check_dir_and_log()
     toolsD = {}
-    for tool in toolList:
-        t = tcTools[tool]
+    for toolname in toolList:
+        t = TOOLS_DICT[toolname]
         toolsD[t.name] = t
-    if tool_check: # --hard option == install all tools, no matter what we already have
+    if tool_check: # --hard option == install all tools that were passed in, no matter what we already have
         toolsD = check_tools(toolsD) #dict with only tools that need to be installed
     log_table = read_log()
     tasks = []

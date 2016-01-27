@@ -1,8 +1,8 @@
+# author: bluegenes
+
 import os
 from os.path import join, exists
 from tasks_v2 import Task
-
-# now going to avoid softlinks, etc. SO. executables list needs to include relative path to exes from within the tool folder
 
 class ext_tool:
     def __init__(self,name,url,target,executables,instructions,urltype='tar.gz',dependencies = []):
@@ -40,11 +40,4 @@ class ext_tool:
     def __call__(self):
         return [self.name, self.url, self.target, self.exe,self.urltype, self.install, self.instructions]
 
-
-#def install_tool_task(target, executables, tasks, log_flag= True):
-#    trgs = ['{0!s}/{1!s}'.format(target,executables[0])] # maybe add loop here so get all targets?
-#    cmd = 'cd {0!s}; make; ln -sf {0!s}/{1!s} {2!s}/{1!s}'.format(trinity_target, trinity_exes[0], PATH_TOOLS)
-#    name = 'install_trinity'
-#    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
-#    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
 
