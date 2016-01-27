@@ -11,13 +11,10 @@ else:
     from py2_which import which_python2 as which
 
 from external_tools import PATH_ROOT, PATH_TOOLS, TOOLS_DICT
-#from external_tools import (PATH_ROOT, PATH_TOOLS, trinity_tool, trimmomatic_tool, prinseq_tool,
-#transdecoder_tool, hmmer_tool, diamond_tool, salmon_tool, busco_tool,
-#busco_plant_tool, transrate_tool)
 
 ''' name variables '''
-NAME_ASSEMBLY = 'myassembly'
-NAME_OUT_DIR = 'mmt_test_output'
+#NAME_ASSEMBLY = 'myassembly'
+#NAME_OUT_DIR = 'mmt_test_output'
 
 ''' static path variables '''
 PATH_SCRIPTS = join(PATH_ROOT, 'scripts')
@@ -25,40 +22,26 @@ PATH_DATABASES = join(PATH_ROOT, 'databases')
 PATH_ASSEMBLIES = join(PATH_ROOT, 'assemblies')
 
 ''' static tool variables '''
-#to do:  use tool variables class instead
-
 PATH_BEDTOOLS = 'bedtools'
 PATH_BLASTP = 'blastp'
 PATH_BLASTX = 'blastx'
 PATH_BOWTIE2 = ''
-PATH_BUSCO = join(PATH_TOOLS, 'BUSCO_plants.py')
-PATH_BUSCO_REFERENCE = join(PATH_DATABASES, 'busco')
 PATH_CEGMA = 'cegma'
-PATH_DIAMOND = 'diamond' #diamond_tool.full_exe[0]  # NEED THE 0 HERE? ORRRR....#'diamond'
 PATH_EXPRESS = 'express'
-PATH_FASTQC = 'fastqc'
-PATH_GENE_TRANS_MAP = 'get_Trinity_gene_to_trans_map.pl' #make this 2nd exe for trinity_tool!??
-PATH_HMMPRESS ='hmmpress'
 PATH_KALLISTO = 'kallisto'
-PATH_NR = os.path.join(PATH_DATABASES, 'nr', 'nr')
-PATH_PFAM = 'hmmscan'
-PATH_PFAM_DATABASE = '{0!s}/pfam/Pfam-A.hmm'.format(PATH_DATABASES)
-PATH_PRINSEQ = 'prinseq-lite.pl'
 PATH_RNAMMER = '/matta1/biotools/redhat/rnammer-1.2/rnammer'
 PATH_RNAMMER_PL = 'RnammerTranscriptome.pl'
-PATH_SALMON = 'salmon'
 PATH_SIGNALP = 'signalp'
 PATH_RNASPADES = 'rnaspades.py'
 PATH_TMHMM = 'tmhmm'
 PATH_TRANSDECODER = 'TransDecoder'
-#PATH_TRANSRATE= 'transrate'
-PATH_TRANSRATE =  join(PATH_TOOLS, 'transrate-1.0.1-linux-x86_64','transrate')
-PATH_TRIMMOMATIC = 'trimmomatic-0.35.jar'
 PATH_TRIMMOMATIC_ADAPTERS_SINGLE = join(PATH_TOOLS,'Trimmomatic-0.35/adapters/TruSeq3-SE.fa')
 PATH_TRIMMOMATIC_ADAPTERS_PAIRED = join(PATH_TOOLS,'Trimmomatic-0.35/adapters/TruSeq3-PE.fa')
-PATH_TRINITY = 'Trinity'
 
-
+''' static db variables '''
+PATH_BUSCO_REFERENCE = join(PATH_DATABASES, 'busco')
+PATH_PFAM_DATABASE = '{0!s}/pfam/Pfam-A.hmm'.format(PATH_DATABASES)
+PATH_NR = os.path.join(PATH_DATABASES, 'nr', 'nr')
 PATH_SWISS_PROT = os.path.join(PATH_DATABASES, 'uniprot_sprot', 'uniprot_sprot')
 PATH_UNIREF90 = os.path.join(PATH_DATABASES, 'uniref90', 'uniref90')
 PATH_NOG_CATEGORIES = os.path.join(PATH_DATABASES, 'nog_categories')
@@ -483,7 +466,7 @@ def tmhmm_task(tasks):
 def pfam_task(cpu_cap, tasks):
     trgs = ['{0!s}/{1!s}.pfam'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
     cmd = '{4!s} --cpu {0!s} --domtblout {1!s} {2!s} {3!s}'.format(cpu_cap,
-            trgs[0],PATH_PFAM_DATABASE,GEN_PATH_PEP(),tool_path_check(PATH_PFAM))
+            trgs[0],PATH_PFAM_DATABASE,GEN_PATH_PEP(),tool_path_check(TOOLS_DICT['hmmer'].full_exe[0]))
     name = 'pfam'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
