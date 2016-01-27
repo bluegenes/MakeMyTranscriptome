@@ -13,15 +13,20 @@ else:
 from external_tools import PATH_ROOT, PATH_TOOLS, TOOLS_DICT
 
 ''' name variables '''
-#NAME_ASSEMBLY = 'myassembly'
-#NAME_OUT_DIR = 'mmt_test_output'
+NAME_ASSEMBLY = 'myassembly'
+NAME_OUT_DIR = 'mmt_test_output'
 
 ''' static path variables '''
 PATH_SCRIPTS = join(PATH_ROOT, 'scripts')
 PATH_DATABASES = join(PATH_ROOT, 'databases')
 PATH_ASSEMBLIES = join(PATH_ROOT, 'assemblies')
 
-''' static tool variables '''
+''' transfer to external_tools '''
+PATH_TRANSDECODER = 'TransDecoder'
+PATH_TRIMMOMATIC_ADAPTERS_SINGLE = join(PATH_TOOLS,'Trimmomatic-0.35/adapters/TruSeq3-SE.fa')
+PATH_TRIMMOMATIC_ADAPTERS_PAIRED = join(PATH_TOOLS,'Trimmomatic-0.35/adapters/TruSeq3-PE.fa')
+
+''' set these up as executables that we just look for in the $path '''
 PATH_BEDTOOLS = 'bedtools'
 PATH_BLASTP = 'blastp'
 PATH_BLASTX = 'blastx'
@@ -29,14 +34,13 @@ PATH_BOWTIE2 = ''
 PATH_CEGMA = 'cegma'
 PATH_EXPRESS = 'express'
 PATH_KALLISTO = 'kallisto'
+
+'''optional tools -- set up the same way as above? just don't check for them with mmt setup; only install instructions in tools''' 
 PATH_RNAMMER = '/matta1/biotools/redhat/rnammer-1.2/rnammer'
 PATH_RNAMMER_PL = 'RnammerTranscriptome.pl'
 PATH_SIGNALP = 'signalp'
 PATH_RNASPADES = 'rnaspades.py'
 PATH_TMHMM = 'tmhmm'
-PATH_TRANSDECODER = 'TransDecoder'
-PATH_TRIMMOMATIC_ADAPTERS_SINGLE = join(PATH_TOOLS,'Trimmomatic-0.35/adapters/TruSeq3-SE.fa')
-PATH_TRIMMOMATIC_ADAPTERS_PAIRED = join(PATH_TOOLS,'Trimmomatic-0.35/adapters/TruSeq3-PE.fa')
 
 ''' static db variables '''
 PATH_BUSCO_REFERENCE = join(PATH_DATABASES, 'busco')
@@ -314,7 +318,7 @@ def busco_task(reference_name, cpu_cap, tasks):
     trgs = ['{0!s}/run_busco_{1!s}'.format(GEN_PATH_QUALITY_FILES(),reference_name)]
     cmd = ('cd {0!s}; /matta1/biotools/anaconda/envs/py3k/bin/python {1!s} '
             '-o busco_{2!s} -in {3!s} -l {4!s}/{2!s}_buscos/{2!s} -m trans -f -c {5!s}'
-            ).format(GEN_PATH_QUALITY_FILES(),tool_path_check(TOOLS_DICT['busco'].full_exe[0]),reference_name,GEN_PATH_ASSEMBLY(),
+            ).format(GEN_PATH_QUALITY_FILES(),tool_path_check(TOOLS_DICT['busco_plant'].full_exe[0]),reference_name,GEN_PATH_ASSEMBLY(),
             PATH_BUSCO_REFERENCE,cpu_cap)
     name = 'busco_'+ reference_name
     out,err = GEN_LOGS(name)
@@ -737,7 +741,7 @@ def build_diamond_task(fasta,out_path,tasks,log_flag=True):
     title = os.path.basename(out_path)
     trgs = ['{0!s}'.format(out_path + '.dmnd')] 
     #cmd = '{0!s} makedb --in {1!s} --db {2!s}'.format(PATH_DIAMOND, fasta, out_path)
-    cmd = '{0!s} makedb --in {1!s} --db {2!s}'.format(TOOLS_DICT['diamond'].full_exe[1], fasta, out_path)
+    cmd = '{0!s} makedb --in {1!s} --db {2!s}'.format(TOOLS_DICT['diamond'].full_exe[0], fasta, out_path)
     name = 'build_diamond_'+ title
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
