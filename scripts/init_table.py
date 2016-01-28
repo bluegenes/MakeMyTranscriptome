@@ -59,8 +59,13 @@ def compare(transcriptid_file, transcriptid_table):
        Input:        TranscriptID, TranscriptID
        Return:        Boolean
     """
-    transcriptid_file = [int(x[1:]) for x in (transcriptid_file.split('_')[3:])]
-    transcriptid_table = [int(x[1:]) for x in (transcriptid_table.split('_')[3:])]
+    if transcriptid_file.startswith('TRIN'):
+        transcriptid_file = [int(x[1:]) for x in (transcriptid_file.split('_')[3:])]
+        transcriptid_table = [int(x[1:]) for x in (transcriptid_table.split('_')[3:])]
+    else:
+        transcriptid_file = [int(x[1:]) for x in (transcriptid_file.split('_'))]
+        transcriptid_table = [int(x[1:]) for x in (transcriptid_table.split('_'))]
+       
     for x, y in zip(transcriptid_file, transcriptid_table):
         if x > y:
             return True
