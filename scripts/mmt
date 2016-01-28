@@ -3,6 +3,7 @@
 import argparse
 import os
 import sys
+import json
 from tasks_v2 import Supervisor, Task
 import task_functions_v2 as tf
 from assembler import gen_assembly_supervisor
@@ -10,6 +11,7 @@ from annotater import gen_annotation_supervisor
 from expression import gen_expression_supervisor
 from quality import gen_quality_supervisor
 from itertools import chain
+from manage_database import read_log as read_db_log
 import time
 
 #####################____Argument_Parsers____#####################
@@ -479,29 +481,65 @@ def run_supers(args, supers):
     build_log(args, total.task_status)
 
 
+def get_command():
+    opts = sys.argv
+    opts = ['"'+o+'"' if(' ' in o) else o for o in opts ]
+    opts = ' '.join(opts)
+    return opts
+
+
+def write_assembly_history(args, task_status):
+    json_log = os.path.join(tf.GEN_PATH_LOGS(), 'history.json')
+    task_dict = {t.name:task_status[t] for t in task_status}
+    # print(vars(args))
+    write_dict = {'args_actual': vars(args), 'tasks': task_dict, 'date': time.asctime(), 'opts': get_command()}
+    if(os.path.isfile(json_log)):
+        f = open(json_log, 'rb')
+        temp = json.load(f)
+        temp.append(write_dict)
+        f.close()
+    else:
+        temp = [write_dict]
+    f = open(json_log, 'wb')
+    json.dump(temp, f,sort_keys=True, indent=2)
+    f.close()
+
+
 def build_log(args, task_status):
+    write_assembly_history(args, task_status)
     master_log = os.path.join(tf.GEN_PATH_DIR(), 'master.log')
     f = open(master_log, 'a')
-    f.write('##################__'+args.which+'__##################\n')
-    skipped_tasks = {t: task_status[t] for t in task_status if(task_status[t]['state'] == Supervisor.STATE_SKIPPED)}
-    completed_tasks = {t: task_status[t] for t in task_status if(task_status[t]['state'] == Supervisor.STATE_FINISHED)}
-    failed_tasks = {t: task_status[t] for t in task_status if(task_status[t]['state'] == Supervisor.STATE_ERR)}
-    removed_tasks = {t: task_status[t] for t in task_status if(task_status[t]['state'] == Supervisor.STATE_REMOVED)}
-    f.write('\nThe following jobs were detected as already having been '
-            'completed. They were not executed as part of this pipeline\'s '
-            'execution. Output from previous runs was used instead\n')
-    for t in skipped_tasks:
-        f.write('\t'+t.name+'\n')
-    f.write('\nThe following jobs were exectued succesfully.\n')
-    for t in completed_tasks:
-        f.write('\t'+t.name+' : '+completed_tasks[t]['message']+'\n')
-    f.write('\nThe following jobs encountered an unexpected error during execution.\n')
-    for t in failed_tasks:
-        f.write('\t'+t.name+' : '+failed_tasks[t]['message']+'\n')
-    f.write('\nDue to the above errors, the following jobs could not be started.\n')
-    for t in removed_tasks:
-        f.write('\t'+t.name+'\n')
-    f.write('\n\n')
+    f.write('##################__'+args.which+'__'+time.asctime()+'__##################\n')
+    f.write('Run command:\n')
+    f.write(get_command()+'\n\n')
+    f.write('Databases:\n')
+    db_log = read_db_log()
+    for db in db_log:
+        f.write(db+' : '+db_log[db]+'\n')
+    f.write('\nTools Skipped:\n')
+    f.write('Tool - Status\n')
+    for t in task_status:
+        if(task_status[t]['state'] == Supervisor.STATE_SKIPPED):
+            f.write(t.name+' - Already Executed\n')
+        if(task_status[t]['state'] == Supervisor.STATE_REMOVED):
+            f.write(t.name+' - Upstream Tool Failed\n')
+    f.write('\nTools run:\n')
+    f.write('Tool - Start Time - Wall Time - Status\n')
+    for t in task_status:
+        status = task_status[t]['state']
+        if(status == Supervisor.STATE_FINISHED or status == Supervisor.STATE_ERR):
+            start_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(task_status[t]['start']))
+            wall_time = task_status[t]['stop'] - task_status[t]['start']
+            m, s  = divmod(wall_time, 60)
+            h, m = divmod(m, 60)
+            wall_time = '{0!s}h {1!s}m {2!s}s'.format(h, m ,s)
+        if(status == Supervisor.STATE_FINISHED):
+            f.write(t.name+' - '+start_date+' - '+wall_time+' - Executed\n')
+        if(task_status[t]['state'] == Supervisor.STATE_ERR):
+            f.write(t.name+' - '+start_date+' - '+wall_time+' - Failed\n')
+    f.write('\nLog Files:\n')
+    f.write(tf.GEN_PATH_LOGS())
+    f.write('\n\n\n')
     f.close()
 
 

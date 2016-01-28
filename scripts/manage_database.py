@@ -96,6 +96,9 @@ busco_flags = {'arthropoda': False, 'metazoa': False, 'vertebrata': False,
                'plantae': False}
 
 
+db_log = os.path.join(PATH_DATABASES, 'database_log')
+
+
 def run_tasks(tasks, cpu=4):
     for t in tasks:
         print(t.name)
@@ -156,14 +159,14 @@ def get(log_table, flag, source, target, file_check=True):
 
 
 def read_log():
-    log = open(os.path.join(PATH_DATABASES, 'database_log'))
+    log = open(db_log, 'r')
     log_table = json.load(log)
     log.close()
     return log_table
 
 
 def write_log(log_table):
-    log = open(os.path.join(PATH_DATABASES, 'database_log'), 'w')
+    log = open(db_log, 'w')
     json.dump(log_table, log, sort_keys=True, indent=4)
     log.close()
 
@@ -239,7 +242,7 @@ def check_database_dir():
         os.mkdir(pfam_folder)
     if(not os.path.isdir(busco_folder)):
         os.mkdir(busco_folder)
-    if(not os.path.isfile(os.path.join(PATH_DATABASES, '.database_log'))):
+    if(not os.path.isfile(db_log)):
         write_log({})
 
 
