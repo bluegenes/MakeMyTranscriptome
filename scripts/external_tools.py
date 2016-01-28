@@ -117,21 +117,63 @@ fastqc_linux_url = 'http://www.bioinformatics.babraham.ac.uk/projects/fastqc/fas
 fastqc_linux_target = 'fastqc_v0.11.4'
 fastqc_exe = ['fastqc']
 fastqc_instructions = 'fastqc instructions here'
+fastqc_folder_name = 'FastQC' #unzips into FastQC dir
+fastqc_urltype = 'zip'
 
-fastqc_tool = tc('fastqc', fastqc_linux_url, fastqc_linux_target, fastqc_exe, fastqc_instructions, 'zip')
+fastqc_tool = tc('fastqc', fastqc_linux_url, fastqc_linux_target, fastqc_exe, fastqc_instructions, urltype='zip', folder_name=fastqc_folder_name)
 fastqc_tool.change_exe_fullpath(join(PATH_TOOLS,'FastQC')) #unzips into FastQC dir
 fastqc_cmd = 'chmod 755 '+ fastqc_tool.full_exe[0]
 fastqc_tool.set_install(fastqc_cmd)
 TOOL_LIST.append(fastqc_tool)
 
+cegma_url =  'http://korflab.ucdavis.edu/datasets/cegma/CEGMA_v2.5.tar.gz'
+cegma_target = 'CEGMA_v2.5'
+cegma_exe = ['cegma']
+cegma_instructions = 'MMT cannot install cegma. Please see http://korflab.ucdavis.edu/datasets/cegma/#SCT3 for installation instructions.'
+
+cegma_tool = tc('cegma', cegma_url, cegma_target, cegma_exe, cegma_instructions)
+cegma_tool.change_exe_fullpath('') # they need to put cegma into their $path
+TOOL_LIST.append(cegma_tool)
+
+
+bedtools_url = 'https://github.com/arq5x/bedtools2/releases/download/v2.25.0/bedtools-2.25.0.tar.gz'
+bedtools_target = 'bedtools-2.25.0'
+bedtools_cmd = 'make'
+bedtools_instructions = 'see installation instructions here: http://bedtools.readthedocs.org/en/latest/content/installation.html'
+bedtools_exe = ['intersectBed']
+bedtools_folder_name = 'bedtools2' #unpacks to 'bedtools2'
+
+bedtools_tool = tc('bedtools',bedtools_url, bedtools_target, bedtools_exe, bedtools_instructions, folder_name=bedtools_folder_name)
+bedtools_tool.change_exe_fullpath(join(PATH_TOOLS,'bedtools2/bin'))
+TOOL_LIST.append(bedtools_tool)
+
+
+
 # set up tools dictionary for use in all mmt
+#if(platform.system().lower() == 'linux')
 TOOLS_DICT = {tool.name: tool for tool in TOOL_LIST}
 
-#if(platform.system().lower() == 'linux')
-#set up diff tool list based on platform? or just trinity_tool = trinity_linux_tool
-#tool_list = [trinity_tool, trimmomatic_tool, prinseq_tool, transdecoder_tool, transrate_tool,busco_tool, hmmer_tool, diamond_tool, salmon_tool]
+
+""" TOOLS/INFO TO ADD !!!!!!
+PATH_TRANSDECODER = 'TransDecoder'
+PATH_TRIMMOMATIC_ADAPTERS_SINGLE = join(PATH_TOOLS,'Trimmomatic-0.35/adapters/TruSeq3-SE.fa')
+PATH_TRIMMOMATIC_ADAPTERS_PAIRED = join(PATH_TOOLS,'Trimmomatic-0.35/adapters/TruSeq3-PE.fa')
+
+''' set these up as executables that we just look for in the $path '''
+PATH_BEDTOOLS = 'bedtools'
+PATH_BLASTP = 'blastp'
+PATH_BLASTX = 'blastx'
+PATH_BOWTIE2 = ''
+PATH_CEGMA = 'cegma'
+PATH_EXPRESS = 'express'
+PATH_KALLISTO = 'kallisto'
+
+'''optional tools -- set up the same way as above? just don't check for them with mmt setup; only install instructions in tools'''
+PATH_RNAMMER = '/matta1/biotools/redhat/rnammer-1.2/rnammer'
+PATH_RNAMMER_PL = 'RnammerTranscriptome.pl'
+PATH_SIGNALP = 'signalp'
+PATH_RNASPADES = 'rnaspades.py'
+PATH_TMHMM = 'tmhmm'
 
 
-
-
-
+"""
