@@ -17,9 +17,11 @@ common_parser = argparse.ArgumentParser(add_help=False)
 common_parser.add_argument('-no_log', help='Pipeline will delete log files.',action='store_true')
 common_parser.add_argument('-force', help='Use this flag to perform a fresh run of the pipeline. All steps will be executed regradless of what has already been performed.',action='store_true')
 common_parser.add_argument('--email',help='Pipeline will send emails informing you of runstate.')
-common_parser.add_argument('--out_dir', help='Path to the ouput location. Defaults to assemblies directory inside pipeline',default=tf.PATH_ASSEMBLIES)
-common_parser.add_argument('-o','--out_name', help='The name of the output directory to be made in out_dir. If unused, name will be inherited from input file names')
-common_parser.add_argument('-test',help='Use this flag to test the pipeline.',action='store_true')
+
+out_parser = argparse.ArgumentParser(add_help=False)
+out_parser.add_argument('--out_dir', help='Path to the ouput location. Defaults to assemblies directory inside pipeline',default=tf.PATH_ASSEMBLIES)
+out_parser.add_argument('-o','--out_name', help='The name of the output directory to be made in out_dir. If unused, name will be inherited from input file names')
+out_parser.add_argument('-test',help='Use this flag to test the pipeline.',action='store_true')
 
 master_parser = argparse.ArgumentParser(description=('Description: MMT is a powerful convenience tool that '
         'allows a user to run a full transcriptomics pipeline with a single command. MMT will manage the '
@@ -42,6 +44,10 @@ csv_input_parser.add_argument('--csv', help='A CSV file specifying fastq input, 
 #support cpu input
 cpu_input_parser = argparse.ArgumentParser(add_help=False)
 cpu_input_parser.add_argument('--cpu', help='Sets the process cap for execution. Default is 12. Use 0 to indicate no process cap should be used.',default=12,type=int)
+#memory_parser?
+#max_memory_parser = argparse.ArgumentParser(add_help=False)
+#max_memory_parser.add_argument('--max_memory', help='Sets maximum memory for programs that contain memory arguments')
+
 #ASSEMBLER ARGS
 assembler_input = argparse.ArgumentParser(add_help=False)
 assembler_input.add_argument('-rnaspades',help='Use this flag to specify that assembly should be performed by rnaSPAdes rather than the default Trinity.',action='store_true')
@@ -93,19 +99,19 @@ tool_args.add_argument('--reinstall',action='store_true', default =False, help= 
 #####################____Subparsers____#####################
 subparsers = master_parser.add_subparsers(title='TOOLS', description='Tool Selector', help='Select an available module')
 
-full_parser = subparsers.add_parser('full', parents=[common_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembly_input_parser, assembler_input, annotation_input, expression_input, quality_input, database_selector, annot_database_selector, tool_args], description= "Selected_tool : Full. Executing this tool will run the entire transcriptomics pipeline. This tool requires a specially formatted CSV file to describe the input. Please see the online documentation to learn how to format these files.", add_help=True)
+full_parser = subparsers.add_parser('full', parents=[common_parser, out_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembly_input_parser, assembler_input, annotation_input, expression_input, quality_input, database_selector, annot_database_selector, tool_args], description= "Selected_tool : Full. Executing this tool will run the entire transcriptomics pipeline. This tool requires a specially formatted CSV file to describe the input. Please see the online documentation to learn how to format these files.", add_help=True)
 full_parser.set_defaults(which='full')
 
-assembly_parser = subparsers.add_parser('assembly', parents=[common_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembler_input, tool_args], description='Selected_tool : Assembler. Executing this tool will  clean all provided reads and assemble them.', add_help=True)
+assembly_parser = subparsers.add_parser('assembly', parents=[common_parser, out_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembler_input, tool_args], description='Selected_tool : Assembler. Executing this tool will  clean all provided reads and assemble them.', add_help=True)
 assembly_parser.set_defaults(which='assembly')
 
-annotation_parser = subparsers.add_parser("annotation", parents=[common_parser, cpu_input_parser, assembly_input_parser, annotation_input, annot_database_selector, tool_args], description='Selected_tool : Annotation. Executing this tool will run asssembly quality assesment along with a series of tools designing to provide information about the assembled transcripts.', add_help=True)
+annotation_parser = subparsers.add_parser("annotation", parents=[common_parser, out_parser, cpu_input_parser, assembly_input_parser, annotation_input, annot_database_selector, tool_args], description='Selected_tool : Annotation. Executing this tool will run asssembly quality assesment along with a series of tools designing to provide information about the assembled transcripts.', add_help=True)
 annotation_parser.set_defaults(which='annotation')
 
-quality_parser = subparsers.add_parser("quality", parents=[common_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembly_input_parser, database_selector, quality_input, tool_args], description='Selected_tool : Quality. Executing this tool will perform a quality assessment of an existing assembly.', add_help=True)
+quality_parser = subparsers.add_parser("quality", parents=[common_parser, out_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembly_input_parser, database_selector, quality_input, tool_args], description='Selected_tool : Quality. Executing this tool will perform a quality assessment of an existing assembly.', add_help=True)
 quality_parser.set_defaults(which='quality')
 
-expression_parser = subparsers.add_parser("expression", parents=[common_parser, cpu_input_parser, csv_input_parser, expression_input, tool_args], description='Selected_tool : Expression. Executing this tool will run a series of differential expression analyses and sumarize the output.',add_help=True)
+expression_parser = subparsers.add_parser("expression", parents=[common_parser, out_parser, cpu_input_parser, csv_input_parser, expression_input, tool_args], description='Selected_tool : Expression. Executing this tool will run a series of differential expression analyses and sumarize the output.',add_help=True)
 expression_parser.set_defaults(which='expression')
 
 database_parser = subparsers.add_parser('databases', parents=[cpu_input_parser, database_selector, annot_database_selector], description='Selected_tool : Databases. Executing this tool will check that all annotation databases are present and download if necessary. Optional: download new versions of all databases', add_help=True)
@@ -113,6 +119,9 @@ database_parser.set_defaults(which='databases')
 
 tools_parser = subparsers.add_parser('tools', parents=[cpu_input_parser, tool_args], description='Selected_tool : Tools. Executing this tool will check that all required tools are present in the path, and advise if any are missing. Optional: on a linux system, it can be used to download and install a local copy of these tools.', add_help=True)
 tools_parser.set_defaults(which='tools')
+
+setup_parser = subparsers.add_parser('setup', parents =[common_parser, cpu_input_parser, tool_args, database_selector,annot_database_selector], description='Selected tool : Setup. Executing this tool will check that all required tools and all required databases are present. Databases will be downloaded if necessary; Tools will be downloaded if necessary, and installation instructions will be printed to the screen. See the help options for optional downloadable databases.', add_help=True)
+setup_parser.set_defaults(which='setup')
 
 args =  master_parser.parse_args()
 
@@ -208,9 +217,10 @@ def check_fasta_input(args):
 
 #can we make this a task, or otherwise avoid recheck if rerunning? SLOW.
 def fastq_pair_check(fastq1,fastq2):
-    #TEMP hack to allow quick quality runs
-    if args.which == 'quality':
-        return True
+    #TEMP hack to allow quicker runs
+    return True
+#    if args.which == 'quality':
+#        return True
     if args.test: #skip check for our test data
         return True
     else:
@@ -307,10 +317,10 @@ def go_manage_db(args, dep, log_files=True):
                   'fungi': args.fungi, 'bacteria': args.bacteria,
                   'plantae': args.plantae}
     busco_args = [k for k in busco_args if(busco_args[k])]
-    if(args.which=='quality'): 
+    if(args.which=='quality'): # need to put these in the namespace
         args.nr = False
 	args.uniref90 = False
-	args.blastplus=False
+	args.blastplus= False
     return tf.manage_db_task(args.fresh, args.nr, args.uniref90, busco_args, args.blastplus, int(round(args.cpu/4)), dep, log_files)
 
 def go_manage_tools(args, dep, log_files=True):
@@ -327,10 +337,12 @@ def go_manage_tools(args, dep, log_files=True):
         toolsD.update(quality_tools)
     if args.which == 'expression':
         toolsD.update(expression_tools)
-    if args.which == 'full' or args.which == 'tools':
+    if args.which == 'full' or args.which == 'tools' or args.which == 'setup':
         toolsD = {x: True for x in toolsD}
     tool_checklist = [tool for tool, value in toolsD.items() if value == True]
     return tf.manage_tools_task(args.install, args.reinstall, int(round(args.cpu/4)), tool_checklist, dep, log_files)
+
+
 
 #####################____Main_Modules____#####################
 def run_full(args):
@@ -350,7 +362,7 @@ def run_full(args):
         supers.append(assembly_super)
 	deps.append(assembly_super) # if transrate fails, all downstream fails ... need to change the dependency structure here.
     else: #run everything else BUT assembly
-	check_fasta_input(args) #fast input is required --> check that it's a proper file
+	check_fasta_input(args) #fasta input is required --> check that it's a proper file
 #-->	# do we need to add the cp task here?
 	check_read_inputs(args, False) # get read input from either the csv or command-line inputs
 	global_setup(args)
@@ -465,6 +477,14 @@ def run_tools(args):
     s = go_manage_tools(args, [], False)
     s.run()
 
+def run_setup(args):
+    supers = []
+    manage_db = go_manage_db(args, [], False)
+    supers.append(manage_db)
+    manage_tools = go_manage_tools(args, [], False)
+    supers.append(manage_tools)
+    setup = Supervisor(tasks=supers, cpu=args.cpu, force_run=args.force, email=args.email)
+    setup.run() #logging is taken care of independently. NEED TO PRINT RESULTS TO SCREEN THO...
 
 def run_supers(args, supers):
     run_log = os.path.join(tf.GEN_PATH_DIR(), 'run.log')
@@ -518,3 +538,5 @@ if(__name__ == '__main__'):
         run_databases(args)
     if(args.which=='tools'):
         run_tools(args)
+    if(args.which=='setup'):
+        run_setup(args)
