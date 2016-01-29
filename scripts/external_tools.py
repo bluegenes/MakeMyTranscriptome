@@ -114,7 +114,7 @@ TOOL_LIST.append(salmon_tool)
 
 ### FastQC ###
 fastqc_linux_url = 'http://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.4.zip'
-fastqc_linux_target = 'fastqc_v0.11.4'
+fastqc_linux_target = join(PATH_TOOLS,'fastqc_v0.11.4')
 fastqc_exe = ['fastqc']
 fastqc_instructions = 'fastqc instructions here'
 fastqc_folder_name = 'FastQC' #unzips into FastQC dir
@@ -127,7 +127,7 @@ fastqc_tool.set_install(fastqc_cmd)
 TOOL_LIST.append(fastqc_tool)
 
 cegma_url =  'http://korflab.ucdavis.edu/datasets/cegma/CEGMA_v2.5.tar.gz'
-cegma_target = 'CEGMA_v2.5'
+cegma_target = join(PATH_TOOLS,'CEGMA_v2.5')
 cegma_exe = ['cegma']
 cegma_instructions = 'MMT cannot install cegma. Please see http://korflab.ucdavis.edu/datasets/cegma/#SCT3 for installation instructions.'
 
@@ -137,7 +137,7 @@ TOOL_LIST.append(cegma_tool)
 
 
 bedtools_url = 'https://github.com/arq5x/bedtools2/releases/download/v2.25.0/bedtools-2.25.0.tar.gz'
-bedtools_target = 'bedtools-2.25.0'
+bedtools_target = join(PATH_TOOLS,'bedtools-2.25.0')
 bedtools_cmd = 'make'
 bedtools_instructions = 'see installation instructions here: http://bedtools.readthedocs.org/en/latest/content/installation.html'
 bedtools_exe = ['intersectBed']

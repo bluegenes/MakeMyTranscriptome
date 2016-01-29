@@ -1,11 +1,12 @@
 # author: bluegenes
 
 import os
-from os.path import join, exists
+from os.path import join, exists, dirname
 from tasks_v2 import Task
 
 class ext_tool:
-    def __init__(self,name,url,target,executables,instructions,urltype='tar.gz',dependencies = []):
+    def __init__(self,name,url,target,executables,instructions,urltype='tar.gz',dependencies = [], folder_name = ''):
+
         self.name = name
         self.url = url
         self.target = target
@@ -17,6 +18,9 @@ class ext_tool:
         self.full_exe = [join(self.target, x) for x in self.exe]
         self.install_task = None
         self.check_install_task = None
+        self.folder_name = target
+	if len(folder_name)>0:
+	    self.folder_name = join(dirname(self.target), folder_name)
 	
     def set_install(self, cmd, task_deps=[], log_flag=True):
         install_trgs = self.full_exe

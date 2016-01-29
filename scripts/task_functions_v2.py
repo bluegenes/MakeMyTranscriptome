@@ -77,7 +77,6 @@ def GEN_LOGS(x): return (os.path.join(GEN_PATH_LOGS(), x+'.out_log'),
                          os.path.join(GEN_PATH_LOGS(), x+'.err_log'))
 
 
-# this won't work now -> not softlinking into PATH_TOOLS. need to pass in the tool + ask for the full executables
 def tool_path_check(name):
     temp = os.path.join(PATH_TOOLS, name)
     if(os.path.exists(temp)):
@@ -120,7 +119,6 @@ def fastqc_task(fq_files, output_name, tasks):
     trgs = ['{0!s}/fastqc_{1!s}'.format(GEN_PATH_ASSEMBLY_FILES(), output_name)]
     cmd = 'mkdir {2!s}; {0!s} {1!s} --outdir {2!s}'.format(
            TOOLS_DICT['fastqc'].full_exe[0],' '.join(fq_files), trgs[0])
-	    #PATH_FASTQC, ' '.join(fq_files), trgs[0])
     name = 'fastqc_'+output_name
     out, err = GEN_LOGS(name)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
@@ -135,7 +133,6 @@ def prinseq_unpaired_task(input1, basename, opts, tasks):
            '--trim_qual_left 20 --trim_qual_right 20 --trim_qual_type min --min_len 35 '
            '--trim_tail_left 8 --trim_tail_right 8 {4!s} -log; mv {2!s}/{3!s}.fastq {5!s}'
            ).format(tool_path_check(TOOLS_DICT['prinseq'].full_exe[0]), input1, GEN_PATH_ASSEMBLY_FILES(), 
-           #).format(tool_path_check(PATH_PRINSEQ), input1, GEN_PATH_ASSEMBLY_FILES(), 
                     basename, opts, trgs[0])
     name = basename
     out, err = GEN_LOGS(name)
@@ -157,7 +154,6 @@ def prinseq_task(input_1, input_2, basename, opts, tasks):
     cmd = ('perl {0!s} -fastq {1!s} -fastq2 {2!s} --out_format 3 --out_good {3!s}/{4!s} '
             '--out_bad null --trim_qual_left 20 --trim_qual_right 20 --trim_qual_type min '
             '--min_len 55 --trim_tail_left 8 --trim_tail_right 8 {5!s} -log; mv {6!s} {7!s};'
-            #' mv {8!s} {9!s};').format(tool_path_check(PATH_PRINSEQ), input_1, input_2, GEN_PATH_ASSEMBLY_FILES(), 
             ' mv {8!s} {9!s};').format(tool_path_check(TOOLS_DICT['prinseq'].full_exe[0]), input_1, input_2, GEN_PATH_ASSEMBLY_FILES(), 
             basename, opts,pseudo_trgs[0],trgs[0],pseudo_trgs[1],trgs[1])
     name = basename
@@ -521,12 +517,12 @@ def pipeplot_task(annotation_table, tasks):
 
 def diamondX_task(ref, cpu_cap, tasks):
     base_ref = os.path.basename(ref)
-    trgs = ['{0!s}/diamond_{1!s}.blastx'.format(GEN_PATH_ANNOTATION_FILES(), base_ref)]
+    #trgs = ['{0!s}/diamond_{1!s}.blastx'.format(GEN_PATH_ANNOTATION_FILES(), base_ref)]
+    trgs = ['{0!s}/{1!s}_x_{2!s}.diamond_blastx'.format(GEN_PATH_ANNOTATION_FILES(), NAME_ASSEMBLY, base_ref)]
     pseudo_trgs = ['{0!s}/diamond_{1!s}_blastx'.format(GEN_PATH_ANNOTATION_FILES(), base_ref)]
     cmd = ('{0!s} blastx --db {1!s} --query {2!s} --daa {3!s} --tmpdir {4!s} '
            '--max-target-seqs 20 --sensitive --threads {5!s} --evalue 0.001; {0!s} view '
            '--daa {3!s}.daa --out {6!s};').format(
-           #tool_path_check(PATH_DIAMOND), ref, GEN_PATH_ASSEMBLY(), pseudo_trgs[0], GEN_PATH_ANNOTATION_FILES(),
            tool_path_check(TOOLS_DICT['diamond'].full_exe[0]), ref, GEN_PATH_ASSEMBLY(), pseudo_trgs[0], GEN_PATH_ANNOTATION_FILES(),
            cpu_cap, trgs[0])
     name = 'diamond_blastx_'+base_ref
@@ -536,12 +532,12 @@ def diamondX_task(ref, cpu_cap, tasks):
 
 def diamondP_task(ref, cpu_cap, tasks):
     base_ref = os.path.basename(ref)
-    trgs = ['{0!s}/diamond_{1!s}.blastp'.format(GEN_PATH_ANNOTATION_FILES(), base_ref)]
+    #trgs = ['{0!s}/diamond_{1!s}.blastp'.format(GEN_PATH_ANNOTATION_FILES(), base_ref)]
+    trgs = ['{0!s}/{1!s}_x_{2!s}.diamond_blastp'.format(GEN_PATH_ANNOTATION_FILES(), NAME_ASSEMBLY, base_ref)]
     pseudo_trgs = ['{0!s}/diamond_{1!s}_blastp'.format(GEN_PATH_ANNOTATION_FILES(), base_ref)]
     cmd = ('{0!s} blastp --db {1!s} --query {2!s} --daa {3!s} --tmpdir {4!s} '
            '--max-target-seqs 20 --sensitive --threads {5!s} --evalue 0.001; {0!s} view '
            '--daa {3!s}.daa --out {6!s};').format(
-           #tool_path_check(PATH_DIAMOND), ref, GEN_PATH_PEP(), pseudo_trgs[0], GEN_PATH_ANNOTATION_FILES(),
            tool_path_check(TOOLS_DICT['diamond'].full_exe[0]), ref, GEN_PATH_PEP(), pseudo_trgs[0], GEN_PATH_ANNOTATION_FILES(),
            cpu_cap, trgs[0])
     name = 'diamond_blastp_'+base_ref
