@@ -20,7 +20,8 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
     predict_orfs = tf.predict_orfs_task(cpumod(cpu, 2), [])
     task_insert(predict_orfs, 'transdecoder')
     pfam = tf.pfam_task(cpumod(cpu, 2), [predict_orfs])
-    task_insert(pfam, 'pfam')
+#    task_insert(pfam, 'pfam')
+    tasks.append(pfam)
 
     if(tmhmm_flag):
         tmhmm = tf.tmhmm_task([predict_orfs])
