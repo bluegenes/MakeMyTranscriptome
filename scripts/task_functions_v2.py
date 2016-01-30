@@ -297,15 +297,16 @@ def rnaspades_task(left, right, unpaired, cpu_cap, tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
 
-def cegma_task(assembly,cpu_cap, tasks):
+def cegma_task(out_dir,assembly,cpu_cap, tasks):
     '''    Defines the cegma task. Uses PATH_DIR, PATH_CEGMA, NAME_ASSEMBLY.
         Params :
             cpu_cap - number of threads to be used by cegma
             tasks - a list of tasks that this task is dependant on (trinity_task)
     '''
-    trgs = ['{0!s}/{1!s}.completeness_report'.format(GEN_PATH_QUALITY_FILES(),NAME_ASSEMBLY)]
+    assembly_name = os.path.basename(assembly).split('.fa')[0]
+    trgs = ['{0!s}/{1!s}.completeness_report'.format(out_dir,assembly_name)]
     cmd = '{0!s} -g {1!s} -v -o {3!s}/{2!s} -T {4!s}'.format(PATH_CEGMA,
-            assembly,NAME_ASSEMBLY,GEN_PATH_QUALITY_FILES(),cpu_cap)
+            assembly,assembly_name,out_dir,cpu_cap)
     name = 'cegma'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=cpu_cap,stdout=out,stderr=err)
@@ -329,17 +330,19 @@ def busco_task(out_dir, assembly,reference_name, cpu_cap, tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=cpu_cap,stdout=out,stderr=err)
 
 
-def transrate_task(assembly, lefts, rights, singles, out_dir, transrate_name, cpu_cap, tasks, reference = ''): #, cpu_cap, tasks):
-    trgs = ['{0!s}/assemblies.csv'.format(transrate_name)]
+def transrate_task(assembly, lefts, rights, singles, out_dir, transrate_dir, cpu_cap, tasks, reference = ''): #, cpu_cap, tasks):
+#    transrate_name = basename(transrate_dir)
+    trgs = ['{0!s}/assemblies.csv'.format(transrate_dir)]
     lefts = ','.join(lefts+singles)
     rights = ','.join(rights) 
     lefts = '--left '+lefts if(len(lefts) > 0) else ''
     rights = '--right '+rights if(len(rights) > 0) else ''
     reference = '--reference ' + reference if(reference != '') else ''
-    cmd = '{0!s} --assembly {1!s} {4!s} {5!s} --threads {2!s} --output {3!s}/{6!s}'.format(
+    cmd = '{0!s} --assembly {1!s} {4!s} {5!s} --threads {2!s} --output {6!s}'.format(
            #tool_path_check(PATH_TRANSRATE), GEN_PATH_ASSEMBLY(), cpu_cap, GEN_PATH_QUALITY_FILES(), lefts, rights, transrate_name) #, reference)
-           tool_path_check(TOOLS_DICT['transrate'].full_exe[0]), assembly, cpu_cap, out_dir, lefts, rights, transrate_name, reference)
-    name = transrate_name
+           tool_path_check(TOOLS_DICT['transrate'].full_exe[0]), assembly, cpu_cap, out_dir, lefts, rights, transrate_dir, reference)
+    #name = transrate_name
+    name = 'transrate_' + (os.path.basename(assembly)).split('.fa')[0]
     out, err = GEN_LOGS(name)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
 
