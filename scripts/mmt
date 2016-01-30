@@ -307,7 +307,7 @@ def go_annotation(args, dep):
 def go_expression(args, dep):
     return gen_expression_supervisor(
         args.fastq1, args.fastq2, args.paired_names, args.unpaired,
-        args.unpaired_names, args.cpu, args.sample_info, args.model, dep, args.intersectbed, args.express)
+        args.unpaired_names, args.cpu, args.sample_info, args.model, dep, args.intersectbed, args.express, assembly_name=tf.NAME_ASSEMBLY, assembly_path= tf.GEN_PATH_ASSEMBLY(), out_dir=tf.GEN_PATH_EXPRESSION_FILES())
 
 def go_manage_db(args, dep, log_files=True):
     if(args.which=='annotation'): 

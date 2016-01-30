@@ -54,6 +54,8 @@ PATH_NOG_CATEGORIES = os.path.join(PATH_DATABASES, 'nog_categories')
 # Dynamic path variable functions
 def GEN_PATH_DIR(): return os.path.join(PATH_ASSEMBLIES, NAME_OUT_DIR)
 
+#def GEN_ASSEMBLY_NAME(): return NAME_ASSEMBLY
+
 def GEN_PATH_ASSEMBLY_FILES(): return os.path.join(GEN_PATH_DIR(), 'assembly_files')
 
 def GEN_PATH_QUALITY_FILES(): return os.path.join(GEN_PATH_DIR(), 'quality_files')
@@ -356,14 +358,13 @@ def assembly_stats_task(assembly,tasks):
 
 ##################___Annotation_Tasks___##################
 
-def gene_trans_map_task(tasks):
+def gene_trans_map_task(path_assembly,assembly_name,out_dir,tasks):
     '''    Defines gene_trans_map task. Uses NAME_ASSEMBLY, PATH_DIR, PATH_GENE_TRANS_MAP.
         Params :
             tasks - a list of tasks that this task is dependant on (trinity_task) 
     '''
-    trgs = ['{0!s}/{1!s}.gene_trans_map'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
-    #cmd = '{0!s} {1!s}/{2!s}.fasta > {3!s}'.format(PATH_GENE_TRANS_MAP,GEN_PATH_DIR(),NAME_ASSEMBLY,trgs[0])
-    cmd = '{0!s} {1!s}/{2!s}.fasta > {3!s}'.format(tool_path_check(TOOLS_DICT['trinity'].full_exe[1]),GEN_PATH_DIR(),NAME_ASSEMBLY,trgs[0])
+    trgs = ['{0!s}/{1!s}.gene_trans_map'.format(out_dir, assembly_name)]#GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
+    cmd = '{0!s} {1!s} > {2!s}'.format(tool_path_check(TOOLS_DICT['trinity'].full_exe[1]),path_assembly,trgs[0])
     name = 'gene_trans_map'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
@@ -548,38 +549,38 @@ def blast_augment_task(db, blast, tasks):
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
 
 
-def build_bowtie_task(tasks):
+def build_bowtie_task(path_assembly, assembly_name, out_dir, tasks):
     '''
     '''
-    trgs = ['{0!s}/{1!s}.1.bt2'.format(GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY)]
+    trgs = ['{0!s}/{1!s}.1.bt2'.format(out_dir,assembly_name)]  #GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY)]
     cmd = 'bowtie2-build --offrate 1 -f {1!s} {2!s}/{3!s}'.format(
-            PATH_BOWTIE2,GEN_PATH_ASSEMBLY(),GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY)
+            PATH_BOWTIE2, path_assembly, out_dir, assembly_name) #GEN_PATH_ASSEMBLY(),GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY)
     name = 'build_bowtie'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def bowtie2_unpaired_task(fastq,out_name,opt,cpu_cap,tasks):
+def bowtie2_unpaired_task(bowtie2_index,out_dir,fastq,out_name,opt,cpu_cap,tasks):
     '''
     '''
     opts = ['-a -t --end-to-end', '-t --local']
-    trgs = ['{0!s}/{1!s}.bam'.format(GEN_PATH_EXPRESSION_FILES(),out_name)]
-    cmd = ('bowtie2 {1!s} -L {2!s} -N 1 --threads {3!s} -x {4!s}/{5!s} -U '
-            '{6!s} | samtools view -Sb - > {7!s} ').format(PATH_BOWTIE2,
-            opts[opt],22,cpu_cap,GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY,fastq,trgs[0])
+    trgs = ['{0!s}/{1!s}.bam'.format(out_dir,out_name)]
+    cmd = ('bowtie2 {1!s} -L {2!s} -N 1 --threads {3!s} -x {4!s} -U '
+            '{5!s} | samtools view -Sb - > {6!s} ').format(PATH_BOWTIE2,
+            opts[opt],22,cpu_cap,bowtie2_index,fastq,trgs[0])
     name = 'bowtie2_'+out_name
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
 
-def bowtie2_task(fastq1,fastq2,out_name,opt,cpu_cap,tasks):
+def bowtie2_task(bowtie2_index,out_dir,fastq1,fastq2,out_name,opt,cpu_cap,tasks):
     '''    
     '''
     opts = ['-a -t --end-to-end', '-t --local']
-    trgs = ['{0!s}/{1!s}.bam'.format(GEN_PATH_EXPRESSION_FILES(),out_name)]
-    cmd = ('bowtie2 {1!s} -L {2!s} -N 1 --maxins 800 --threads {3!s} -x {4!s}/{5!s} -1 '
-            '{6!s} -2 {7!s} | samtools view -Sb - > {8!s} ').format(PATH_BOWTIE2,
-            opts[opt],22,cpu_cap,GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY,fastq1,fastq2,trgs[0])
+    trgs = ['{0!s}/{1!s}.bam'.format(out_dir,out_name)]
+    cmd = ('bowtie2 {1!s} -L {2!s} -N 1 --maxins 800 --threads {3!s} -x {4!s} -1 '
+            '{5!s} -2 {6!s} | samtools view -Sb - > {7!s} ').format(PATH_BOWTIE2,
+            opts[opt],22,cpu_cap,bowtie2_index,fastq1,fastq2,trgs[0])
     name = 'bowtie2_'+out_name
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
@@ -597,79 +598,74 @@ def express_task(bam_input,out_name,tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def counts_to_table_task(express_files,out_name,flag,tasks):
+def counts_to_table_task(gene_trans_map,out_dir,express_files,out_name,flag,tasks):
     '''
     '''
-    trgs = ['{0!s}/{1!s}.countsTable'.format(GEN_PATH_EXPRESSION_FILES(),out_name)]
+    trgs = ['{0!s}/{1!s}.countsTable'.format(out_dir,out_name)]
     count_str = ' '.join(['--counts {0!s}'.format(f) for f in express_files])
     cmd = ('python {0!s}/counts_to_table2.py --out {1!s} --inDir {2!s} '
-            '--outDir {2!s} {3!s} {4!s} --geneTransMap {5!s}/{6!s}.gene_trans_map').format(
-            PATH_SCRIPTS,out_name,GEN_PATH_EXPRESSION_FILES(),flag,count_str,
-            GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)
+            '--outDir {2!s} {3!s} {4!s} --geneTransMap {5!s}').format( #{5!s}/{6!s}.gene_trans_map').format(
+            PATH_SCRIPTS,out_name,out_dir,flag,count_str,gene_trans_map)
     name = 'counts_to_table_'+flag
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def sam_sort_task(bam_file,out_name,tasks):
+def sam_sort_task(out_dir,bam_file,out_name,tasks):
     '''
     '''
-    trgs = ['{0!s}/{1!s}.bam'.format(GEN_PATH_EXPRESSION_FILES(),out_name)]
-    cmd = 'samtools sort {0!s} {1!s}/{2!s}'.format(bam_file,GEN_PATH_EXPRESSION_FILES(),out_name)
+    trgs = ['{0!s}/{1!s}.bam'.format(out_dir,out_name)]
+    cmd = 'samtools sort {0!s} {1!s}/{2!s}'.format(bam_file,out_dir,out_name)
     name = 'sam_sort_'+out_name
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def assembly_to_bed_task(tasks):
+def assembly_to_bed_task(path_assembly,assembly_name,out_dir, tasks):
     '''
     '''
-    trgs = ['{0!s}/{1!s}.bed'.format(GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY)]
+    trgs = ['{0!s}/{1!s}.bed'.format(out_dir,assembly_name)]
     cmd = 'python {0!s}/fasta_to_bed_count_length.py {1!s} {2!s}'.format(
-            PATH_SCRIPTS,GEN_PATH_ASSEMBLY(),trgs[0])
+            PATH_SCRIPTS,path_assembly,trgs[0])
     name = 'fasta_to_bed'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def intersect_bed_task(bam_file,bed_reference,output_name,tasks):
+def intersect_bed_task(out_dir,bam_file,bed_reference,output_name,tasks):
     '''
     '''
-    trgs = ['{0!s}/{1!s}.bed'.format(GEN_PATH_EXPRESSION_FILES(),output_name)]
+    trgs = ['{0!s}/{1!s}.bed'.format(out_dir,output_name)]
     cmd = '{0!s} intersect -abam {1!s} -b {2!s} -wb -bed > {3!s}'.format(PATH_BEDTOOLS,bam_file,bed_reference,trgs[0])
     name = 'intersect_bed_'+output_name
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def deseq2_task(counts_to_table_results,sample_info,basename,model,tasks):
+def deseq2_task(out_dir,counts_to_table_results,sample_info,basename,model,tasks):
     '''
     '''
     pseudo_model_temp = ''.join([c if c!=' ' else '_' for c in model])
-    trgs = ['{0!s}/deseq2_{1!s}_{2!s}/'.format(GEN_PATH_EXPRESSION_FILES(),basename,pseudo_model_temp)]
+    trgs = ['{0!s}/deseq2_{1!s}_{2!s}/'.format(out_dir,basename,pseudo_model_temp)]
     cmd = 'Rscript {5!s}/deseq2.r --args {0!s} {1!s} {2!s} {3!s} {4!s}'.format(
-            counts_to_table_results,sample_info,GEN_PATH_EXPRESSION_FILES(),basename,model,PATH_SCRIPTS)
+            counts_to_table_results,sample_info,out_dir,basename,model,PATH_SCRIPTS)
     name = 'de_'+basename
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def build_salmon_task(cpu_cap,tasks):
-    trgs = ['{0!s}/{1!s}_salmon'.format(GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY)]
-    #cmd = '{0!s} index -t {1!s} -i {2!s}/{3!s}_salmon -p {4!s} --type quasi'.format(tool_path_check(PATH_SALMON),
-    cmd = '{0!s} index -t {1!s} -i {2!s}/{3!s}_salmon -p {4!s} --type quasi'.format(tool_path_check(TOOLS_DICT['salmon'].full_exe[0]),
-        GEN_PATH_ASSEMBLY(),GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY, cpu_cap)
+def build_salmon_task(path_assembly,assembly_name,out_dir,cpu_cap,tasks):
+    trgs = ['{0!s}/{1!s}_salmon'.format(out_dir, assembly_name)] 
+    cmd = '{0!s} index --transcripts {1!s} --index {2!s}/{3!s}_salmon --threads {4!s} --type quasi'.format(tool_path_check(TOOLS_DICT['salmon'].full_exe[0]),
+        path_assembly, out_dir, assembly_name, cpu_cap)
     name = 'build_salmon'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err, cpu=cpu_cap)
 
 
-def salmon_gene_map_task(gene_trans_map,tasks):
-    '''    Defines gene_trans_map task. Uses NAME_ASSEMBLY, PATH_DIR, PATH_GENE_TRANS_MAP.
-        Params :
-            tasks - a list of tasks that this task is dependant on (trinity_task) 
-    '''
-    trgs = ['{0!s}/{1!s}.trans_gene_map'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
+def salmon_gene_map_task(out_dir,assembly_name,gene_trans_map,tasks):
+    ''' salmon requires gene_trans_map in reverse column order (transcript \t gene \n)'''
+    trgs = ['{0!s}/{1!s}.trans_gene_map'.format(out_dir,assembly_name)] 
     cmd = 'join -t, -o 1.2,1.1 {0!s} {0!s} > {1!s}'.format(gene_trans_map, trgs[0]) 
     name = 'trans_gene_map'
     name = 'salmon_gene_map_task'
@@ -677,22 +673,21 @@ def salmon_gene_map_task(gene_trans_map,tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def salmon_task(index,left,right,out_name,gene_map,cpu_cap,tasks):
-    trgs = ['{0!s}/{1!s}/quant.sf'.format(GEN_PATH_EXPRESSION_FILES(),out_name)]
+def salmon_task(index,left,right,out_name,gene_map,out_dir,cpu_cap,tasks):
+    trgs = ['{0!s}/{1!s}/quant.sf'.format(out_dir,out_name)]
     cmd = '{0!s} quant -i {1!s} -l IU -1 {2!s} -2 {3!s} -o {4!s}/{5!s} --geneMap {6!s} -p {7!s} --extraSensitive; cp ' \
         '{4!s}/{5!s}/quant.sf {4!s}/{5!s}_quant.sf; cp {4!s}/{5!s}/quant.genes.sf {4!s}/{5!s}_quant.genes.sf'.format(
-	#tool_path_check(PATH_SALMON),index,left,right,GEN_PATH_EXPRESSION_FILES(),out_name,gene_map,cpu_cap)
-	tool_path_check(TOOLS_DICT['salmon'].full_exe[0]),index,left,right,GEN_PATH_EXPRESSION_FILES(),out_name,gene_map,cpu_cap)
+	tool_path_check(TOOLS_DICT['salmon'].full_exe[0]),index,left,right,out_dir,out_name,gene_map,cpu_cap)
     name = 'salmon'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
 
-def salmon_unpaired_task(index,unpaired,out_name,gene_map,cpu_cap,tasks):
+def salmon_unpaired_task(index,unpaired,out_name,gene_map,out_dir,cpu_cap,tasks):
     trgs = []
     cmd = '{0!s} quant -i {1!s} -l U -r {2!s} -o {3!s}/{4!s} --geneMap {5!s} -p {6!s} --extraSensitive'.format(
             #tool_path_check(PATH_SALMON),index,unpaired,GEN_PATH_EXPRESSION_FILES(),out_name,gene_map,cpu_cap)
-            tool_path_check(TOOLS_DICT['salmon'].full_exe[0]),index,unpaired,GEN_PATH_EXPRESSION_FILES(),out_name,gene_map,cpu_cap)
+            tool_path_check(TOOLS_DICT['salmon'].full_exe[0]),index,unpaired,out_dir,out_name,gene_map,cpu_cap)
     name = 'salmon_unpaired'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
@@ -795,7 +790,7 @@ def manage_tools_task(install, fresh, cpu_cap, tool_list, tasks, log_flag=True):
 def filter_task(assembly, quant_file_list, filter_TPM, tasks, log_flag=True):
     trgs = ['{0!s}_filtered_{1!s}.fasta'.format(assembly,filter_TPM)]
 #    quant_files = '" ".join([" --quant_files "+ x for x in quant_file_list]) 
-    cmd = 'python {0!s}/filter_assembly_by_TPM.py --assembly {1!s}/{2!s} --tpm {3!s} {4!s} --out {5!s}'.format(PATH_SCRIPTS, GEN_PATH_FILTER_FILES(), assembly, filter_TPM, quants, trgs[0])
+    cmd = 'python {0!s}/filter_contigs_by_tpm.py --assembly {1!s}/{2!s} --tpm {3!s} {4!s} --out {5!s}'.format(PATH_SCRIPTS, GEN_PATH_FILTER_FILES(), assembly, filter_TPM, quants, trgs[0])
     name = 'filter_{0!s}_TPM_{1!s}'.format(assembly, filter_TPM)
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)

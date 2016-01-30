@@ -11,6 +11,10 @@ import time
 def gen_filter_supervisor(fq1, fq2, unpaired,  dependency_set, busco_refs, cpu=12, cegma_flag=False, transrate_ref='', filter_tpm=0.5):
     tasks = []
     transrate_good_assembly = join(tf.GEN_PATH_TRANSRATE_DIR(),NAME_ASSEMBLY,'good.'+NAME_ASSEMBLY+'.fasta')
+    tr_good_build_salmon = tf.build_salmon_task(cpu,[])
+    salmon_transrate_good = tf.salmon_task()
+    salmon_full = tf.salmon_task()
+
     filter_transrate_good = tf.filter_task(transrate_good_assembly, filter_tpm, []) # transrate is a dependency - can it depend on the file existing?
     tasks.append(filter_transrate_good)
     filter_full_assembly = tf.filter_task(tf.GEN_PATH_ASSEMBLY(), filter_tpm, [])  #trinity is dependency .. can it depend on the file?
