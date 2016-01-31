@@ -102,9 +102,6 @@ def gen_assembly_supervisor(fastq1, fastq2, unpaired, dependency_set, no_trim=Fa
         trinity = tf.trinity_task(fastq1, fastq2, unpaired, cpu, int(cpu/2), 120, 120, normalize_flag, assembler_dependencies)
         tasks.append(trinity)
     assembler_main_task = tasks[-1]
-    # if running FULL, would prefer to run transrate just once... need a flag? --> WANT TO RUN IT IN QUALITY, NOT HERE.
-    transrate = tf.transrate_task(transrate_fastq1, transrate_fastq2, transrate_unpaired, "transrate_post_assembly", int(round(float(cpu), 4)), [assembler_main_task])
-    tasks.append(transrate)
     return Supervisor(tasks=tasks)
 
 

@@ -16,7 +16,7 @@ def gen_expression_supervisor(fastq1,fastq2,paired_names,unpaired,unpaired_names
     salmon_tasks, express_tasks, bowtie_e_tasks, bowtie_i_tasks,sam_sort_tasks, intersect_tasks = [],[],[],[],[],[]
     for i in range(len(fastq1)):
         bowtie_e = tf.bowtie2_task(bowtie2_index,out_dir,fastq1[i],fastq2[i],paired_names[i]+'_express_bt2',0,int(cpu/2),[build_bowtie])
-        express = tf.express_task(bowtie_e.targets[0],paired_names[i],[bowtie_e])
+        express = tf.express_task(assembly_path,out_dir,paired_names[i],bowtie_e.targets[0],[bowtie_e])
         bowtie_i = tf.bowtie2_task(bowtie2_index,out_dir,fastq1[i],fastq2[i],paired_names[i]+'_intersect_bt2',1,int(cpu/2),[build_bowtie])
         sam_sort = tf.sam_sort_task(out_dir,bowtie_i.targets[0],paired_names[i]+'_intersect_bt2_sorted',[bowtie_i])
         intersect_bed = tf.intersect_bed_task(out_dir,sam_sort.targets[0],fasta_to_bed.targets[0],paired_names[i],[sam_sort,fasta_to_bed])
@@ -31,7 +31,7 @@ def gen_expression_supervisor(fastq1,fastq2,paired_names,unpaired,unpaired_names
             intersect_tasks.append(intersect_bed)
     for i in range(len(unpaired)):
         bowtie_e = tf.bowtie2_unpaired_task(bowtie2_index,out_dir,unpaired[i],unpaired_names[i]+'_express_bt2',0,int(cpu/2),[build_bowtie])
-        express = tf.express_task(bowtie_e.targets[0],unpaired_names[i],[bowtie_e])
+        express = tf.express_task(assembly_path,out_dir,unpaired_names[i],bowtie_e.targets[0],[bowtie_e])
         bowtie_i = tf.bowtie2_unpaired_task(bowtie2_index,out_dir,unpaired[i],unpaired_names[i]+'_intersect_bt2',1,int(cpu/2),[build_bowtie])
         sam_sort = tf.sam_sort_task(out_dir,bowtie_i.targets[0],unpaired_names[i]+'_intersect_bt2_sorted',[bowtie_i])
         intersect_bed = tf.intersect_bed_task(out_dir,sam_sort.targets[0],fasta_to_bed.targets[0],unpaired_names[i],[sam_sort,fasta_to_bed])

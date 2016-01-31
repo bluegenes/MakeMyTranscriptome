@@ -7,7 +7,7 @@ import task_functions_v2 as tf
 def cpumod(cpu, k): return int(round(float(cpu)/k))
 
 
-def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_flag, tmhmm_flag, rnammer_flag, dependency_set):
+def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_flag, tmhmm_flag, rnammer_flag, dependency_set, assembly_path=tf.GEN_PATH_ASSEMBLY(), assembly_name=tf.NAME_ASSEMBLY,out_dir=tf.GEN_PATH_ANNOTATION_FILES()):
     tasks = []
     annot_table_opts = {}
     def task_insert(task, name=None):
@@ -15,7 +15,7 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
         if(name != None):
             annot_table_opts[name] = task.targets[0]
 
-    gene_trans_map = tf.gene_trans_map_task([])
+    gene_trans_map = tf.gene_trans_map_task(assembly_path,assembly_name,out_dir,[])
     task_insert(gene_trans_map, 'geneTransMap')
     predict_orfs = tf.predict_orfs_task(cpumod(cpu, 2), [])
     task_insert(predict_orfs, 'transdecoder')

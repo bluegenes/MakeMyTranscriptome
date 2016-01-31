@@ -304,7 +304,8 @@ def go_quality(args, dep):
 def go_annotation(args, dep):
     return gen_annotation_supervisor(
         args.cpu, args.uniref90, args.nr, args.blastplus, args.signalp,
-        args.tmhmm, args.rnammer, dep)
+        args.tmhmm, args.rnammer, dep, assembly_path= tf.GEN_PATH_ASSEMBLY(),
+	assembly_name=tf.NAME_ASSEMBLY, out_dir=tf.GEN_PATH_ANNOTATION_FILES())
 
 def go_expression(args, dep):
     return gen_expression_supervisor(
