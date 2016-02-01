@@ -151,6 +151,9 @@ class Supervisor:
         self.log_path = log if(log!=None) else name+'.run_log'
         #self.log_file = open(self.log_path,'w',1)
         self.log_str = ''
+        if(len(set([t.name for t in tasks])) != len(tasks)):
+            print('WARNING : at least two tasks share a name.')
+        self.task_map = {t.name: t for t in tasks}
         self.task_status = {t:{'state':Supervisor.STATE_INITIALIZED,'exit_code':None,'message':None,'start':None,'stop':None}  for t in tasks}
         self.errors = []
         self.targets = [t for t in chain(*[x.targets for x in tasks])]
