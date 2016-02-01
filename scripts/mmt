@@ -363,7 +363,7 @@ def go_manage_tools(args, dep, log_files=True):
 def run_full(args):
     supers = []
     deps = []
-    assembly_fasta = os.path.join(tf.PATH_ASSEMBLIES,tf.NAME_OUT_DIR,tf.NAME_ASSEMBLY +'.fasta')
+#    assembly_fasta = os.path.join(tf.PATH_ASSEMBLIES,tf.NAME_OUT_DIR,tf.NAME_ASSEMBLY +'.fasta')
     if(args.test):
 	set_test_args(args)
     if(args.assembly==None): #we run the assembly portion of pipeline
@@ -378,14 +378,13 @@ def run_full(args):
 	deps.append(assembly_super) # if transrate fails, all downstream fails ... need to change the dependency structure here.
     else: #run everything else BUT assembly
 	check_fasta_input(args) #fasta input is required --> check that it's a proper file
-#-->	# do we need to add the cp task here?
 	check_read_inputs(args, False) # get read input from either the csv or command-line inputs
 	global_setup(args)
         manage_tools = go_manage_tools(args, [])
         supers.append(manage_tools)
 	deps.append(manage_tools)
-        if not os.path.exists(assembly_fasta):
-            cp = tf.cp_assembly_task(tf.GEN_PATH_ASSEMBLY(),args.assembly, deps)
+        if not os.path.exists(tf.GEN_PATH_ASSEMBLY()):   
+            cp = tf.cp_assembly_task(tf.GEN_PATH_ASSEMBLY(),args.assembly, [])
             supers.append(cp)
             deps.append(cp)
     manage_db = go_manage_db(args, [])
@@ -399,12 +398,14 @@ def run_full(args):
         gen_sample_info(args)
         expression_super = go_expression(tf.GEN_PATH_ASSEMBLY(),tf.NAME_ASSEMBLY,tf.GEN_PATH_EXPRESSION_FILES(), args, deps)
         supers.append(expression_super)
-	if args.filter_by_TPM:
-	    deps.append(quality_super)
+        if args.filter_by_TPM:
+            deps.append(quality_super)
+            # set assembly_names
 	    transrate_good_name = 'good.' + tf.NAME_ASSEMBLY
-	    tr_good_filt = transrate_good_name + str(args.tpm_threshold) + 'tpm'
-	    full_filt = tf.NAME_ASSEMBLY + str(args.tpm_threshold) + 'tpm'
-            transrate_good_exp = go_expression(tf.GEN_PATH_FILTER_FILES(), transrate_good_name,tf.GEN_PATH_FILTER_FILES(),args,deps)
+            tr_good_filt = transrate_good_name + str(args.tpm_threshold) + 'tpm'
+            full_filt = tf.NAME_ASSEMBLY + str(args.tpm_threshold) + 'tpm'
+            # use assembly names
+	    transrate_good_exp = go_expression(tf.GEN_PATH_FILTER_FILES(), transrate_good_name,tf.GEN_PATH_FILTER_FILES(),args,deps)
             good_filtered_exp = go_expression(tf.GEN_PATH_FILTER_FILES(), tr_good_filt,tf.GEN_PATH_FILTER_FILES(),args,deps)
             full_filtered_exp = go_expression(tf.GEN_PATH_FILTER_FILES(), full_filt,tf.GEN_PATH_FILTER_FILES(),args,deps)
             supers.extend([transrate_good_exp,good_filtered_exp,full_filtered_exp])

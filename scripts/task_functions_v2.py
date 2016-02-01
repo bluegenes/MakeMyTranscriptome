@@ -104,7 +104,7 @@ def build_dir_task(tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,stdout=os.devnull,stderr=os.devnull)
 
 
-def cp_assembly_task(path_assembly,source, tasks):
+def cp_assembly_task(path_assembly, source, tasks):
     '''    Defines task used to initialize an assembly when running on fasta
         files. Uses GEN_PATH_DIR() and NAME_ASSEMBLY.
         Params :
@@ -656,7 +656,7 @@ def deseq2_task(out_dir,counts_to_table_results,sample_info,basename,model,tasks
 def build_salmon_task(path_assembly,assembly_name,out_dir,cpu_cap,tasks):
     trgs = ['{0!s}/{1!s}_salmon'.format(out_dir, assembly_name)] 
     cmd = '{0!s} index --transcripts {1!s} --index {2!s}/{3!s}_salmon --threads {4!s} --type quasi'.format(tool_path_check(TOOLS_DICT['salmon'].full_exe[0]),path_assembly, out_dir, assembly_name, cpu_cap)
-    name = 'build_salmon'
+    name = 'build_salmon_' + assembly_name
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err, cpu=cpu_cap)
 
@@ -666,7 +666,7 @@ def salmon_gene_map_task(out_dir,assembly_name,gene_trans_map,tasks):
     trgs = ['{0!s}/{1!s}.trans_gene_map'.format(out_dir,assembly_name)] 
     cmd = 'join -t, -o 1.2,1.1 {0!s} {0!s} > {1!s}'.format(gene_trans_map, trgs[0]) 
     name = 'trans_gene_map'
-    name = 'salmon_gene_map_task'
+    name = 'salmon_gene_map_task_' + assembly_name
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
@@ -676,7 +676,7 @@ def salmon_task(index,left,right,out_name,gene_map,out_dir,cpu_cap,tasks):
     cmd = '{0!s} quant -i {1!s} -l IU -1 {2!s} -2 {3!s} -o {4!s}/{5!s} --geneMap {6!s} -p {7!s} --extraSensitive; cp ' \
         '{4!s}/{5!s}/quant.sf {4!s}/{5!s}_quant.sf; cp {4!s}/{5!s}/quant.genes.sf {4!s}/{5!s}_quant.genes.sf'.format(
 	tool_path_check(TOOLS_DICT['salmon'].full_exe[0]),index,left,right,out_dir,out_name,gene_map,cpu_cap)
-    name = 'salmon'
+    name = 'salmon_' + os.path.basename(index)
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
@@ -685,7 +685,7 @@ def salmon_unpaired_task(index,unpaired,out_name,gene_map,out_dir,cpu_cap,tasks)
     trgs = []
     cmd = '{0!s} quant -i {1!s} -l U -r {2!s} -o {3!s}/{4!s} --geneMap {5!s} -p {6!s} --extraSensitive'.format(
             tool_path_check(TOOLS_DICT['salmon'].full_exe[0]),index,unpaired,out_dir,out_name,gene_map,cpu_cap)
-    name = 'salmon_unpaired'
+    name = 'salmon_unpaired_' + os.path.basename(index)
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
