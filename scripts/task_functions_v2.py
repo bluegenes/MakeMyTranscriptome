@@ -344,14 +344,14 @@ def transrate_dep_generator(transrate_task, lefts, rights, singles, reference, a
         new_rights = [[g for g in assembly_files if(re.search(os.path.basename(f), g))][0] for f in rights]
         new_singles = [[g for g in assembly_files if(re.search(os.path.basename(f), g))][0] for f in singles]
         if(len(new_lefts) == len(lefts) and len(new_rights) == len(rights) and len(new_singles) == len(singles)):
-            lefts = ','.join(new_lefts+new_singles)
-            rights = ','.join(new_rights) 
-            lefts = '--left '+lefts if(len(lefts) > 0) else ''
-            rights = '--right '+rights if(len(rights) > 0) else ''
+            new_lefts = ','.join(new_lefts+new_singles)
+            new_rights = ','.join(new_rights) 
+            new_lefts = '--left '+lefts if(len(lefts) > 0) else ''
+            new_rights = '--right '+rights if(len(rights) > 0) else ''
             reference = '--reference ' + reference if(reference != '') else ''
             cmd = '{0!s} --assembly {1!s} {2!s} {3!s} --threads {4!s} {5!s} --output {6!s}'.format(
-                   tool_path_check(TOOLS_DICT['transrate'].full_exe[0]), assembly_path, lefts,
-                   rights, cpu_cap, reference, transrate_dir)
+                   tool_path_check(TOOLS_DICT['transrate'].full_exe[0]), assembly_path, new_lefts,
+                   new_rights, cpu_cap, reference, transrate_dir)
             transrate_task.command = cmd
         else:
             print('Unable to match input files with trimmed output. Continuing transrate using input files instead.')
