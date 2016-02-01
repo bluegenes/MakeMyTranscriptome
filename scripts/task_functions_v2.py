@@ -11,6 +11,7 @@ else:
     from py2_which import which_python2 as which
 
 from external_tools import PATH_ROOT, PATH_TOOLS, TOOLS_DICT
+import re
 
 ''' name variables '''
 NAME_ASSEMBLY = 'myassembly'
@@ -329,6 +330,36 @@ def busco_task(assembly_path, assembly_name, out_dir,reference_name, cpu_cap, ta
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=cpu_cap,stdout=out,stderr=err)
 
 
+def transrate_dep_generator(transrate_task, lefts, rights, singles, reference, assembly_path, cpu_cap, transrate_dir, other_dependencies):
+
+    def ret():
+        for t in other_dependencies:
+             try:
+                if( not d.finished()):
+                    return False
+            except Task.ExitCodeException:
+                return False
+        assembly_files = sorted(os.listdir(GEN_PATH_ASSEMBLY_FILES()))
+        new_lefts = [[g for g in assembly_files if(re.search(os.path.basename(f), g))][0] for f in lefts]
+        new_rights = [[g for g in assembly_files if(re.search(os.path.basename(f), g))][0] for f in rights]
+        new_singles = [[g for g in assembly_files if(re.search(os.path.basename(f), g))][0] for f in singles]
+        if(len(new_lefts) == len(lefts) and len(new_rights) == len(rights) and len(new_singles) == len(singles)):
+            lefts = ','.join(new_lefts+new_singles)
+            rights = ','.join(new_rights) 
+            lefts = '--left '+lefts if(len(lefts) > 0) else ''
+            rights = '--right '+rights if(len(rights) > 0) else ''
+            reference = '--reference ' + reference if(reference != '') else ''
+            cmd = '{0!s} --assembly {1!s} {2!s} {3!s} --threads {4!s} {5!s} --output {6!s}'.format(
+                   tool_path_check(TOOLS_DICT['transrate'].full_exe[0]), assembly_path, lefts,
+                   rights, cpu_cap, reference, transrate_dir)
+            
+        else:
+            print('Unable to match input files with trimmed output. Continuing transrate using input files instead.')
+        return True
+
+
+
+
 def transrate_task(assembly_path, assembly_name,lefts, rights, singles, out_dir, transrate_dir, cpu_cap, tasks, reference = ''): #, cpu_cap, tasks):
     trgs = ['{0!s}/assemblies.csv'.format(transrate_dir),'{0!s}/{1!s}/good.{1!s}.fasta'.format(transrate_dir,assembly_name),'{0!s}/{1!s}/{1!s}.fasta_quant.sf'.format(transrate_dir,assembly_name)]
     lefts = ','.join(lefts+singles)
@@ -337,7 +368,8 @@ def transrate_task(assembly_path, assembly_name,lefts, rights, singles, out_dir,
     rights = '--right '+rights if(len(rights) > 0) else ''
     reference = '--reference ' + reference if(reference != '') else ''
     cmd = '{0!s} --assembly {1!s} {2!s} {3!s} --threads {4!s} {5!s} --output {6!s}'.format(
-           tool_path_check(TOOLS_DICT['transrate'].full_exe[0]), assembly_path,lefts,rights, cpu_cap, reference, transrate_dir)
+           tool_path_check(TOOLS_DICT['transrate'].full_exe[0]), assembly_path, lefts,
+           rights, cpu_cap, reference, transrate_dir)
     name = 'transrate_' + assembly_name
     out, err = GEN_LOGS(name)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
