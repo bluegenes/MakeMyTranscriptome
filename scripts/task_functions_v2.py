@@ -334,7 +334,7 @@ def transrate_dep_generator(transrate_task, lefts, rights, singles, reference, a
 
     def ret():
         for t in other_dependencies:
-             try:
+            try:
                 if( not d.finished()):
                     return False
             except Task.ExitCodeException:
@@ -352,12 +352,10 @@ def transrate_dep_generator(transrate_task, lefts, rights, singles, reference, a
             cmd = '{0!s} --assembly {1!s} {2!s} {3!s} --threads {4!s} {5!s} --output {6!s}'.format(
                    tool_path_check(TOOLS_DICT['transrate'].full_exe[0]), assembly_path, lefts,
                    rights, cpu_cap, reference, transrate_dir)
-            
+            transrate_task.command = cmd
         else:
             print('Unable to match input files with trimmed output. Continuing transrate using input files instead.')
         return True
-
-
 
 
 def transrate_task(assembly_path, assembly_name,lefts, rights, singles, out_dir, transrate_dir, cpu_cap, tasks, reference = ''): #, cpu_cap, tasks):
@@ -372,7 +370,10 @@ def transrate_task(assembly_path, assembly_name,lefts, rights, singles, out_dir,
            rights, cpu_cap, reference, transrate_dir)
     name = 'transrate_' + assembly_name
     out, err = GEN_LOGS(name)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
+    temp_task = Task(command=cmd, dependencies=[], targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
+    deps = transrate_dep_generator(temp_task, lefts, rights, singles, reference, assembly_path, cpu_cap, transrate_dir, tasks)
+    temp_task.dependencies = [deps]
+    return temp_task
 
 
 def assembly_stats_task(out_dir,assembly,tasks):
