@@ -356,6 +356,7 @@ def transrate_dep_generator(transrate_task, lefts, rights, singles, reference, a
         else:
             print('Unable to match input files with trimmed output. Continuing transrate using input files instead.')
         return True
+    return ret
 
 
 def transrate_task(assembly_path, assembly_name,lefts, rights, singles, out_dir, transrate_dir, cpu_cap, tasks, reference = ''): #, cpu_cap, tasks):
