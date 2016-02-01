@@ -104,16 +104,16 @@ def build_dir_task(tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,stdout=os.devnull,stderr=os.devnull)
 
 
-def cp_assembly_task(source, tasks):
+def cp_assembly_task(path_assembly,source, tasks):
     '''    Defines task used to initialize an assembly when running on fasta
         files. Uses GEN_PATH_DIR() and NAME_ASSEMBLY.
         Params :
             source - The path to the source fasta that should be used for analsis
             tasks - a list of tasks that this task is dependant on.
     '''
-    trgs = [GEN_PATH_ASSEMBLY()]
+    trgs = ['{0!s}'.format(path_assembly)]
     cmd = 'cp {0!s} {1!s}'.format(source, trgs[0]) 
-    name = 'setting_fasta'
+    name = 'setting_fasta_' + os.path.basename(path_assembly)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name)
 
 
