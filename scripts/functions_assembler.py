@@ -1,15 +1,9 @@
 '''
 '''
-
 from tasks_v2 import Task
 import os
 from os.path import join, exists
 import sys
-#if(sys.version[0] == '3'):
-#    from shutil import which
-#else:
-#    from py2_which import which_python2 as which
-
 from external_tools import TOOLS_DICT
 import functions_general as fg
 
@@ -37,7 +31,7 @@ def prinseq_unpaired_task(out_dir,input1, basename, opts, tasks):
     cmd = ('perl {0!s} -fastq {1!s} --out_format 3 --out_good {2!s}/{3!s} --out_bad null '
            '--trim_qual_left 20 --trim_qual_right 20 --trim_qual_type min --min_len 35 '
            '--trim_tail_left 8 --trim_tail_right 8 {4!s} -log; mv {2!s}/{3!s}.fastq {5!s}'
-           ).format(tool_path_check(TOOLS_DICT['prinseq'].full_exe[0]), input1, out_dir, 
+           ).format(fg.tool_path_check(TOOLS_DICT['prinseq'].full_exe[0]), input1, out_dir, 
                     basename, opts, trgs[0])
     name = basename
     out, err = fg.GEN_LOGS(name)
@@ -59,7 +53,7 @@ def prinseq_task(out_dir,input_1, input_2, basename, opts, tasks):
     cmd = ('perl {0!s} -fastq {1!s} -fastq2 {2!s} --out_format 3 --out_good {3!s}/{4!s} '
             '--out_bad null --trim_qual_left 20 --trim_qual_right 20 --trim_qual_type min '
             '--min_len 55 --trim_tail_left 8 --trim_tail_right 8 {5!s} -log; mv {6!s} {7!s};'
-            ' mv {8!s} {9!s};').format(tool_path_check(TOOLS_DICT['prinseq'].full_exe[0]), input_1, 
+            ' mv {8!s} {9!s};').format(fg.tool_path_check(TOOLS_DICT['prinseq'].full_exe[0]), input_1, 
             input_2, out_dir, basename, opts,pseudo_trgs[0],trgs[0],pseudo_trgs[1],trgs[1])
     name = basename
     out,err = fg.GEN_LOGS(name)
@@ -72,7 +66,7 @@ def trimmomatic_unpaired_task(out_dir,input1, cpu_cap, basename, tasks):
     orphans = [form('{0!s}/{1!s}_orphans_{2!s}', input1)]
     cmd = ('java -jar {0!s} SE -threads {4!s} {1!s} {2!s} {3!s} ILLUMINACLIP:'
            '{5!s}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:35'
-           ).format(tool_path_check(TOOLS_DICT['trimmomatic'].full_exe[0]), input1, trgs[0], orphans[0],cpu_cap,
+           ).format(fg.tool_path_check(TOOLS_DICT['trimmomatic'].full_exe[0]), input1, trgs[0], orphans[0],cpu_cap,
            TOOLS_DICT['trimmomatic'].full_exe[2]) #PATH_TRIMMOMATIC_ADAPTERS_SINGLE)
     name = basename
     out, err = fg.GEN_LOGS(name)
@@ -88,7 +82,7 @@ def trimmomatic_task(out_dir,left, right, cpu_cap, basename, tasks):
     cmd = ('java -jar {0!s} PE -threads {3!s} {1!s} {2!s} {5!s} {4!s} {7!s} '
            '{6!s} ILLUMINACLIP:{8!s}:2:30:10 LEADING:3 TRAILING:3 '
            'SLIDINGWINDOW:4:15 MINLEN:35').format(
-           tool_path_check(TOOLS_DICT['trimmomatic'].full_exe[0]), left, right, cpu_cap, orphans[0], trgs[0],
+           fg.tool_path_check(TOOLS_DICT['trimmomatic'].full_exe[0]), left, right, cpu_cap, orphans[0], trgs[0],
            orphans[1], trgs[1], TOOLS_DICT['trimmomatic'].full_exe[1]) #PATH_TRIMMOMATIC_ADAPTERS_PAIRED)
     name = basename
     out, err = fg.GEN_LOGS(name)
@@ -170,7 +164,7 @@ def trinity_task(path_assembly, out_dir, fastq, fastq2, unpaired, cpu_cap_trin, 
     trgs = [path_assembly]
     cmd = ('{0!s} --seqType fq {1!s} --CPU {2!s} --max_memory {3!s}G --bflyCalculateCPU {4!s} '
             '--output {6!s}/trinity; cp {6!s}/trinity/Trinity.fasta {7!s};'
-            ).format(tool_path_check(TOOLS_DICT['trinity'].full_exe[0]), input_str, cpu_cap_trin, mem_trin, normalize_flag,
+            ).format(fg.tool_path_check(TOOLS_DICT['trinity'].full_exe[0]), input_str, cpu_cap_trin, mem_trin, normalize_flag,
                      mem_bfly, out_dir, trgs[0])
     name = 'trinity_assembly'
     out,err = fg.GEN_LOGS(name)
@@ -189,7 +183,7 @@ def rnaspades_task(path_assembly, out_dir, left, right, unpaired, cpu_cap, tasks
     if(unpaired!=[]):
         input_strings.append('-s '+unpaired[0])
     cmd = '{0!s} {1!s} --threads {2!s} -o {3!s}; cp {3!s}/contigs.fasta {4!s};'.format(
-            tool_path_check(TOOLS_DICT['rnaspades'].full_exe[0]),' '.join(input_strings),cpu_cap,virtual_target,trgs[0])
+            fg.tool_path_check(TOOLS_DICT['rnaspades'].full_exe[0]),' '.join(input_strings),cpu_cap,virtual_target,trgs[0])
     name = 'rnaSPAdes_assembly'
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)

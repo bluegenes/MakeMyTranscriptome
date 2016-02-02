@@ -2,7 +2,7 @@
 '''
 from tasks_v2 import Task
 import os
-from os.path import join, exists
+from os.path import join, exists, dirname, abspath
 import sys
 if(sys.version[0] == '3'):
     from shutil import which

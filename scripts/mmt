@@ -5,7 +5,7 @@ import os
 import sys
 import json
 from tasks_v2 import Supervisor, Task
-import task_functions_v2 as tf
+#import task_functions_v2 as tf
 import functions_general as fg
 from assembler import gen_assembly_supervisor
 from annotater import gen_annotation_supervisor
@@ -23,7 +23,7 @@ common_parser.add_argument('-force', help='Use this flag to perform a fresh run 
 common_parser.add_argument('--email',help='Pipeline will send emails informing you of runstate.')
 
 out_parser = argparse.ArgumentParser(add_help=False)
-out_parser.add_argument('--out_dir', help='Path to the ouput location. Defaults to assemblies directory inside pipeline',default=tf.PATH_ASSEMBLIES)
+out_parser.add_argument('--out_dir', help='Path to the ouput location. Defaults to assemblies directory inside pipeline',default=fg.PATH_ASSEMBLIES)
 out_parser.add_argument('-o','--out_name', help='The name of the output directory to be made in out_dir. If unused, name will be inherited from input file names')
 out_parser.add_argument('-test',help='Use this flag to test the pipeline.',action='store_true')
 
@@ -152,15 +152,15 @@ def inherit_name_from_paired(paired_1):
 def set_test_args(args):
     args.out_name = args.out_name if(args.out_name!=None) else 'test_v2'
     if(args.which=='full' or args.which=='assembly' or args.which=='expression' or args.which=='quality'):
-        args.csv = tf.PATH_ROOT+'/test_data/sample_info2.csv'
+        args.csv = fg.PATH_ROOT+'/test_data/sample_info2.csv'
     if(args.which=='quality' or args.which=='annotation' or args.which=='expression'):
-        args.assembly = tf.PATH_ROOT+'/test_data/test_v2.fasta'
+        args.assembly = fg.PATH_ROOT+'/test_data/test_v2.fasta'
 
 def set_subsample_size(args):
     args.subsample_size = 10**15 if(args.subsample_size<=0) else args.subsample_size*10**6
 
 def gen_sample_info(args):
-    args.sample_info = tf.GEN_PATH_EXPRESSION_FILES()+'/sample_info.tsv'
+    args.sample_info = fg.GEN_PATH_EXPRESSION_FILES()+'/sample_info.tsv'
     si = open(args.sample_info,'w')
     f = open(args.csv)
     for line in f:
@@ -177,7 +177,7 @@ def global_setup(args):
             raise Exception('\n\nERROR : invalid out_dir argument. Path does not exist.')
     if(args.cpu<=0):
         args.cpu = float('inf')
-    tf.PATH_ASSEMBLIES = args.out_dir
+    fg.PATH_ASSEMBLIES = args.out_dir
     if(args.which=='full'):
 	if(args.assembly!=None):
 	    base = inherit_name(args.assembly)
@@ -196,9 +196,9 @@ def global_setup(args):
             base = inherit_name(args.unpaired[0])
     if(args.which=='annotation' or args.which=='quality' or args.which=='expression'):
         base = inherit_name(args.assembly)
-    tf.NAME_OUT_DIR = args.out_name if(args.out_name!=None) else base
-    tf.NAME_ASSEMBLY = tf.NAME_OUT_DIR
-    tf.build_dir_task([]).run()
+    fg.NAME_OUT_DIR = args.out_name if(args.out_name!=None) else base
+    fg.NAME_ASSEMBLY = fg.NAME_OUT_DIR
+    fg.build_dir_task([]).run()
 
 
 #####################____Argument_Testers____#####################
@@ -301,27 +301,26 @@ def go_quality(args, dep):
     busco_args = [k for k in busco_args if(busco_args[k])]
     return gen_quality_supervisor(
         args.fastq1, args.fastq2, args.unpaired, dep, busco_args,
-        args.cpu, args.cegma, args.transrate_ref, assembly_name=tf.NAME_ASSEMBLY, 
-	assembly_path= tf.GEN_PATH_ASSEMBLY(), out_dir=tf.GEN_PATH_QUALITY_FILES(),
-	transrate_dir=tf.GEN_PATH_TRANSRATE_DIR(), filter_files= tf.GEN_PATH_FILTER_FILES(),
-	filter_flag=args.filter_by_TPM, tpm_threshold=args.tpm_threshold)
+        args.cpu, args.cegma, args.transrate_ref, assembly_name=fg.NAME_ASSEMBLY, 
+	assembly_path= fg.GEN_PATH_ASSEMBLY(), out_dir=fg.GEN_PATH_QUALITY_FILES(),
+	transrate_dir=fg.GEN_PATH_TRANSRATE_DIR(), reads_dir=fg.GEN_PATH_ASSEMBLY_FILES())
 
 def go_filter(args, transrate_task, dep):
-    return gen_filter_supervisor(tf.GEN_PATH_ASSEMBLY(),tf.NAME_ASSEMBLY,tf.GEN_PATH_FILTER_FILES(), transrate_task, dep, tpm_threshold=args.tpm_threshold)
+    return gen_filter_supervisor(fg.GEN_PATH_ASSEMBLY(),fg.NAME_ASSEMBLY,fg.GEN_PATH_FILTER_FILES(), transrate_task, dep, tpm_threshold=args.tpm_threshold)
 
 def go_annotation(args, dep):
     return gen_annotation_supervisor(
         args.cpu, args.uniref90, args.nr, args.blastplus, args.signalp,
-        args.tmhmm, args.rnammer, dep, assembly_path= tf.GEN_PATH_ASSEMBLY(),
-	assembly_name=tf.NAME_ASSEMBLY, out_dir=tf.GEN_PATH_ANNOTATION_FILES())
+        args.tmhmm, args.rnammer, dep, assembly_path= fg.GEN_PATH_ASSEMBLY(),
+	assembly_name=fg.NAME_ASSEMBLY, out_dir=fg.GEN_PATH_ANNOTATION_FILES())
 
 def go_expression(path_assembly, out_dir, args, dep):
     assembly_name = os.path.basename(path_assembly).split('.fa')[0]
     return gen_expression_supervisor(
         args.fastq1, args.fastq2, args.paired_names, args.unpaired,
         args.unpaired_names, args.cpu, args.sample_info, args.model, dep, 
-	args.intersectbed, args.express, assembly_name=tf.NAME_ASSEMBLY, 
-	assembly_path= tf.GEN_PATH_ASSEMBLY(), out_dir=tf.GEN_PATH_EXPRESSION_FILES())
+	args.intersectbed, args.express, assembly_name=fg.NAME_ASSEMBLY, 
+	assembly_path= fg.GEN_PATH_ASSEMBLY(), out_dir=fg.GEN_PATH_EXPRESSION_FILES())
 
 def go_manage_db(args, dep, log_files=True):
     if(args.which=='annotation'): 
@@ -337,7 +336,7 @@ def go_manage_db(args, dep, log_files=True):
         args.nr = False
 	args.uniref90 = False
 	args.blastplus= False
-    return tf.manage_db_task(args.fresh, args.nr, args.uniref90, busco_args, args.blastplus, int(round(args.cpu/4)), dep, log_files)
+    return fg.manage_db_task(args.fresh, args.nr, args.uniref90, busco_args, args.blastplus, int(round(args.cpu/4)), dep, log_files)
 
 def go_manage_tools(args, dep, log_files=True):
     toolsD = {'trinity':False,'trimmomatic':False,'prinseq':False,'transdecoder':False,'diamond':False,'hmmer': False,'transrate':False,'busco':False,'salmon':False, 'fastqc':False}
@@ -356,7 +355,7 @@ def go_manage_tools(args, dep, log_files=True):
     if args.which == 'full' or args.which == 'tools' or args.which == 'setup':
         toolsD = {x: True for x in toolsD}
     tool_checklist = [tool for tool, value in toolsD.items() if value == True]
-    return tf.manage_tools_task(args.install, args.reinstall, int(round(args.cpu/4)), tool_checklist, dep, log_files)
+    return fg.manage_tools_task(args.install, args.reinstall, int(round(args.cpu/4)), tool_checklist, dep, log_files)
 
 
 
@@ -364,7 +363,6 @@ def go_manage_tools(args, dep, log_files=True):
 def run_full(args):
     supers = []
     deps = []
-#    assembly_fasta = os.path.join(tf.PATH_ASSEMBLIES,tf.NAME_OUT_DIR,tf.NAME_ASSEMBLY +'.fasta')
     if(args.test):
 	set_test_args(args)
     if(args.assembly==None): #we run the assembly portion of pipeline
@@ -384,8 +382,8 @@ def run_full(args):
         manage_tools = go_manage_tools(args, [])
         supers.append(manage_tools)
 	deps.append(manage_tools)
-        if not os.path.exists(tf.GEN_PATH_ASSEMBLY()):   
-            cp = tf.cp_assembly_task(tf.GEN_PATH_ASSEMBLY(),args.assembly, [])
+        if not os.path.exists(fg.GEN_PATH_ASSEMBLY()):   
+            cp = fg.cp_assembly_task(fg.GEN_PATH_ASSEMBLY(),args.assembly, [])
             supers.append(cp)
             deps.append(cp)
     manage_db = go_manage_db(args, [])
@@ -394,25 +392,24 @@ def run_full(args):
     supers.append(annotation_super)
     quality_super = go_quality(args, deps+[manage_db])
 
-    transrate_task = quality_super.task_map['transrate_' + tf.NAME_ASSEMBLY]
+    transrate_task = quality_super.task_map['transrate_' + fg.NAME_ASSEMBLY]
     supers.append(quality_super)
     filtering_tasks = []
     if args.filter_by_TPM:
         filter_super = go_filter(args, transrate_task, deps)
 	supers.append(filter_super)
-	filtered_full_task = filter_super.task_map['filt_' + tf.NAME_ASSEMBLY + '_' + str(args.tpm_threshold) + 'tpm']
-	tr_good_name = 'good.'+ tf.NAME_ASSEMBLY
-	#tr_good_cp_task = filter_super.task_map('setting_fasta_good.' + tf.NAME_ASSEMBLY)
+	filtered_full_task = filter_super.task_map['filt_' + fg.NAME_ASSEMBLY + '_' + str(args.tpm_threshold) + 'tpm']
+	tr_good_name = 'good.'+ fg.NAME_ASSEMBLY
 	tr_good_cp_task = filter_super.task_map['setting_fasta_' + tr_good_name]
 	tr_good_filter = filter_super.task_map['filt_' + tr_good_name + '_' + str(args.tpm_threshold) + 'tpm']
 	filtering_tasks = [tr_good_cp_task, filtered_full_task, tr_good_filter] 
     if(args.csv !=None): #csv is required so we have metadata
 	check_csv_input(args)# since it wasn't required earlier, we need to check that it exists, is proper file. 
         gen_sample_info(args)
-        expression_super = go_expression(tf.GEN_PATH_ASSEMBLY(),tf.GEN_PATH_EXPRESSION_FILES(), args, deps)
+        expression_super = go_expression(fg.GEN_PATH_ASSEMBLY(),fg.GEN_PATH_EXPRESSION_FILES(), args, deps)
         supers.append(expression_super)
 	for task in filtering_tasks:
-	    supers.append(go_expression(task.targets[0],tf.GEN_PATH_FILTER_FILES(),args,deps+[filter_super]))
+	    supers.append(go_expression(task.targets[0],fg.GEN_PATH_FILTER_FILES(),args,deps+[filter_super]))
     run_supers(args, supers)
 
 
@@ -440,8 +437,8 @@ def run_quality(args):
     global_setup(args)
     supers = []
     deps = []
-    if not os.path.exists(os.path.join(tf.PATH_ASSEMBLIES,tf.NAME_OUT_DIR,tf.NAME_ASSEMBLY +'.fasta')):
-        cp = tf.cp_assembly_task(tf.GEN_PATH_ASSEMBLY(),args.assembly, [])
+    if not os.path.exists(fg.GEN_PATH_ASSEMBLY()): 
+        cp = fg.cp_assembly_task(fg.GEN_PATH_ASSEMBLY(),args.assembly, [])
         supers.append(cp)
         deps = [cp] 
     manage_tools = go_manage_tools(args, [])
@@ -462,8 +459,8 @@ def run_annotation(args):
     global_setup(args)
     supers = []
     deps = []
-    if not os.path.exists(os.path.join(tf.PATH_ASSEMBLIES,tf.NAME_OUT_DIR,tf.NAME_ASSEMBLY +'.fasta')):
-        cp = tf.cp_assembly_task(tf.GEN_PATH_ASSEMBLY(),args.assembly, [])
+    if not os.path.exists(fg.GEN_PATH_ASSEMBLY()):
+        cp = fg.cp_assembly_task(fg.GEN_PATH_ASSEMBLY(),args.assembly, [])
         supers.append(cp)
         deps = [cp]
     manage_tools = go_manage_tools(args, [])
@@ -487,14 +484,14 @@ def run_expression(args):
     gen_sample_info(args)
     supers = []
     deps = []
-    if not os.path.exists(os.path.join(tf.PATH_ASSEMBLIES,tf.NAME_OUT_DIR,tf.NAME_ASSEMBLY +'.fasta')):
-        cp = tf.cp_assembly_task(tf.GEN_PATH_ASSEMBLY(),args.assembly, [])
+    if not os.path.exists(fg.GEN_PATH_ASSEMBLY()): 
+        cp = fg.cp_assembly_task(fg.GEN_PATH_ASSEMBLY(),args.assembly, [])
         supers.append(cp)
         deps = [cp]
     manage_tools = go_manage_tools(args, [])
     supers.append(manage_tools)
     deps.append(manage_tools)
-    expression_super = go_expression(tf.GEN_PATH_ASSEMBLY(),tf.GEN_PATH_EXPRESSION_FILES(), args, deps)
+    expression_super = go_expression(fg.GEN_PATH_ASSEMBLY(),fg.GEN_PATH_EXPRESSION_FILES(), args, deps)
     supers.append(expression_super)
     run_supers(args, supers)
 
@@ -517,7 +514,7 @@ def run_setup(args):
     setup.run() #logging is taken care of independently. NEED TO PRINT RESULTS TO SCREEN THO...
 
 def run_supers(args, supers):
-    run_log = os.path.join(tf.GEN_PATH_DIR(), 'run.log')
+    run_log = os.path.join(fg.GEN_PATH_DIR(), 'run.log')
     total = Supervisor(tasks=supers, cpu=args.cpu, force_run=args.force, log=run_log, email=args.email)
     try:
         total.run()
@@ -535,7 +532,7 @@ def get_command():
 
 
 def write_assembly_history(args, task_status):
-    json_log = os.path.join(tf.GEN_PATH_LOGS(), 'history.json')
+    json_log = os.path.join(fg.GEN_PATH_LOGS(), 'history.json')
     task_dict = {t.name:task_status[t] for t in task_status}
     # print(vars(args))
     write_dict = {'args_actual': vars(args), 'tasks': task_dict, 'date': time.asctime(), 'opts': get_command()}
@@ -553,7 +550,7 @@ def write_assembly_history(args, task_status):
 
 def build_log(args, task_status):
     write_assembly_history(args, task_status)
-    master_log = os.path.join(tf.GEN_PATH_DIR(), 'master.log')
+    master_log = os.path.join(fg.GEN_PATH_DIR(), 'master.log')
     f = open(master_log, 'a')
     f.write('##################__'+args.which+'__'+time.asctime()+'__##################\n')
     f.write('Run command:\n')
@@ -584,7 +581,7 @@ def build_log(args, task_status):
         if(task_status[t]['state'] == Supervisor.STATE_ERR):
             f.write(t.name+' - '+start_date+' - '+wall_time+' - Failed\n')
     f.write('\nLog Files:\n')
-    f.write(tf.GEN_PATH_LOGS())
+    f.write(fg.GEN_PATH_LOGS())
     f.write('\n\n\n')
     f.close()
 

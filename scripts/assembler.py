@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 from tasks_v2 import Supervisor, Task
-import task_functions_v2 as tf
+import functions_general as fg
 import functions_assembler as fa
 import time
 
@@ -96,10 +96,10 @@ def gen_assembly_supervisor(out_dir, fastq1, fastq2, unpaired, dependency_set, n
             tasks.append(fa.fastqc_task(out_dir,unpaired, 'post_trimming_unpaired', [unpaired_sup]))
             assembler_dependencies.append(unpaired_sup)
     if(rnaSPAdes):
-        rnaspades = fa.rnaspades_task(out_dir,fastq1, fastq2, unpaired, cpu, assembler_dependencies)
+        rnaspades = fa.rnaspades_task(path_assembly, out_dir,fastq1, fastq2, unpaired, cpu, assembler_dependencies)
         tasks.append(rnaspades)
     else:
-        trinity = fa.trinity_task(out_dir, fastq1, fastq2, unpaired, cpu, int(cpu/2), 120, 120, normalize_flag, assembler_dependencies)
+        trinity = fa.trinity_task(path_assembly, out_dir, fastq1, fastq2, unpaired, cpu, int(cpu/2), 120, 120, normalize_flag, assembler_dependencies)
         tasks.append(trinity)
     assembler_main_task = tasks[-1]
     return Supervisor(tasks=tasks)

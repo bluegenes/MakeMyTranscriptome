@@ -10,7 +10,7 @@ if(sys.version[0] == '3'):
 else:
     from py2_which import which_python2 as which
 
-from external_tools import PATH_ROOT, PATH_TOOLS, TOOLS_DICT
+from external_tools import PATH_TOOLS, TOOLS_DICT
 import re
 
 ''' name variables '''
@@ -18,9 +18,9 @@ NAME_ASSEMBLY = 'myassembly'
 NAME_OUT_DIR = 'mmt_test_output'
 
 ''' static path variables '''
-PATH_SCRIPTS = join(PATH_ROOT, 'scripts')
-PATH_DATABASES = join(PATH_ROOT, 'databases')
-PATH_ASSEMBLIES = join(PATH_ROOT, 'assemblies')
+#PATH_SCRIPTS = join(PATH_ROOT, 'scripts')
+#PATH_DATABASES = join(PATH_ROOT, 'databases')
+#PATH_ASSEMBLIES = join(PATH_ROOT, 'assemblies')
 
 ''' transfer to external_tools '''
 PATH_TRANSDECODER = 'TransDecoder'

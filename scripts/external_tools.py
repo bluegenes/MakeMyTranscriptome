@@ -184,17 +184,17 @@ kallisto_url = 'https://github.com/pachterlab/kallisto/releases/download/v0.42.4
 kallisto_target = join(PATH_TOOLS, 'kallisto_linux-v0.42.4')
 kallisto_instructions = "As kallisto is distributed under a non-commercial license, MMT cannot download kallisto for you. Please see https://pachterlab.github.io/kallisto/about.html for information about kallisto. To use, install kallisto yourself and place tool in your $path variable"
 kallisto_exe = ['kallisto']
-kallisto_tool = tc(kallisto_url, kallisto_target, kallisto_exe, kallisto_instructions, install=False)
+kallisto_tool = tc("kallisto", kallisto_url, kallisto_target, kallisto_exe, kallisto_instructions, install=False)
 kallisto_tool.change_exe_fullpath('') # look for exe in $path
 TOOL_LIST.append(kallisto_tool)
 
 #PATH_RNAMMER = '/matta1/biotools/redhat/rnammer-1.2/rnammer'
 rnammer_url = ''
-rnammer_target = ''
+rnammer_target = '' #join(PATH_TOOLS,'rnammer-1.2')
 rnammer_exe = ['RnammerTranscriptome.pl']
 rnammer_instructions = 'RNAMMER is freely available for academic use only. See http://www.cbs.dtu.dk/services/RNAmmer/ for download and installation instructions. RNAMMER is currently supported as an optional tool, but this support may be removed at any time in favor of openly licensed tools.'
 rnammer_tool = tc('rnammer', rnammer_url, rnammer_target, rnammer_exe, rnammer_instructions, install=False)
-rnammer_tool.change_exe_fullpath('') # look for exe in $path
+#rnammer_tool.change_exe_fullpath('') # look for exe in $path
 TOOL_LIST.append(rnammer_tool)
 
 tmhmm_url = ''

@@ -3,7 +3,8 @@
 from time import strftime
 import tarfile
 import zipfile
-from external_tools import PATH_ROOT, PATH_TOOLS, TOOLS_DICT
+from functions_general import PATH_TOOLS, PATH_ROOT
+from external_tools import TOOLS_DICT
 import os
 from os.path import exists, join, split
 import json
