@@ -10,6 +10,7 @@ from assembler import gen_assembly_supervisor
 from annotater import gen_annotation_supervisor
 from expression import gen_expression_supervisor
 from quality import gen_quality_supervisor
+from filter_super import gen_filter_supervisor
 from itertools import chain
 from manage_database import read_log as read_db_log
 import time
@@ -297,11 +298,6 @@ def go_quality(args, dep):
                   'fungi': args.fungi, 'bacteria': args.bacteria,
                   'plantae': args.plantae}
     busco_args = [k for k in busco_args if(busco_args[k])]
-#    if not any[args.fastq1, args.fastq2, args.unpaired]:
-#    if args.which == 'full' and not args.no_trim: # set the transrate fq args. Use regex to find files.
-#        args.fastq1 = ''
-#	args.fastq2 = ''
-#	args.unpaired = ''
     return gen_quality_supervisor(
         args.fastq1, args.fastq2, args.unpaired, dep, busco_args,
         args.cpu, args.cegma, args.transrate_ref, assembly_name=tf.NAME_ASSEMBLY, 
@@ -309,13 +305,17 @@ def go_quality(args, dep):
 	transrate_dir=tf.GEN_PATH_TRANSRATE_DIR(), filter_files= tf.GEN_PATH_FILTER_FILES(),
 	filter_flag=args.filter_by_TPM, tpm_threshold=args.tpm_threshold)
 
+def go_filter(args, transrate_task, dep):
+    return gen_filter_supervisor(tf.GEN_PATH_ASSEMBLY(),tf.NAME_ASSEMBLY,tf.GEN_PATH_FILTER_FILES(), transrate_task, dep, tpm_threshold=args.tpm_threshold)
+
 def go_annotation(args, dep):
     return gen_annotation_supervisor(
         args.cpu, args.uniref90, args.nr, args.blastplus, args.signalp,
         args.tmhmm, args.rnammer, dep, assembly_path= tf.GEN_PATH_ASSEMBLY(),
 	assembly_name=tf.NAME_ASSEMBLY, out_dir=tf.GEN_PATH_ANNOTATION_FILES())
 
-def go_expression(assembly_path, assembly_name, out_dir, args, dep):
+def go_expression(path_assembly, out_dir, args, dep):
+    assembly_name = os.path.basename(path_assembly).split('.fa')[0]
     return gen_expression_supervisor(
         args.fastq1, args.fastq2, args.paired_names, args.unpaired,
         args.unpaired_names, args.cpu, args.sample_info, args.model, dep, 
@@ -339,8 +339,8 @@ def go_manage_db(args, dep, log_files=True):
     return tf.manage_db_task(args.fresh, args.nr, args.uniref90, busco_args, args.blastplus, int(round(args.cpu/4)), dep, log_files)
 
 def go_manage_tools(args, dep, log_files=True):
-    toolsD = {'trinity':False,'trimmomatic':False,'prinseq':False,'transdecoder':False,'diamond':False,'hmmer': False,'transrate':False,'busco':False,'salmon':False}
-    assembly_tools = {'trinity':True,'trimmomatic':True,'prinseq':True,'transrate':True}
+    toolsD = {'trinity':False,'trimmomatic':False,'prinseq':False,'transdecoder':False,'diamond':False,'hmmer': False,'transrate':False,'busco':False,'salmon':False, 'fastqc':False}
+    assembly_tools = {'trinity':True,'trimmomatic':True,'prinseq':True,'transrate':True, 'fastqc':True}
     annotation_tools = {'transdecoder':True,'diamond':True,'hmmer':True}
     quality_tools = {'transrate':True,'busco':True}
     expression_tools = {'salmon':True}  
@@ -392,23 +392,26 @@ def run_full(args):
     annotation_super = go_annotation(args, deps+[manage_db])
     supers.append(annotation_super)
     quality_super = go_quality(args, deps+[manage_db])
+
+    transrate_task = quality_super.task_map['transrate_' + tf.NAME_ASSEMBLY]
     supers.append(quality_super)
+    filtering_tasks = []
+    if args.filter_by_TPM:
+        filter_super = go_filter(args, transrate_task, deps)
+	supers.append(filter_super)
+	filtered_full_task = filter_super.task_map['filt_' + tf.NAME_ASSEMBLY + '_' + str(args.tpm_threshold) + 'tpm']
+	tr_good_name = 'good.'+ tf.NAME_ASSEMBLY
+	#tr_good_cp_task = filter_super.task_map('setting_fasta_good.' + tf.NAME_ASSEMBLY)
+	tr_good_cp_task = filter_super.task_map['setting_fasta_' + tr_good_name]
+	tr_good_filter = filter_super.task_map['filt_' + tr_good_name + '_' + str(args.tpm_threshold) + 'tpm']
+	filtering_tasks = [tr_good_cp_task, filtered_full_task, tr_good_filter] 
     if(args.csv !=None): #csv is required so we have metadata
 	check_csv_input(args)# since it wasn't required earlier, we need to check that it exists, is proper file. 
         gen_sample_info(args)
-        expression_super = go_expression(tf.GEN_PATH_ASSEMBLY(),tf.NAME_ASSEMBLY,tf.GEN_PATH_EXPRESSION_FILES(), args, deps)
+        expression_super = go_expression(tf.GEN_PATH_ASSEMBLY(),tf.GEN_PATH_EXPRESSION_FILES(), args, deps)
         supers.append(expression_super)
-        if args.filter_by_TPM:
-            deps.append(quality_super)
-            # set assembly_names
-	    transrate_good_name = 'good.' + tf.NAME_ASSEMBLY
-            tr_good_filt = transrate_good_name + str(args.tpm_threshold) + 'tpm'
-            full_filt = tf.NAME_ASSEMBLY + str(args.tpm_threshold) + 'tpm'
-            # use assembly names
-	    transrate_good_exp = go_expression(tf.GEN_PATH_FILTER_FILES(), transrate_good_name,tf.GEN_PATH_FILTER_FILES(),args,deps)
-            good_filtered_exp = go_expression(tf.GEN_PATH_FILTER_FILES(), tr_good_filt,tf.GEN_PATH_FILTER_FILES(),args,deps)
-            full_filtered_exp = go_expression(tf.GEN_PATH_FILTER_FILES(), full_filt,tf.GEN_PATH_FILTER_FILES(),args,deps)
-            supers.extend([transrate_good_exp,good_filtered_exp,full_filtered_exp])
+	for task in filtering_tasks:
+	    supers.append(go_expression(task.targets[0],tf.GEN_PATH_FILTER_FILES(),args,deps+[filter_super]))
     run_supers(args, supers)
 
 
@@ -490,7 +493,7 @@ def run_expression(args):
     manage_tools = go_manage_tools(args, [])
     supers.append(manage_tools)
     deps.append(manage_tools)
-    expression_super = go_expression(args, deps)
+    expression_super = go_expression(tf.GEN_PATH_ASSEMBLY(),tf.GEN_PATH_EXPRESSION_FILES(), args, deps)
     supers.append(expression_super)
     run_supers(args, supers)
 
