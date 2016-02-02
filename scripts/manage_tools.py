@@ -76,7 +76,7 @@ def safe_retrieve(source, target, urltype):
         print("WARNING : could not extract " + target+extension)
 
 def expand_target(target, extension):
-   if (extension == '.tar.gz'):
+   if (extension == '.tar.gz' or extension == '.tgz'):
         tfile = tarfile.open((target+extension), 'r:gz')
         tfile.extractall(PATH_TOOLS)
         os.remove(target+extension)
@@ -93,7 +93,7 @@ def expand_target(target, extension):
         z.extractall(PATH_TOOLS)
         os.remove(target+extension)
    else:
-        raise ValueError('Can\'t expand '+target+ ' -- please check the urltype/extension. Acceptable values are: "", "zip", "gz", or "tar.gz".')
+        raise ValueError('Can\'t expand '+target+ ' -- please check the urltype/extension. Acceptable values are: "", "zip", "gz", "tgz", or  "tar.gz".')
 
 def get(log_table, urltype, source, target, file_check=True):
     if(file_check and exists(target)):
@@ -129,10 +129,13 @@ def main(install=False, toolList = [], tool_check=True, cpu=4):
     partial_get = lambda a, b, c : get(log_table, a, b ,c, tool_check)
     if(install and platform.system().lower() == 'linux'):
         for name, tool in toolsD.items():
-            partial_get(tool.urltype, tool.url, tool.target)
-            install_task = tool.install_task
-            if install_task is not None:
-                tasks.append(install_task)
+            if tool.install: # don't download tools that are not openly licensed or do not provide linux binaries
+	        partial_get(tool.urltype, tool.url, tool.target)
+                install_task = tool.install_task
+                if install_task is not None:
+                    tasks.append(install_task)
+            else:
+	        print(tool.instructions)
     else:
         for name, tool in toolsD.items():
             print(tool.instructions)

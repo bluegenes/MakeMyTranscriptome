@@ -6,6 +6,7 @@ import sys
 import json
 from tasks_v2 import Supervisor, Task
 import task_functions_v2 as tf
+import functions_general as fg
 from assembler import gen_assembly_supervisor
 from annotater import gen_annotation_supervisor
 from expression import gen_expression_supervisor
@@ -287,10 +288,10 @@ def handle_csv(args):
 ######################___go_functions___######################
 def go_assembly(args, dep):
     return gen_assembly_supervisor(
-        args.fastq1, args.fastq2, args.unpaired, dep,args.no_trim, 
-        args.rnaspades, args.no_rmdup, args.subsample_size,
-        args.cpu, args.subsample_seed, args.trinity_normalization,
-        args.truncate, args.trimmomatic)
+        fg.GEN_PATH_ASSEMBLY_FILES(), args.fastq1, args.fastq2, 
+        args.unpaired, dep,args.no_trim,args.rnaspades, args.no_rmdup, 
+        args.subsample_size, args.cpu, args.subsample_seed, 
+        args.trinity_normalization, args.truncate, args.trimmomatic,fg.GEN_PATH_ASSEMBLY())
 
 def go_quality(args, dep):
     busco_args = {'arthropoda': args.arthropoda, 'metazoa': args.metazoa,
