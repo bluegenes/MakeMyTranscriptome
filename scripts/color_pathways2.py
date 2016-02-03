@@ -7,6 +7,7 @@ from KGML_parser import read
 from KGML_vis import KGMLCanvas
 from KGML_scrape import retrieve_kgml_to_file, retrieve_KEGG_pathway
 import argparse
+import pandas as pd
 ############################
 psr = argparse.ArgumentParser(description="Color KEGG maps with the Kegg Orthology entries that exist in your annotated transcriptome. Optional: color up/down-regulated genes red/blue")
 # kegg pathway name
@@ -28,22 +29,25 @@ if not os.path.exists(args.outDir):
 pathway = retrieve_KEGG_pathway(args.path) #pathway of interest
 
 def readKOFile(koFile, keggPath):
-    koList = []
+    pd_annot_table = pd.io.parsers.read_table(koFile, header=0, sep='\t')
+    koList = pd_annot_table['kegg']
+    '''
     with open(koFile, 'r') as koF:
         for line in koF:
-	    path = 'ko:' + line.rstrip()
-	    koList.append(path)
-	koF.close()
+            path = 'ko:' + line.rstrip()
+            koList.append(path)
+    koF.close()
+    '''
     entryList = [e for e in keggPath.entries.values() if len(set(e.name.split()).intersection(koList))]
     return set(entryList)
 
 def colorMapItems(geneSet, color, width):
     for e in geneSet:
-	for g in e.graphics:
-	    if g.type == 'line':
-		g.fgcolor = color
-		g.width = width
-	    g.bgcolor = color
+        for g in e.graphics:
+            if g.type == 'line':
+                g.fgcolor = color
+                g.width = width
+                g.bgcolor = color
 
 #main
 knownKOSet = readKOFile(args.transKO, pathway)
