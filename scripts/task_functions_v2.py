@@ -3,50 +3,50 @@
 
 from tasks_v2 import Task
 import os
+from os.path import join, exists
+import sys
+if(sys.version[0] == '3'):
+    from shutil import which
+else:
+    from py2_which import which_python2 as which
 
+from external_tools import PATH_TOOLS, TOOLS_DICT
+import re
 
 ''' name variables '''
 NAME_ASSEMBLY = 'myassembly'
 NAME_OUT_DIR = 'mmt_test_output'
 
 ''' static path variables '''
-PATH_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PATH_SCRIPTS = os.path.join(PATH_ROOT, 'scripts')
-PATH_DATABASES = os.path.join(PATH_ROOT, 'databases')
-PATH_ASSEMBLIES = os.path.join(PATH_ROOT, 'assemblies')
-PATH_TOOLS = os.path.join(PATH_ROOT, 'external_tools')
+#PATH_SCRIPTS = join(PATH_ROOT, 'scripts')
+#PATH_DATABASES = join(PATH_ROOT, 'databases')
+#PATH_ASSEMBLIES = join(PATH_ROOT, 'assemblies')
+
+''' transfer to external_tools '''
+PATH_TRANSDECODER = 'TransDecoder'
+PATH_TRIMMOMATIC_ADAPTERS_SINGLE = join(PATH_TOOLS,'Trimmomatic-0.35/adapters/TruSeq3-SE.fa')
+PATH_TRIMMOMATIC_ADAPTERS_PAIRED = join(PATH_TOOLS,'Trimmomatic-0.35/adapters/TruSeq3-PE.fa')
+
+''' set these up as executables that we just look for in the $path '''
 PATH_BEDTOOLS = 'bedtools'
 PATH_BLASTP = 'blastp'
 PATH_BLASTX = 'blastx'
 PATH_BOWTIE2 = ''
-#PATH_BUSCO = 'BUSCO_v1.1b.py'
-#PATH_BUSCO = os.path.join(PATH_TOOLS,'BUSCO_v1.1b1.py')
-PATH_BUSCO = os.path.join(PATH_TOOLS,'BUSCO_plants.py')
-#PATH_BUSCO_REFERENCE = '/matta1/hitsdata/reference_files/BUSCO'
-PATH_BUSCO_REFERENCE = os.path.join(PATH_DATABASES,'busco')
-PATH_BUSCO_METAZOA = '{0!s}/metazoa_buscos'.format(PATH_DATABASES)
 PATH_CEGMA = 'cegma'
-PATH_DIAMOND = 'diamond'
 PATH_EXPRESS = 'express'
-PATH_FASTQC = 'fastqc'
-PATH_GENE_TRANS_MAP = 'get_Trinity_gene_to_trans_map.pl'
 PATH_KALLISTO = 'kallisto'
-PATH_NR = os.path.join(PATH_DATABASES, 'nr', 'nr')
-PATH_PFAM = 'hmmscan'
-PATH_PFAM_DATABASE = '{0!s}/pfam/Pfam-A.hmm'.format(PATH_DATABASES)
-PATH_PRINSEQ = 'prinseq-lite.pl'
+
+'''optional tools -- set up the same way as above? just don't check for them with mmt setup; only install instructions in tools''' 
 PATH_RNAMMER = '/matta1/biotools/redhat/rnammer-1.2/rnammer'
 PATH_RNAMMER_PL = 'RnammerTranscriptome.pl'
-PATH_SALMON = 'salmon'
 PATH_SIGNALP = 'signalp'
 PATH_RNASPADES = 'rnaspades.py'
 PATH_TMHMM = 'tmhmm'
-PATH_TRANSDECODER = 'TransDecoder'
-PATH_TRANSRATE = 'transrate'
-PATH_TRIMMOMATIC = '/matta1/biotools/redhat/Trimmomatic-0.33/trimmomatic-0.33.jar'
-PATH_TRIMMOMATIC_ADAPTERS_SINGLE = '/matta1/biotools/redhat/Trimmomatic-0.33/adapters/TruSeq3-SE.fa'
-PATH_TRIMMOMATIC_ADAPTERS_PAIRED = '/matta1/biotools/redhat/Trimmomatic-0.33/adapters/TruSeq3-PE.fa'
-PATH_TRINITY = 'Trinity'
+
+''' static db variables '''
+PATH_BUSCO_REFERENCE = join(PATH_DATABASES, 'busco')
+PATH_PFAM_DATABASE = '{0!s}/pfam/Pfam-A.hmm'.format(PATH_DATABASES)
+PATH_NR = os.path.join(PATH_DATABASES, 'nr', 'nr')
 PATH_SWISS_PROT = os.path.join(PATH_DATABASES, 'uniprot_sprot', 'uniprot_sprot')
 PATH_UNIREF90 = os.path.join(PATH_DATABASES, 'uniref90', 'uniref90')
 PATH_NOG_CATEGORIES = os.path.join(PATH_DATABASES, 'nog_categories')
@@ -54,6 +54,8 @@ PATH_NOG_CATEGORIES = os.path.join(PATH_DATABASES, 'nog_categories')
 
 # Dynamic path variable functions
 def GEN_PATH_DIR(): return os.path.join(PATH_ASSEMBLIES, NAME_OUT_DIR)
+
+#def GEN_ASSEMBLY_NAME(): return NAME_ASSEMBLY
 
 def GEN_PATH_ASSEMBLY_FILES(): return os.path.join(GEN_PATH_DIR(), 'assembly_files')
 
@@ -63,41 +65,57 @@ def GEN_PATH_ANNOTATION_FILES(): return os.path.join(GEN_PATH_DIR(), 'annotation
 
 def GEN_PATH_EXPRESSION_FILES(): return os.path.join(GEN_PATH_DIR(), 'expression_files')
 
+def GEN_PATH_FILTER_FILES(): return os.path.join(GEN_PATH_DIR(), 'filtered_assemblies')
+
 def GEN_PATH_LOGS(): return os.path.join(GEN_PATH_DIR(), 'log_files')
 
 def GEN_PATH_ASSEMBLY(): return os.path.join(GEN_PATH_DIR(), NAME_ASSEMBLY+'.fasta')
 
 def GEN_PATH_TRANSDECODER_DIR(): return os.path.join(GEN_PATH_ANNOTATION_FILES(), 'transdecoder')
 
+def GEN_PATH_TRANSRATE_DIR(): return os.path.join(GEN_PATH_QUALITY_FILES(), 'transrate')
+
 def GEN_PATH_PEP(): return os.path.join(GEN_PATH_TRANSDECODER_DIR(), NAME_ASSEMBLY+'.fasta.transdecoder.pep')
 
 def GEN_PATH_ANNOT_TABLE(): return os.path.join(GEN_PATH_DIR(), NAME_ASSEMBLY+'annotation.txt')
+
 
 
 def GEN_LOGS(x): return (os.path.join(GEN_PATH_LOGS(), x+'.out_log'),
                          os.path.join(GEN_PATH_LOGS(), x+'.err_log'))
 
 
+def tool_path_check(name):
+    temp = os.path.join(PATH_TOOLS, name)
+    if(os.path.exists(temp)):
+        return temp
+    elif(which(name)):
+        print('WARNING : MMT has not installed '+name+'. MMT will use the version found in your path variable instead.')
+        return name
+    else:
+        #raise EnvironmentError('MMT has not installed and was unable to detect '+name)
+        print('INSTALLATION ERROR : MMT has not installed '+name+' and did not find this program in your path variable. Steps requiring '+name+'will not be performed.') 
+
 def build_dir_task(tasks):
     '''
     '''
     trgs = [GEN_PATH_DIR(), GEN_PATH_ASSEMBLY_FILES(), GEN_PATH_QUALITY_FILES(), GEN_PATH_ANNOTATION_FILES(),
-            GEN_PATH_EXPRESSION_FILES(), GEN_PATH_LOGS()]
+            GEN_PATH_FILTER_FILES(), GEN_PATH_EXPRESSION_FILES(), GEN_PATH_LOGS()]
     cmd = ' '.join(['mkdir -p {0!s};'.format(d) for d in trgs])
     return Task(command=cmd,dependencies=tasks,targets=trgs,stdout=os.devnull,stderr=os.devnull)
 
 
-def cp_assembly_task(source, tasks):
+def cp_assembly_task(path_assembly, source, tasks):
+    assembly_name = os.path.basename(path_assembly).split('.fa')[0]
     '''    Defines task used to initialize an assembly when running on fasta
         files. Uses GEN_PATH_DIR() and NAME_ASSEMBLY.
         Params :
             source - The path to the source fasta that should be used for analsis
             tasks - a list of tasks that this task is dependant on.
     '''
-    trgs = [GEN_PATH_ASSEMBLY()]
-    #cmd = 'if [ ! -f "{1!s}" ]; then cp {0!s} {1!s}; fi'.format(source, trgs[0]) # only copy if file does not exist 
+    trgs = ['{0!s}'.format(path_assembly)]
     cmd = 'cp {0!s} {1!s}'.format(source, trgs[0]) 
-    name = 'setting_fasta'
+    name = 'setting_fasta_' + assembly_name
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name)
 
 
@@ -109,7 +127,7 @@ def fastqc_task(fq_files, output_name, tasks):
     '''
     trgs = ['{0!s}/fastqc_{1!s}'.format(GEN_PATH_ASSEMBLY_FILES(), output_name)]
     cmd = 'mkdir {2!s}; {0!s} {1!s} --outdir {2!s}'.format(
-            PATH_FASTQC, ' '.join(fq_files), trgs[0])
+           TOOLS_DICT['fastqc'].full_exe[0],' '.join(fq_files), trgs[0])
     name = 'fastqc_'+output_name
     out, err = GEN_LOGS(name)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
@@ -120,10 +138,10 @@ def prinseq_unpaired_task(input1, basename, opts, tasks):
     '''
     trgs = ['{0!s}/{1!s}_{2!s}'.format(
         GEN_PATH_ASSEMBLY_FILES(), basename, os.path.basename(input1))]
-    cmd = ('{0!s} -fastq {1!s} --out_format 3 --out_good {2!s}/{3!s} --out_bad null '
+    cmd = ('perl {0!s} -fastq {1!s} --out_format 3 --out_good {2!s}/{3!s} --out_bad null '
            '--trim_qual_left 20 --trim_qual_right 20 --trim_qual_type min --min_len 35 '
            '--trim_tail_left 8 --trim_tail_right 8 {4!s} -log; mv {2!s}/{3!s}.fastq {5!s}'
-           ).format(PATH_PRINSEQ, input1, GEN_PATH_ASSEMBLY_FILES(), 
+           ).format(tool_path_check(TOOLS_DICT['prinseq'].full_exe[0]), input1, GEN_PATH_ASSEMBLY_FILES(), 
                     basename, opts, trgs[0])
     name = basename
     out, err = GEN_LOGS(name)
@@ -142,10 +160,10 @@ def prinseq_task(input_1, input_2, basename, opts, tasks):
     trgs = ['{0!s}/{1!s}_1_{2!s}'.format(GEN_PATH_ASSEMBLY_FILES(),basename,os.path.basename(input_1)),
             '{0!s}/{1!s}_2_{2!s}'.format(GEN_PATH_ASSEMBLY_FILES(),basename,os.path.basename(input_2))]
     pseudo_trgs = ['{0!s}/{1!s}_{2!s}.fastq'.format(GEN_PATH_ASSEMBLY_FILES(),basename,x) for x in range(1,3)]
-    cmd = ('{0!s} -fastq {1!s} -fastq2 {2!s} --out_format 3 --out_good {3!s}/{4!s} '
+    cmd = ('perl {0!s} -fastq {1!s} -fastq2 {2!s} --out_format 3 --out_good {3!s}/{4!s} '
             '--out_bad null --trim_qual_left 20 --trim_qual_right 20 --trim_qual_type min '
             '--min_len 55 --trim_tail_left 8 --trim_tail_right 8 {5!s} -log; mv {6!s} {7!s};'
-            ' mv {8!s} {9!s};').format( PATH_PRINSEQ, input_1, input_2, GEN_PATH_ASSEMBLY_FILES(), 
+            ' mv {8!s} {9!s};').format(tool_path_check(TOOLS_DICT['prinseq'].full_exe[0]), input_1, input_2, GEN_PATH_ASSEMBLY_FILES(), 
             basename, opts,pseudo_trgs[0],trgs[0],pseudo_trgs[1],trgs[1])
     name = basename
     out,err = GEN_LOGS(name)
@@ -158,7 +176,8 @@ def trimmomatic_unpaired_task(input1, cpu_cap, basename, tasks):
     orphans = [form('{0!s}/{1!s}_orphans_{2!s}', input1)]
     cmd = ('java -jar {0!s} SE -threads {4!s} {1!s} {2!s} {3!s} ILLUMINACLIP:'
            '{5!s}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:35'
-           ).format(PATH_TRIMMOMATIC, input1, trgs[0], orphans[0],cpu_cap,
+           #).format(tool_path_check(PATH_TRIMMOMATIC), input1, trgs[0], orphans[0],cpu_cap,
+           ).format(tool_path_check(TOOLS_DICT['trimmomatic'].full_exe[0]), input1, trgs[0], orphans[0],cpu_cap,
            PATH_TRIMMOMATIC_ADAPTERS_SINGLE)
 
 
@@ -171,7 +190,8 @@ def trimmomatic_task(left, right, cpu_cap, basename, tasks):
     cmd = ('java -jar {0!s} PE -threads {3!s} {1!s} {2!s} {5!s} {4!s} {7!s} '
            '{6!s} ILLUMINACLIP:{8!s}:2:30:10 LEADING:3 TRAILING:3 '
            'SLIDINGWINDOW:4:15 MINLEN:35').format(
-           PATH_TRIMMOMATIC, left, right, cpu_cap, orphans[0], trgs[0],
+           #tool_path_check(PATH_TRIMMOMATIC), left, right, cpu_cap, orphans[0], trgs[0],
+           tool_path_check(TOOLS_DICT['trimmomatic'].full_exe[0]), left, right, cpu_cap, orphans[0], trgs[0],
            orphans[1], trgs[1], PATH_TRIMMOMATIC_ADAPTERS_PAIRED)
     name = basename
     out, err = GEN_LOGS(name)
@@ -251,9 +271,11 @@ def trinity_task(fastq, fastq2, unpaired, cpu_cap_trin, cpu_cap_bfly, mem_trin, 
         input_str+='--left '+','.join(fastq+unpaired)
         input_str+=' --right '+','.join(fastq2)
     trgs = [GEN_PATH_ASSEMBLY()]
-    cmd = ('ulimit -s unlimited; ulimit -a; {0!s} --seqType fq {1!s} --CPU {2!s} --JM {3!s}G --bflyCalculateCPU {4!s} '
-            '--bfly_opts "-V 10 --stderr" --output {6!s}/trinity; cp {6!s}/trinity/Trinity.fasta {7!s};'
-            ).format( PATH_TRINITY, input_str, cpu_cap_trin, mem_trin, normalize_flag, mem_bfly, GEN_PATH_ASSEMBLY_FILES(), trgs[0])
+    cmd = ('{0!s} --seqType fq {1!s} --CPU {2!s} --max_memory {3!s}G --bflyCalculateCPU {4!s} '
+            '--output {6!s}/trinity; cp {6!s}/trinity/Trinity.fasta {7!s};'
+            #).format(tool_path_check(PATH_TRINITY), input_str, cpu_cap_trin, mem_trin, normalize_flag,
+            ).format(tool_path_check(TOOLS_DICT['trinity'].full_exe[0]), input_str, cpu_cap_trin, mem_trin, normalize_flag,
+                     mem_bfly, GEN_PATH_ASSEMBLY_FILES(), trgs[0])
     name = 'trinity_assembly'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=max(cpu_cap_trin,cpu_cap_bfly),stdout=out,stderr=err)
@@ -277,69 +299,99 @@ def rnaspades_task(left, right, unpaired, cpu_cap, tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
 
-def cegma_task(cpu_cap, tasks):
+def cegma_task(out_dir,assembly,cpu_cap, tasks):
     '''    Defines the cegma task. Uses PATH_DIR, PATH_CEGMA, NAME_ASSEMBLY.
         Params :
             cpu_cap - number of threads to be used by cegma
             tasks - a list of tasks that this task is dependant on (trinity_task)
     '''
-    trgs = ['{0!s}/{1!s}.completeness_report'.format(GEN_PATH_QUALITY_FILES(),NAME_ASSEMBLY)]
+    assembly_name = os.path.basename(assembly).split('.fa')[0]
+    trgs = ['{0!s}/{1!s}.completeness_report'.format(out_dir,assembly_name)]
     cmd = '{0!s} -g {1!s} -v -o {3!s}/{2!s} -T {4!s}'.format(PATH_CEGMA,
-            GEN_PATH_ASSEMBLY(),NAME_ASSEMBLY,GEN_PATH_QUALITY_FILES(),cpu_cap)
+            assembly,assembly_name,out_dir,cpu_cap)
     name = 'cegma'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=cpu_cap,stdout=out,stderr=err)
 
 
-def busco_task(reference_name, cpu_cap, tasks):
+def busco_task(assembly_path, assembly_name, out_dir,reference_name, cpu_cap, tasks):
     ''' Defines the busco task. Uses PATH_DIR, PATH_BUSCO, PATH_BUSCO_REFERENCE
         Params :
             reference_name - Name of the reference file to be used by busco
             cpu_cap - the cpu limit to be gicen to busco.
             tasks - a list of tasks that this task is dependant on.
     '''
-    trgs = ['{0!s}/run_busco_{1!s}'.format(GEN_PATH_QUALITY_FILES(),reference_name)]
+    trgs = ['{0!s}/run_busco_{1!s}_{2!s}'.format(out_dir,assembly_name,reference_name)]
     cmd = ('cd {0!s}; /matta1/biotools/anaconda/envs/py3k/bin/python {1!s} '
-            '-o busco_{2!s} -in {3!s} -l {4!s}/{2!s}_buscos/{2!s} -m trans -f -c {5!s}'
-            ).format(GEN_PATH_QUALITY_FILES(),PATH_BUSCO,reference_name,GEN_PATH_ASSEMBLY(),
+            '-o busco_{3!s}_{2!s} -in {4!s} -l {5!s}/{2!s}_buscos/{2!s} -m trans -f -c {6!s}'
+            ).format(out_dir,tool_path_check(TOOLS_DICT['busco_plant'].full_exe[0]),reference_name,assembly_name,assembly_path,
             PATH_BUSCO_REFERENCE,cpu_cap)
-    name = 'busco_'+ reference_name
+    name = 'busco_'+ reference_name + '_' + assembly_name
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=cpu_cap,stdout=out,stderr=err)
 
 
-def transrate_task(lefts, rights, singles, transrate_name, cpu_cap, tasks, reference = ''): #, cpu_cap, tasks):
-    trgs = []
+def transrate_dep_generator(transrate_task, lefts, rights, singles, reference, assembly_path, cpu_cap, transrate_dir, other_dependencies):
+
+    def ret():
+        for t in other_dependencies:
+            try:
+                if( not d.finished()):
+                    return False
+            except Task.ExitCodeException:
+                return False
+        assembly_files = sorted(os.listdir(GEN_PATH_ASSEMBLY_FILES()))
+        assembly_files = [os.path.join(GEN_PATH_ASSEMBLY_FILES(), f) for f in assembly_files]
+        new_lefts = [[g for g in assembly_files if(os.path.basename(f) in g)] for f in lefts]
+        new_lefts = [k[0] for k in new_lefts if(len(k) > 0)]
+        new_rights = [[g for g in assembly_files if(os.path.basename(f) in g)] for f in rights]
+        new_rights = [k[0] for k in new_rights if(len(k) > 0)]
+        new_singles = [[g for g in assembly_files if(os.path.basename(f) in g)] for f in singles]
+        new_singles = [k[0] for k in new_singles if(len(k) > 0)]
+        if(len(new_lefts) == len(lefts) and len(new_rights) == len(rights) and len(new_singles) == len(singles)
+            and len(new_lefts)+len(new_singles) != 0):
+            new_lefts = ','.join(new_lefts+new_singles)
+            new_rights = ','.join(new_rights) 
+            new_lefts = '--left '+new_lefts if(len(new_lefts) > 0) else ''
+            new_rights = '--right '+new_rights if(len(new_rights) > 0) else ''
+            cmd = '{0!s} --assembly {1!s} {2!s} {3!s} --threads {4!s} {5!s} --output {6!s}'.format(
+                   tool_path_check(TOOLS_DICT['transrate'].full_exe[0]), assembly_path, new_lefts,
+                   new_rights, cpu_cap, reference, transrate_dir)
+            transrate_task.command = cmd
+        else:
+            print('Unable to match input files with trimmed output. Continuing transrate using input files instead.')
+        return True
+    return ret
+
+
+def transrate_task(assembly_path, assembly_name,lefts, rights, singles, out_dir, transrate_dir, cpu_cap, tasks, reference = ''): #, cpu_cap, tasks):
+    trgs = ['{0!s}/assemblies.csv'.format(transrate_dir),'{0!s}/{1!s}/good.{1!s}.fasta'.format(transrate_dir,assembly_name),'{0!s}/{1!s}/{1!s}.fasta_quant.sf'.format(transrate_dir,assembly_name)]
+    orig_lefts = lefts
+    orig_rights = rights
+    orig_singles = singles
     lefts = ','.join(lefts+singles)
     rights = ','.join(rights) 
     lefts = '--left '+lefts if(len(lefts) > 0) else ''
     rights = '--right '+rights if(len(rights) > 0) else ''
     reference = '--reference ' + reference if(reference != '') else ''
-    #take out reference functionality from here?
-    #reference = '--reference ' + reference if(reference != '') else ''
-    cmd = '{0!s} --assembly {1!s} {4!s} {5!s} --threads {2!s} --output {3!s}/{6!s}'.format(
-           PATH_TRANSRATE, GEN_PATH_ASSEMBLY(), cpu_cap, GEN_PATH_QUALITY_FILES(), lefts, rights, transrate_name) #, reference)
-    name = transrate_name
+    cmd = '{0!s} --assembly {1!s} {2!s} {3!s} --threads {4!s} {5!s} --output {6!s}'.format(
+           tool_path_check(TOOLS_DICT['transrate'].full_exe[0]), assembly_path, lefts,
+           rights, cpu_cap, reference, transrate_dir)
+    name = 'transrate_' + assembly_name
     out, err = GEN_LOGS(name)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
-
-def transrate_to_reference_task(transrate_name, reference, cpu_cap, tasks):
-    trgs = []
-    reference = '--reference ' + reference if(reference != '') else ''
-    cmd = '{0!s} --assembly {1!s} --threads {2!s} --output {3!s}/{4!s} {5!s}'.format(
-           PATH_TRANSRATE, GEN_PATH_ASSEMBLY(), cpu_cap, GEN_PATH_QUALITY_FILES(), transrate_name, reference)
-    name = transrate_name 
-    out, err = GEN_LOGS(name)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
+    temp_task = Task(command=cmd, dependencies=[], targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
+    deps = transrate_dep_generator(temp_task, orig_lefts, orig_rights, orig_singles, reference, assembly_path, cpu_cap, transrate_dir, tasks)
+    temp_task.dependencies = [deps]
+    return temp_task
 
 
-def assembly_stats_task(tasks):
+def assembly_stats_task(out_dir,assembly,tasks):
     ''' Defines assembly_stats task. Uses PATH_DIR, PATH_SCRIPTS, NAME_ASSEMBLY.
         Params :
             tasks - a list of tasks that this task is dependant on (trinity_task)
     '''
-    trgs = ['{0!s}/assembly_stats.json'.format(GEN_PATH_QUALITY_FILES())]
-    cmd = 'python {0!s}/assembly_stats.py {1!s}/{2!s}.fasta > {3!s}'.format(PATH_SCRIPTS,GEN_PATH_DIR(),NAME_ASSEMBLY,trgs[0])
+    trgs = ['{0!s}/assembly_stats.json'.format(out_dir)]
+    cmd = 'python {0!s}/assembly_stats.py {1!s} > {2!s}'.format(PATH_SCRIPTS,assembly,trgs[0])
     name = 'assembly_stats'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
@@ -347,13 +399,13 @@ def assembly_stats_task(tasks):
 
 ##################___Annotation_Tasks___##################
 
-def gene_trans_map_task(tasks):
+def gene_trans_map_task(path_assembly,assembly_name,out_dir,tasks):
     '''    Defines gene_trans_map task. Uses NAME_ASSEMBLY, PATH_DIR, PATH_GENE_TRANS_MAP.
         Params :
             tasks - a list of tasks that this task is dependant on (trinity_task) 
     '''
-    trgs = ['{0!s}/{1!s}.gene_trans_map'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
-    cmd = '{0!s} {1!s}/{2!s}.fasta > {3!s}'.format(PATH_GENE_TRANS_MAP,GEN_PATH_DIR(),NAME_ASSEMBLY,trgs[0])
+    trgs = ['{0!s}/{1!s}.gene_trans_map'.format(out_dir, assembly_name)]
+    cmd = '{0!s} {1!s} > {2!s}'.format(tool_path_check(TOOLS_DICT['trinity'].full_exe[1]),path_assembly,trgs[0])
     name = 'gene_trans_map'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
@@ -393,7 +445,7 @@ def rnammer_task(tasks):
 
 
 def predict_orfs_task(cpu_cap, tasks):
-    '''    defines predict_orfs task. Uses NAME_ASSEMBLY, PATH_DIR, PATH_TRANSDECODER.
+    '''    defines predict_orfs task. Uses NAME_ASSEMBLY, PATH_DIR, transdecoder_tool.full_exe.
         Params : 
             cpu_cap - the number of threads to be used by task
             tasks - a list of tasks that this task is dependant on (trinity_task)
@@ -405,7 +457,8 @@ def predict_orfs_task(cpu_cap, tasks):
     trgs = ['{0!s}/{1!s}.fasta.transdecoder.pep'.format(path_transdecoder_output,NAME_ASSEMBLY)]
     cmd = ("mkdir -p {0!s}; cd {0!s}; {1!s} -t {2!s} --workdir {0!s} --CPU {3!s} 2>&1 | "
             "tee {0!s}/transDecoder_no_pfam_log").format(path_transdecoder_output,
-            PATH_TRANSDECODER,GEN_PATH_ASSEMBLY(),cpu_cap)
+            #tool_path_check(TOOLS_DICT['transdecoder'].full_exe[0]),GEN_PATH_ASSEMBLY(),cpu_cap)
+            tool_path_check(PATH_TRANSDECODER),GEN_PATH_ASSEMBLY(),cpu_cap)
     name = 'TransDecoder'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
@@ -448,7 +501,7 @@ def tmhmm_task(tasks):
 def pfam_task(cpu_cap, tasks):
     trgs = ['{0!s}/{1!s}.pfam'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
     cmd = '{4!s} --cpu {0!s} --domtblout {1!s} {2!s} {3!s}'.format(cpu_cap,
-            trgs[0],PATH_PFAM_DATABASE,GEN_PATH_PEP(),PATH_PFAM)
+            trgs[0],PATH_PFAM_DATABASE,GEN_PATH_PEP(),tool_path_check(TOOLS_DICT['hmmer'].full_exe[0]))
     name = 'pfam'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
@@ -499,12 +552,13 @@ def pipeplot_task(annotation_table, tasks):
 
 def diamondX_task(ref, cpu_cap, tasks):
     base_ref = os.path.basename(ref)
-    trgs = ['{0!s}/diamond_{1!s}.blastx'.format(GEN_PATH_ANNOTATION_FILES(), base_ref)]
+    #trgs = ['{0!s}/diamond_{1!s}.blastx'.format(GEN_PATH_ANNOTATION_FILES(), base_ref)]
+    trgs = ['{0!s}/{1!s}_x_{2!s}.diamond_blastx'.format(GEN_PATH_ANNOTATION_FILES(), NAME_ASSEMBLY, base_ref)]
     pseudo_trgs = ['{0!s}/diamond_{1!s}_blastx'.format(GEN_PATH_ANNOTATION_FILES(), base_ref)]
     cmd = ('{0!s} blastx --db {1!s} --query {2!s} --daa {3!s} --tmpdir {4!s} '
            '--max-target-seqs 20 --sensitive --threads {5!s} --evalue 0.001; {0!s} view '
            '--daa {3!s}.daa --out {6!s};').format(
-           PATH_DIAMOND, ref, GEN_PATH_ASSEMBLY(), pseudo_trgs[0], GEN_PATH_ANNOTATION_FILES(),
+           tool_path_check(TOOLS_DICT['diamond'].full_exe[0]), ref, GEN_PATH_ASSEMBLY(), pseudo_trgs[0], GEN_PATH_ANNOTATION_FILES(),
            cpu_cap, trgs[0])
     name = 'diamond_blastx_'+base_ref
     out, err = GEN_LOGS(name)
@@ -513,12 +567,13 @@ def diamondX_task(ref, cpu_cap, tasks):
 
 def diamondP_task(ref, cpu_cap, tasks):
     base_ref = os.path.basename(ref)
-    trgs = ['{0!s}/diamond_{1!s}.blastp'.format(GEN_PATH_ANNOTATION_FILES(), base_ref)]
+    #trgs = ['{0!s}/diamond_{1!s}.blastp'.format(GEN_PATH_ANNOTATION_FILES(), base_ref)]
+    trgs = ['{0!s}/{1!s}_x_{2!s}.diamond_blastp'.format(GEN_PATH_ANNOTATION_FILES(), NAME_ASSEMBLY, base_ref)]
     pseudo_trgs = ['{0!s}/diamond_{1!s}_blastp'.format(GEN_PATH_ANNOTATION_FILES(), base_ref)]
     cmd = ('{0!s} blastp --db {1!s} --query {2!s} --daa {3!s} --tmpdir {4!s} '
            '--max-target-seqs 20 --sensitive --threads {5!s} --evalue 0.001; {0!s} view '
            '--daa {3!s}.daa --out {6!s};').format(
-           PATH_DIAMOND, ref, GEN_PATH_PEP(), pseudo_trgs[0], GEN_PATH_ANNOTATION_FILES(),
+           tool_path_check(TOOLS_DICT['diamond'].full_exe[0]), ref, GEN_PATH_PEP(), pseudo_trgs[0], GEN_PATH_ANNOTATION_FILES(),
            cpu_cap, trgs[0])
     name = 'diamond_blastp_'+base_ref
     out, err = GEN_LOGS(name)
@@ -535,166 +590,161 @@ def blast_augment_task(db, blast, tasks):
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
 
 
-def build_bowtie_task(tasks):
+def build_bowtie_task(path_assembly, assembly_name, out_dir, tasks):
     '''
     '''
-    trgs = ['{0!s}/{1!s}.1.bt2'.format(GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY)]
+    trgs = ['{0!s}/{1!s}.1.bt2'.format(out_dir,assembly_name)]  
     cmd = 'bowtie2-build --offrate 1 -f {1!s} {2!s}/{3!s}'.format(
-            PATH_BOWTIE2,GEN_PATH_ASSEMBLY(),GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY)
+            PATH_BOWTIE2, path_assembly, out_dir, assembly_name) 
     name = 'build_bowtie'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def bowtie2_unpaired_task(fastq,out_name,opt,cpu_cap,tasks):
+def bowtie2_unpaired_task(bowtie2_index,out_dir,fastq,out_name,opt,cpu_cap,tasks):
     '''
     '''
     opts = ['-a -t --end-to-end', '-t --local']
-    trgs = ['{0!s}/{1!s}.bam'.format(GEN_PATH_EXPRESSION_FILES(),out_name)]
-    cmd = ('bowtie2 {1!s} -L {2!s} -N 1 --threads {3!s} -x {4!s}/{5!s} -U '
-            '{6!s} | samtools view -Sb - > {7!s} ').format(PATH_BOWTIE2,
-            opts[opt],22,cpu_cap,GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY,fastq,trgs[0])
+    trgs = ['{0!s}/{1!s}.bam'.format(out_dir,out_name)]
+    cmd = ('bowtie2 {1!s} -L {2!s} -N 1 --threads {3!s} -x {4!s} -U '
+            '{5!s} | samtools view -Sb - > {6!s} ').format(PATH_BOWTIE2,
+            opts[opt],22,cpu_cap,bowtie2_index,fastq,trgs[0])
     name = 'bowtie2_'+out_name
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
 
-def bowtie2_task(fastq1,fastq2,out_name,opt,cpu_cap,tasks):
+def bowtie2_task(bowtie2_index,out_dir,fastq1,fastq2,out_name,opt,cpu_cap,tasks):
     '''    
     '''
     opts = ['-a -t --end-to-end', '-t --local']
-    trgs = ['{0!s}/{1!s}.bam'.format(GEN_PATH_EXPRESSION_FILES(),out_name)]
-    cmd = ('bowtie2 {1!s} -L {2!s} -N 1 --maxins 800 --threads {3!s} -x {4!s}/{5!s} -1 '
-            '{6!s} -2 {7!s} | samtools view -Sb - > {8!s} ').format(PATH_BOWTIE2,
-            opts[opt],22,cpu_cap,GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY,fastq1,fastq2,trgs[0])
+    trgs = ['{0!s}/{1!s}.bam'.format(out_dir,out_name)]
+    cmd = ('bowtie2 {1!s} -L {2!s} -N 1 --maxins 800 --threads {3!s} -x {4!s} -1 '
+            '{5!s} -2 {6!s} | samtools view -Sb - > {7!s} ').format(PATH_BOWTIE2,
+            opts[opt],22,cpu_cap,bowtie2_index,fastq1,fastq2,trgs[0])
     name = 'bowtie2_'+out_name
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
 
-def express_task(bam_input,out_name,tasks):
+def express_task(assembly_path,out_dir,out_name,bam_input,tasks):
     '''
     '''
-    trgs = ['{0!s}/{1!s}.xprs'.format(GEN_PATH_EXPRESSION_FILES(),out_name)]
-    cmd = ('mkdir {1!s}/{2!s}; {0!s} --output-dir {1!s}/{2!s}/ {3!s} {4!s}; mv '
+    trgs = ['{0!s}/{1!s}.xprs'.format(out_dir,out_name)]
+    cmd = ('mkdir {1!s}/{2!s}; {0!s} --output-dir {1!s}/{2!s} {3!s} {4!s}; mv '
             '{1!s}/{2!s}/results.xprs {5!s}; rm -rf {1!s}/{2!s};').format(
-            PATH_EXPRESS,GEN_PATH_EXPRESSION_FILES(),out_name,GEN_PATH_ASSEMBLY(),bam_input,trgs[0])
+            PATH_EXPRESS,out_dir,out_name,assembly_path,bam_input,trgs[0])
     name = 'express_'+out_name
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def counts_to_table_task(express_files,out_name,flag,tasks):
+def counts_to_table_task(gene_trans_map,out_dir,express_files,out_name,flag,tasks):
     '''
     '''
-    trgs = ['{0!s}/{1!s}.countsTable'.format(GEN_PATH_EXPRESSION_FILES(),out_name)]
+    trgs = ['{0!s}/{1!s}.countsTable'.format(out_dir,out_name)]
     count_str = ' '.join(['--counts {0!s}'.format(f) for f in express_files])
     cmd = ('python {0!s}/counts_to_table2.py --out {1!s} --inDir {2!s} '
-            '--outDir {2!s} {3!s} {4!s} --geneTransMap {5!s}/{6!s}.gene_trans_map').format(
-            PATH_SCRIPTS,out_name,GEN_PATH_EXPRESSION_FILES(),flag,count_str,
-            GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)
+            '--outDir {2!s} {3!s} {4!s} --geneTransMap {5!s}').format( 
+            PATH_SCRIPTS,out_name,out_dir,flag,count_str,gene_trans_map)
     name = 'counts_to_table_'+flag
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def sam_sort_task(bam_file,out_name,tasks):
+def sam_sort_task(out_dir,bam_file,out_name,tasks):
     '''
     '''
-    trgs = ['{0!s}/{1!s}.bam'.format(GEN_PATH_EXPRESSION_FILES(),out_name)]
-    cmd = 'samtools sort {0!s} {1!s}/{2!s}'.format(bam_file,GEN_PATH_EXPRESSION_FILES(),out_name)
+    trgs = ['{0!s}/{1!s}.bam'.format(out_dir,out_name)]
+    cmd = 'samtools sort {0!s} {1!s}/{2!s}'.format(bam_file,out_dir,out_name)
     name = 'sam_sort_'+out_name
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def assembly_to_bed_task(tasks):
+def assembly_to_bed_task(path_assembly,assembly_name,out_dir, tasks):
     '''
     '''
-    trgs = ['{0!s}/{1!s}.bed'.format(GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY)]
+    trgs = ['{0!s}/{1!s}.bed'.format(out_dir,assembly_name)]
     cmd = 'python {0!s}/fasta_to_bed_count_length.py {1!s} {2!s}'.format(
-            PATH_SCRIPTS,GEN_PATH_ASSEMBLY(),trgs[0])
+            PATH_SCRIPTS,path_assembly,trgs[0])
     name = 'fasta_to_bed'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def intersect_bed_task(bam_file,bed_reference,output_name,tasks):
+def intersect_bed_task(out_dir,bam_file,bed_reference,output_name,tasks):
     '''
     '''
-    trgs = ['{0!s}/{1!s}.bed'.format(GEN_PATH_EXPRESSION_FILES(),output_name)]
+    trgs = ['{0!s}/{1!s}.bed'.format(out_dir,output_name)]
     cmd = '{0!s} intersect -abam {1!s} -b {2!s} -wb -bed > {3!s}'.format(PATH_BEDTOOLS,bam_file,bed_reference,trgs[0])
     name = 'intersect_bed_'+output_name
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def deseq2_task(counts_to_table_results,sample_info,basename,model,tasks):
+def deseq2_task(out_dir,counts_to_table_results,sample_info,basename,model,tasks):
     '''
     '''
     pseudo_model_temp = ''.join([c if c!=' ' else '_' for c in model])
-    trgs = ['{0!s}/deseq2_{1!s}_{2!s}/'.format(GEN_PATH_EXPRESSION_FILES(),basename,pseudo_model_temp)]
+    trgs = ['{0!s}/deseq2_{1!s}_{2!s}/'.format(out_dir,basename,pseudo_model_temp)]
     cmd = 'Rscript {5!s}/deseq2.r --args {0!s} {1!s} {2!s} {3!s} {4!s}'.format(
-            counts_to_table_results,sample_info,GEN_PATH_EXPRESSION_FILES(),basename,model,PATH_SCRIPTS)
+            counts_to_table_results,sample_info,out_dir,basename,model,PATH_SCRIPTS)
     name = 'de_'+basename
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def build_salmon_task(cpu_cap,tasks):
-    trgs = ['{0!s}/{1!s}_salmon'.format(GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY)]
-    cmd = '{0!s} index -t {1!s} -i {2!s}/{3!s}_salmon -p {4!s} --type quasi'.format(PATH_SALMON,
-        GEN_PATH_ASSEMBLY(),GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY, cpu_cap)
-    name = 'build_salmon'
+def build_salmon_task(path_assembly,assembly_name,out_dir,cpu_cap,tasks):
+    trgs = ['{0!s}/{1!s}_salmon'.format(out_dir, assembly_name)] 
+    cmd = '{0!s} index --transcripts {1!s} --index {2!s}/{3!s}_salmon --threads {4!s} --type quasi'.format(tool_path_check(TOOLS_DICT['salmon'].full_exe[0]),path_assembly, out_dir, assembly_name, cpu_cap)
+    name = 'build_salmon_' + assembly_name
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err, cpu=cpu_cap)
 
 
-def salmon_gene_map_task(gene_trans_map,tasks):
-    '''    Defines gene_trans_map task. Uses NAME_ASSEMBLY, PATH_DIR, PATH_GENE_TRANS_MAP.
-        Params :
-            tasks - a list of tasks that this task is dependant on (trinity_task) 
-    '''
-    trgs = ['{0!s}/{1!s}.trans_gene_map'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
+def salmon_gene_map_task(out_dir,assembly_name,gene_trans_map,tasks):
+    ''' salmon requires gene_trans_map in reverse column order (transcript \t gene \n)'''
+    trgs = ['{0!s}/{1!s}.trans_gene_map'.format(out_dir,assembly_name)] 
     cmd = 'join -t, -o 1.2,1.1 {0!s} {0!s} > {1!s}'.format(gene_trans_map, trgs[0]) 
     name = 'trans_gene_map'
-    name = 'salmon_gene_map_task'
+    name = 'salmon_gene_map_task_' + assembly_name
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def salmon_task(index,left,right,out_name,gene_map,cpu_cap,tasks):
-    trgs = ['{0!s}/{1!s}/quant.sf'.format(GEN_PATH_EXPRESSION_FILES(),out_name)]
+def salmon_task(index,left,right,out_name,gene_map,out_dir,cpu_cap,tasks):
+    trgs = ['{0!s}/{1!s}/quant.sf'.format(out_dir,out_name)]
     cmd = '{0!s} quant -i {1!s} -l IU -1 {2!s} -2 {3!s} -o {4!s}/{5!s} --geneMap {6!s} -p {7!s} --extraSensitive; cp ' \
         '{4!s}/{5!s}/quant.sf {4!s}/{5!s}_quant.sf; cp {4!s}/{5!s}/quant.genes.sf {4!s}/{5!s}_quant.genes.sf'.format(
-	PATH_SALMON,index,left,right,GEN_PATH_EXPRESSION_FILES(),out_name,gene_map,cpu_cap)
-    name = 'salmon'
+	tool_path_check(TOOLS_DICT['salmon'].full_exe[0]),index,left,right,out_dir,out_name,gene_map,cpu_cap)
+    name = 'salmon_' + os.path.basename(index)
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
 
-def salmon_unpaired_task(index,unpaired,out_name,gene_map,cpu_cap,tasks):
+def salmon_unpaired_task(index,unpaired,out_name,gene_map,out_dir,cpu_cap,tasks):
     trgs = []
     cmd = '{0!s} quant -i {1!s} -l U -r {2!s} -o {3!s}/{4!s} --geneMap {5!s} -p {6!s} --extraSensitive'.format(
-            PATH_SALMON,index,unpaired,GEN_PATH_EXPRESSION_FILES(),out_name,gene_map,cpu_cap)
-    name = 'salmon_unpaired'
+            tool_path_check(TOOLS_DICT['salmon'].full_exe[0]),index,unpaired,out_dir,out_name,gene_map,cpu_cap)
+    name = 'salmon_unpaired_' + os.path.basename(index)
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
 
-def build_kallisto_task(tasks):
+def build_kallisto_task(assembly_path, assembly_name,out_dir,tasks):
     trgs = []
     cmd = '{0!s} index -i {1!s}/{2!s}_kallisto {3!s}'.format(
-            PATH_KALLISTO,GEN_PATH_EXPRESSION_FILES(),NAME_ASSEMBLY,GEN_PATH_ASSEMBLY())
+            PATH_KALLISTO,out_dir,assembly_name,assembly_path)
     name = 'build_kallisto'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def kallisto_task(index,out_name,left,right,tasks):
+def kallisto_task(index,out_dir,out_name,left,right,tasks):
     trgs = []
     cmd = '{0!s} quant -i {1!s} -o {2!s}/{3!s} {4!s} {5!s}'.format(
-            PATH_KALLISTO,index,GEN_PATH_EXPRESSION_FILES(),out_name,left,right)
+            PATH_KALLISTO,index,out_dir,out_name,left,right)
     name = 'kallisto'
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
@@ -713,7 +763,7 @@ def build_blast_task(fasta,out_path,dbtype,tasks,log_flag=True):
 def build_diamond_task(fasta,out_path,tasks,log_flag=True):
     title = os.path.basename(out_path)
     trgs = ['{0!s}'.format(out_path + '.dmnd')] 
-    cmd = '{0!s} makedb --in {1!s} --db {2!s}'.format(PATH_DIAMOND, fasta, out_path)
+    cmd = '{0!s} makedb --in {1!s} --db {2!s}'.format(TOOLS_DICT['diamond'].full_exe[0], fasta, out_path)
     name = 'build_diamond_'+ title
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
@@ -729,7 +779,7 @@ def split_mito_task(blast_mt,tasks):
 
 def pfam_build_task(source, tasks, log_flag=True):
     trgs = [PATH_PFAM_DATABASE+'.h3f']
-    cmd = 'cd {0!s} ; hmmpress -f {1!s};'.format(PATH_DATABASES, source)
+    cmd = 'cd {0!s} ; {1!s} -f {2!s};'.format(PATH_DATABASES, tool_path_check(TOOLS_DICT['hmmer'].full_exe[1]), source)
     name = 'hmmpress'
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
@@ -774,66 +824,12 @@ def manage_tools_task(install, fresh, cpu_cap, tool_list, tasks, log_flag=True):
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
 
-
-def install_trinity_task(trinity_target, trinity_exe, tasks, log_flag= True):
-    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,trinity_exe)]
-    cmd = 'cd {0!s}; make; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(trinity_target, trinity_exe, PATH_TOOLS)
-    name = 'install_trinity'
+def filter_task(assembly_path, assembly_name, out_dir, quant_file_list, tpm_threshold, tpm_column_index, tasks, log_flag=True):
+    # TPM column index: transrate uses older salmon; use index =2. Newer salmon: index=3
+    trgs = ['{0!s}/{1!s}_{2!s}tpm.fasta'.format(out_dir,assembly_name,tpm_threshold)]
+    quants = ''.join(' --quant_files '+ x for x in quant_file_list) 
+    cmd = 'python {0!s}/filter_contigs_by_tpm.py --assembly {1!s} --tpm {2!s} {3!s} --out {4!s} --tpm_column_index {5!s}'.format(PATH_SCRIPTS, assembly_path,tpm_threshold, quants, trgs[0], tpm_column_index)
+    name = 'filt_{0!s}_{1!s}tpm'.format(assembly_name, tpm_threshold)
     out, err = GEN_LOGS(name) if(log_flag) else (None, None)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
-
-
-def install_trimmomatic_task(trimmomatic_target, trimmomatic_jar,  tasks, log_flag= True):
-    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS, trimmomatic_jar)]
-    cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(trimmomatic_target, trimmomatic_jar, PATH_TOOLS)
-    name = 'install_trimmomatic'
-    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
-
-
-def install_prinseq_task(prinseq_target, prinseq_exe,  tasks, log_flag= True):
-    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,prinseq_exe)]
-    cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(prinseq_target, prinseq_exe, PATH_TOOLS)
-    name = 'install_prinseq'
-    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
-
-
-def install_transdecoder_task(transdecoder_target, transdecoder_exe1, transdecoder_exe2,  tasks, log_flag= True):
-    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,transdecoder_exe1), '{0!s}/{1!s}'.format(PATH_TOOLS,transdecoder_exe2)]
-    cmd = 'cd {0!s}; make; ln -s {0!s}/{1!s} {2!s}/{1!s}; ln -s {0!s}/{3!s} {2!s}/{3!s}'.format(transdecoder_target, transdecoder_exe1, PATH_TOOLS, transdecoder_exe2)
-    name = 'install_transdecoder'
-    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
-
-
-def install_hmmer_task(hmmer_target, hmmer_exe1, hmmer_exe2, tasks, log_flag= True):
-    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS, hmmer_exe1),'{0!s}/{1!s}'.format(PATH_TOOLS, hmmer_exe2)]
-    cmd = 'cd {0!s}; ln -s {0!s}/binaries/{1!s} {2!s}/{1!s}; ln -s {0!s}/binaries/{3!s} {2!s}/{3!s}'.format(hmmer_target, hmmer_exe1, PATH_TOOLS, hmmer_exe2)
-    name = 'install_hmmer'
-    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
-
-def install_salmon_task(salmon_target, salmon_exe, tasks, log_flag=True):
-    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,salmon_exe)]
-    cmd = 'cd {0!s}; ln -s {0!s}/bin/{1!s} {2!s}/{1!s}'.format(salmon_target, salmon_exe, PATH_TOOLS)
-    name = 'install_salmon'
-    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
-
-def install_busco_task(busco_target, busco_exe,  tasks, log_flag= True):
-    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,busco_exe)]
-    cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(busco_target, busco_exe, PATH_TOOLS)
-    name = 'install_busco'
-    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
-
-def install_transrate_task(transrate_target, transrate_exe,  tasks, log_flag= True):
-    trgs = ['{0!s}/{1!s}'.format(PATH_TOOLS,transrate_exe)]
-    cmd = 'cd {0!s}; ln -s {0!s}/{1!s} {2!s}/{1!s}'.format(transrate_target, transrate_exe, PATH_TOOLS)
-    name = 'install_transrate'
-    out, err = GEN_LOGS(name) if(log_flag) else (None, None)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
-
-
 
