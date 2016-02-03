@@ -34,8 +34,6 @@ PATH_NOG_CATEGORIES = join(PATH_DATABASES, 'nog_categories')
 # Dynamic path variable functions
 def GEN_PATH_DIR(): return os.path.join(PATH_ASSEMBLIES, NAME_OUT_DIR)
 
-#def GEN_ASSEMBLY_NAME(): return NAME_ASSEMBLY
-
 def GEN_PATH_ASSEMBLY_FILES(): return os.path.join(GEN_PATH_DIR(), 'assembly_files')
 
 def GEN_PATH_QUALITY_FILES(): return os.path.join(GEN_PATH_DIR(), 'quality_files')
@@ -71,7 +69,7 @@ def tool_path_check(name):
         print('WARNING : MMT has not installed '+name+'. MMT will use the version found in your path variable instead.')
         return name
     else:
-        print('INSTALLATION ERROR : MMT has not installed '+name+' and did not find this program in your path variable. Steps requiring '+name+'will not be performed.') 
+        print('INSTALLATION ERROR : MMT has not installed '+name+' and did not find this program in your path variable. Steps requiring '+name+' will not be performed.') 
 
 def build_dir_task(tasks):
     '''
