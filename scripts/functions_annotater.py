@@ -76,17 +76,33 @@ def rnammer_task(path_assembly, out_dir, tasks):
     out,err = GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
-def predict_orfs_task(path_assembly, out_dir,cpu_cap, tasks):
+def transdecoder_longorfs_task(path_assembly, path_transdecoder_output, cpu_cap, tasks):
+    assembly_name = os.path.basename(path_assembly).split('.fa')[0]
+    trgs = ['{0!s}/longest_orfs.pep'.format(path_transdecoder_output),'{0!s}/longest_orfs.gff3'.format(path_transdecoder_output),
+    '{0!s}/longest_orfs.cds'.format(path_transdecoder_output)]
+    cmd = ("mkdir -p {0!s}; cd {0!s}; {1!s} -t {2!s}").format(path_transdecoder_output,
+            fg.tool_path_check(TOOLS_DICT['transdecoder'].full_exe[0]),path_assembly,cpu_cap)
+    name = 'TransDecoder_LongORFs' + assembly_name
+    out,err = fg.GEN_LOGS(name)
+    return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap) 
+
+def transdecoder_predict_orfs_task(path_assembly,path_transdecoder_output,cpu_cap,tasks,pfam_input='',blastp_input=''):
     ''' Use transdecoder to predict ORF's from input fasta file. 
         Required for  downstream blastp, pfam, tmhmm, signalp.
         Targets: *transdecoder.*
     '''
-    path_transdecoder_output = out_dir+'/transdecoder'
+    pfam,blastp,retain_blastp, retain_pfam = '','','',''
+    if len(pfam_input) > 0:
+        pfam = '--retain_pfam_hits ' + pfam_input
+        retain_pfam = '_retain_pfam'
+    if len(blastp_input) > 0:
+        blastp = '--retain_blastp_hits ' + blastp_input
+        retain_blastp = '_retain_blastp'
     assembly_name = os.path.basename(path_assembly).split('.fa')[0]
     trgs = ['{0!s}/{1!s}.fasta.transdecoder.pep'.format(path_transdecoder_output,assembly_name)]
-    cmd = ("mkdir -p {0!s}; cd {0!s}; {1!s} -t {2!s}").format(path_transdecoder_output,
-            fg.tool_path_check(TOOLS_DICT['transdecoder'].full_exe[0]),path_assembly,cpu_cap)
-    name = 'TransDecoder_' + assembly_name
+    cmd = ("mkdir -p {0!s}; cd {0!s}; {1!s} -t {2!s} {3!s} {4!s}").format(path_transdecoder_output,
+            fg.tool_path_check(TOOLS_DICT['transdecoder'].full_exe[1]),path_assembly,cpu_cap,pfam, blastp)
+    name = 'TransDecoder_' + assembly_name + retain_pfam + retain_blastp
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
@@ -94,7 +110,7 @@ def signalp_task(path_orfs,out_dir,tasks):
     out_name = os.path.basename(path_orfs).split('.')[0]
     trgs = ['{0!s}/{1!s}.signalp'.format(out_dir,out_name)]
     cmd = '{0!s} -f short -n {1!s} {2!s}'.format(fg.tool_path_check(TOOLS_DICT['signalp'].full_exe[0]),trgs[-1],path_orfs)
-    name = 'signalp'
+    name = 'signalp_' + out_name
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
@@ -102,16 +118,16 @@ def tmhmm_task(path_orfs,out_dir,tasks):
     out_name = os.path.basename(path_orfs).split('.')[0]
     trgs = ['{0!s}/{1!s}.tmhmm'.format(out_dir, out_name)] 
     cmd = 'cd {0!s}; {1!s} --short < {2!s} > {3!s}'.format(out_dir,fg.tool_path_check(TOOLS_DICT['tmhmm'].full_exe[0]),path_orfs,trgs[0])
-    name = 'tmhmm'
+    name = 'tmhmm_' + out_name
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 def pfam_task(path_orfs,out_dir, cpu_cap, tasks):
     out_name = os.path.basename(path_orfs).split('.')[0]
     trgs = ['{0!s}/{1!s}.pfam'.format(out_dir,out_name)]
-    cmd = '{4!s} --cpu {0!s} --domtblout {1!s} {2!s} {3!s}'.format(cpu_cap,
-            trgs[0],PATH_PFAM_DATABASE,path_orfs,fg.tool_path_check(TOOLS_DICT['hmmer'].full_exe[0]))
-    name = 'pfam'
+    cmd = '{0!s} --cpu {1!s} --domtblout {2!s} {3!s} {4!s}'.format(
+        fg.tool_path_check(TOOLS_DICT['hmmer'].full_exe[0]),cpu_cap,trgs[0],PATH_PFAM_DATABASE, path_orfs)
+    name = 'pfam_' + out_name
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
@@ -136,16 +152,13 @@ def annot_table_task(path_assembly,out_dir,opts, tasks):
     out, err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
-def kegg_task(out_dir, annotation_table, tasks, kegg_map_id='ko01100'):
-    '''    Defines the kegg task. Uses PATH_SCRIPTS, 
-        Params : 
-    '''
+def kegg_task(annotation_table, out_dir,tasks, kegg_map_id='ko01100'):
+    ''' color pathways found in transcriptome on a given kegg map'''
     trgs = ['{0!s}/{1!s}.pdf'.format(out_dir,kegg_map_id),
             '{0!s}/{1!s}_KO.txt'.format(out_dir,kegg_map_id)]
-    cmd = ('python {0!s}/color_pathways2.py --path {1!}s --transcriptomeKO '
-            #'{2!s}/uniq_ko_annots.txt --output {3!s}').format(fg.PATH_SCRIPTS,kegg_map_id,fg.PATH_DATABASES,out_dir)
-            '{2!s} --output {3!s}').format(fg.PATH_SCRIPTS,kegg_map_id,annotation_table,out_dir)
-    name='draw_kegg_maps_' + os.path.basename(annotation_table)
+    cmd = ('python {0!s}/color_pathways2.py --path {1!s} --transcriptomeKO {2!s}'
+            ' --output {3!s}').format(fg.PATH_SCRIPTS,kegg_map_id,annotation_table,out_dir)
+    name='draw_kegg_map_{0!s}_{1!s}'.format(os.path.basename(annotation_table), kegg_map_id)
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
@@ -157,10 +170,7 @@ def pipeplot_task(annotation_table,out_dir,tasks):
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
-
 def assembly_to_bed_task(path_assembly,out_dir, tasks):
-    '''
-    '''
     assembly_name = os.path.basename(path_assembly).split('.fa')[0]
     trgs = ['{0!s}/{1!s}.bed'.format(out_dir,assembly_name)]
     cmd = 'python {0!s}/fasta_to_bed_count_length.py {1!s} {2!s}'.format(
