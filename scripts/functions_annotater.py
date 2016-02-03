@@ -84,7 +84,7 @@ def predict_orfs_task(path_assembly, out_dir,cpu_cap, tasks):
     path_transdecoder_output = out_dir+'/transdecoder'
     assembly_name = os.path.basename(path_assembly).split('.fa')[0]
     trgs = ['{0!s}/{1!s}.fasta.transdecoder.pep'.format(path_transdecoder_output,assembly_name)]
-    cmd = ("mkdir -p {0!s}; cd {0!s}; {1!s} -t {2!s} --workdir {0!s} --CPU {3!s}").format(path_transdecoder_output,
+    cmd = ("mkdir -p {0!s}; cd {0!s}; {1!s} -t {2!s}").format(path_transdecoder_output,
             fg.tool_path_check(TOOLS_DICT['transdecoder'].full_exe[0]),path_assembly,cpu_cap)
     name = 'TransDecoder_' + assembly_name
     out,err = fg.GEN_LOGS(name)

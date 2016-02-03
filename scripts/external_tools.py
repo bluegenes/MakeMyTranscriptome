@@ -43,7 +43,7 @@ PATH_TRANSDECODER = 'TransDecoder' #which exe to use!???
 
 transdecoder_url = 'https://github.com/TransDecoder/TransDecoder/archive/2.0.1.tar.gz'
 transdecoder_target = join(PATH_TOOLS, 'TransDecoder-2.0.1')
-transdecoder_exe = ['TransDecoder.Predict','TransDecoder.LongOrfs']
+transdecoder_exe = ['TransDecoder.LongOrfs', 'TransDecoder.Predict']
 transdecoder_instructions = "transdecoder instructions here"
 transdecoder_cmd= 'make'
 
