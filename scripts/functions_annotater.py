@@ -157,8 +157,8 @@ def kegg_task(annotation_table, out_dir,tasks, kegg_map_id='ko01100'):
     ''' color pathways found in transcriptome on a given kegg map'''
     trgs = ['{0!s}/{1!s}.pdf'.format(out_dir,kegg_map_id),
             '{0!s}/{1!s}_KO.txt'.format(out_dir,kegg_map_id)]
-    cmd = ('python {0!s}/color_pathways2.py --path {1!s} --transcriptomeKO {2!s}'
-            ' --output {3!s}').format(fg.PATH_SCRIPTS,kegg_map_id,annotation_table,out_dir)
+    cmd = ('mkdir -p {3!s}/plots ; cd {3!s}/plots ; python {0!s}/color_pathways2.py --path {1!s} '
+            ' --transcriptomeKO {2!s} --output {3!s}/plots').format(fg.PATH_SCRIPTS,kegg_map_id,annotation_table,out_dir)
     name='draw_kegg_map_{0!s}_{1!s}'.format(os.path.basename(annotation_table), kegg_map_id)
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
