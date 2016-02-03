@@ -92,7 +92,7 @@ def transrate_task(reads_dir, assembly_path, assembly_name,lefts, rights, single
            rights, cpu_cap, reference, transrate_dir)
     name = 'transrate_' + assembly_name
     out, err = fg.GEN_LOGS(name)
-    temp_task = Task(command=cmd, dependencies=[], targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
+    temp_task = Task(command=cmd, dependencies=[], targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err, max_wall_time=720)
     deps = transrate_dep_generator(reads_dir, temp_task, orig_lefts, orig_rights, orig_singles, reference, assembly_path, cpu_cap, transrate_dir, tasks)
     temp_task.dependencies = [deps]
     return temp_task
