@@ -10,7 +10,7 @@ import functions_databases as fd
 def cpumod(cpu, k): return int(round(float(cpu)/k))
 
 
-def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_flag, tmhmm_flag, rnammer_flag, dependency_set, path_assembly=fg.GEN_PATH_ASSEMBLY(), assembly_name=fg.NAME_ASSEMBLY,out_dir=fg.GEN_PATH_ANNOTATION_FILES()):
+def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_flag, tmhmm_flag, rnammer_flag, dependency_set, path_assembly=fg.GEN_PATH_ASSEMBLY(), assembly_name=fg.NAME_ASSEMBLY,out_dir=fg.GEN_PATH_ANNOTATION_FILES(), improve_orfs=False):
     tasks = []
     annot_table_opts = {}
     def task_insert(task, name=None):
@@ -19,7 +19,15 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
             annot_table_opts[name] = task.targets[0]
     gene_trans_map = fan.gene_trans_map_task(path_assembly,out_dir,[])
     task_insert(gene_trans_map, 'geneTransMap')
-    predict_orfs = fan.predict_orfs_task(path_assembly, out_dir, cpumod(cpu, 2), [])
+    transd_dir = os.path.join(out_dir,'transdecoder')
+    longorfs = fan.transdecoder_longorfs_task(path_assembly,  transd_dir, cpumod(cpu, 2), [])
+    if improve_orfs:
+        blastp_transd = fan.blast_task('blastp',  transd_dir, longorfs.targets[0],fd.PATH_SWISS_PROT, int(cpu/2), [longorfs])
+        pfam_transd = fan.pfam_task(longorfs.targets[0], transd_dir,cpumod(cpu,2), [longorfs])
+        tasks.extend([blastp_transd,pfam_transd]) 
+        predict_orfs=fan.transdecoder_predict_orfs_task(path_assembly,transd_dir,cpumod(cpu,2),[longorfs,pfam_transd,blastp_transd],pfam_transd.targets[0],blastp_transd.targets[0])
+    else:
+        predict_orfs = fan.transdecoder_predict_orfs_task(path_assembly,transd_dir,cpumod(cpu,2),[longorfs])
     task_insert(predict_orfs, 'transdecoder')
     pfam = fan.pfam_task(predict_orfs.targets[0], out_dir,cpumod(cpu, 2), [predict_orfs])
 #    task_insert(pfam, 'pfam') # having trouble with pfam parsing errors
@@ -85,8 +93,8 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
     tasks.append(annot)
     pipeplot = fan.pipeplot_task(annot.targets[0],out_dir,[annot])
     tasks.append(pipeplot)
-#    kegg = fan.kegg_task([annot])
-#    tasks.append(kegg)
+    kegg = fan.kegg_task(annot.targets[0],out_dir, [annot])
+    tasks.append(kegg)
     return Supervisor(tasks=tasks,dependencies=dependency_set)
 
 
