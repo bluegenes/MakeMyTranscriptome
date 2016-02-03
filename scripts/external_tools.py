@@ -5,6 +5,7 @@ from functions_general import PATH_TOOLS
 from os.path import join,dirname,abspath
 import platform
 
+#samtools --> need to either add here, or make sure user has downloaded somehow..
 TOOL_LIST = []
 
 ### Trinity ###
@@ -157,7 +158,7 @@ bowtie2_urltype = 'zip'
 bowtie2_target = join(PATH_TOOLS,'bowtie2-2.2.6-linux-x86_64')
 bowtie2_instructions = 'bowtie2 instructions here'
 bowtie2_folder_name = 'bowtie2-2.2.6'
-bowtie2_exe = ['bowtie2']
+bowtie2_exe = ['bowtie2-build','bowtie2']
 
 bowtie2_tool = tc('bowtie2', bowtie2_url, bowtie2_target, bowtie2_exe, bowtie2_instructions, urltype=bowtie2_urltype, folder_name=bowtie2_folder_name)
 TOOL_LIST.append(bowtie2_tool)
