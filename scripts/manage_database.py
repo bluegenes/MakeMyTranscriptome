@@ -1,5 +1,6 @@
-from task_functions_v2 import (
-    PATH_DATABASES, PATH_UNIREF90, PATH_SWISS_PROT,
+from functions_general import PATH_DATABASES
+from functions_databases import (
+    PATH_UNIREF90, PATH_SWISS_PROT,
     PATH_NR, PATH_PFAM_DATABASE, pfam_build_task, 
     build_diamond_task, build_blast_task, db2stitle_task)
 from time import strftime
@@ -11,28 +12,29 @@ import argparse
 import sys
 import functools
 from tasks_v2 import Supervisor
+import functions_general as fg
+import functions_databases as fd
 if(sys.version[0] == '3'):
     from urllib.request import urlretrieve, ContentTooShortError
 else:
     from urllib import urlretrieve, ContentTooShortError
 
-swissprot_folder = os.path.join(PATH_DATABASES, 'uniprot_sprot')
-uniref90_folder = os.path.join(PATH_DATABASES, 'uniref90')
-nr_folder = os.path.join(PATH_DATABASES, 'nr')
-pfam_folder = os.path.join(PATH_DATABASES, 'pfam')
-busco_folder = os.path.join(PATH_DATABASES, 'busco') 
 
 url_sprot = 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz'
 sprot_target = PATH_SWISS_PROT + '.gz'
+swissprot_folder = os.path.join(PATH_DATABASES, 'uniprot_sprot')
 
 url_uniref90 = 'ftp://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref90/uniref90.fasta.gz'
 uniref90_target = PATH_UNIREF90 + '.gz'
+uniref90_folder = os.path.join(PATH_DATABASES, 'uniref90')
 
 url_nr = 'ftp://ftp.ncbi.nih.gov/blast/db/FASTA/nr.gz'
 nr_target = PATH_NR + '.gz'
+nr_folder = os.path.join(PATH_DATABASES, 'nr')
 
 
 ####
+busco_folder = os.path.join(PATH_DATABASES, 'busco') 
 url_busco_metazoa = 'http://busco.ezlab.org/files/metazoa_buscos.tar.gz'
 busco_metazoa_target = os.path.join(busco_folder, 'metazoa_buscos') 
 
@@ -77,6 +79,7 @@ kog_functional_target = '{0!s}/allKOG_functional_info.txt'.format(PATH_DATABASES
 url_slim_generic = 'http://www.geneontology.org/ontology/subsets/goslim_generic.obo'
 slim_generic_target = '{0!s}/goslim_generic.obo'.format(PATH_DATABASES)
 
+pfam_folder = os.path.join(PATH_DATABASES, 'pfam')
 url_pfam_db = 'ftp://ftp.ebi.ac.uk/pub/databases/Pfam//releases/Pfam28.0/Pfam-A.hmm.gz'
 pfam_db_target = PATH_PFAM_DATABASE
 
@@ -253,29 +256,29 @@ def main(nr_flag=False, uniref90_flag=False, file_check=True, busco_flags=busco_
     log_table = download_databases(log_table, nr_flag, uniref90_flag, file_check, busco_flags)
     log_table = subset_dat(id_mapping_target, idmapping_keys, log_table)
     if blastplus:
-        swissprot_task = build_blast_task(sprot_target, sprot_target, 'prot', [], False)
+        swissprot_task = fd.build_blast_task(sprot_target, PATH_SWISS_PROT, 'prot', [], False)
         tasks.append(swissprot_task)
-    swissprot_diamond = build_diamond_task(sprot_target, PATH_SWISS_PROT, [], False)
+    swissprot_diamond = fd.build_diamond_task(sprot_target, PATH_SWISS_PROT, [], False)
     tasks.append(swissprot_diamond)
-    swissprot_table_task = db2stitle_task(sprot_target, [], False)
+    swissprot_table_task = fd.db2stitle_task(sprot_target, [], False)
     tasks.append(swissprot_table_task)
     if(uniref90_flag and os.path.exists(uniref90_target)):
-        uniref90_diamond = build_diamond_task(uniref90_target, PATH_UNIREF90, [], False)
+        uniref90_diamond = fd.build_diamond_task(uniref90_target, PATH_UNIREF90, [], False)
         tasks.append(uniref90_diamond)
-        uniref90_table_task = db2stitle_task(uniref90_target, [], False)
+        uniref90_table_task = fd.db2stitle_task(uniref90_target, [], False)
         tasks.append(uniref90_table_task)
         if blastplus:
-  	    uniref90_task = build_blast_task(uniref90_target,  PATH_UNIREF90, 'prot', [], False)
+  	    uniref90_task = fd.build_blast_task(uniref90_target, PATH_UNIREF90, 'prot', [], False)
             tasks.append(uniref90_task)
     if(nr_flag and os.path.exists(nr_target)):
-        nr_diamond = build_diamond_task(nr_target, PATH_NR, [], False)
+        nr_diamond = fd.build_diamond_task(nr_target, PATH_NR, [], False)
         tasks.append(nr_diamond)
-	nr_table_task = db2stitle_task(nr_target, [], False)
+	nr_table_task = fd.db2stitle_task(nr_target, [], False)
         tasks.append(nr_table_task)
         if blastplus:
-	    nr_task = build_blast_task(nr_target, PATH_NR, 'prot', [], False)
+	    nr_task = fd.build_blast_task(nr_target, PATH_NR, 'prot', [], False)
 	    tasks.append(nr_task)
-    pfam_task = pfam_build_task(pfam_db_target, [], False)
+    pfam_task = fd.pfam_build_task(pfam_db_target, [], False)
     tasks.append(pfam_task)
     run_tasks(tasks, cpu) 
     write_log(log_table)

@@ -1,17 +1,12 @@
 # author: bluegenes
 
 from tools_class import ext_tool as tc 
+from functions_general import PATH_TOOLS
 from os.path import join,dirname,abspath
 import platform
 
-PATH_ROOT = dirname(dirname(abspath(__file__)))
-#PATH_SCRIPTS = join(PATH_ROOT, 'scripts')
-#PATH_DATABASES = join(PATH_ROOT, 'databases')
-#PATH_ASSEMBLIES = join(PATH_ROOT, 'assemblies')
-PATH_TOOLS = join(PATH_ROOT, 'external_tools')
-
+#samtools --> need to either add here, or make sure user has downloaded somehow..
 TOOL_LIST = []
-#TOOL_LIST = [trinity_tool, trimmomatic_tool, prinseq_tool, transdecoder_tool, transrate_tool,busco_tool, hmmer_tool, diamond_tool, salmon_tool, busco_plant_tool, fastqc_tool]
 
 ### Trinity ###
 trinity_source_url = 'https://github.com/trinityrnaseq/trinityrnaseq/archive/v2.1.1.tar.gz'
@@ -28,7 +23,7 @@ TOOL_LIST.append(trinity_tool)
 ### Trimmomatic ###
 trimmomatic_binary_url = 'http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.35.zip'
 trimmomatic_binary_target = join(PATH_TOOLS, 'Trimmomatic-0.35')
-trimmomatic_exe = ['trimmomatic-0.35.jar']
+trimmomatic_exe = ['trimmomatic-0.35.jar', 'adapters/TruSeq3-PE.fa','adapters/TruSeq3-SE.fa']
 trimmomatic_instructions = "trimmomatic instructions here"
 trimmomatic_urltype = 'zip'
 
@@ -45,9 +40,11 @@ prinseq_tool = tc('prinseq', prinseq_url, prinseq_target, prinseq_exe, prinseq_i
 TOOL_LIST.append(prinseq_tool)
 
 ### Transdecoder ###
+PATH_TRANSDECODER = 'TransDecoder' #which exe to use!???
+
 transdecoder_url = 'https://github.com/TransDecoder/TransDecoder/archive/2.0.1.tar.gz'
 transdecoder_target = join(PATH_TOOLS, 'TransDecoder-2.0.1')
-transdecoder_exe = ['TransDecoder.Predict','TransDecoder.LongOrfs']
+transdecoder_exe = ['TransDecoder.LongOrfs', 'TransDecoder.Predict']
 transdecoder_instructions = "transdecoder instructions here"
 transdecoder_cmd= 'make'
 
@@ -126,54 +123,95 @@ fastqc_cmd = 'chmod 755 '+ fastqc_tool.full_exe[0]
 fastqc_tool.set_install(fastqc_cmd)
 TOOL_LIST.append(fastqc_tool)
 
-cegma_url =  'http://korflab.ucdavis.edu/datasets/cegma/CEGMA_v2.5.tar.gz'
-cegma_target = join(PATH_TOOLS,'CEGMA_v2.5')
-cegma_exe = ['cegma']
-cegma_instructions = 'MMT cannot install cegma. Please see http://korflab.ucdavis.edu/datasets/cegma/#SCT3 for installation instructions.'
-
-cegma_tool = tc('cegma', cegma_url, cegma_target, cegma_exe, cegma_instructions)
-cegma_tool.change_exe_fullpath('') # they need to put cegma into their $path
-TOOL_LIST.append(cegma_tool)
-
-
 bedtools_url = 'https://github.com/arq5x/bedtools2/releases/download/v2.25.0/bedtools-2.25.0.tar.gz'
 bedtools_target = join(PATH_TOOLS,'bedtools-2.25.0')
 bedtools_cmd = 'make'
 bedtools_instructions = 'see installation instructions here: http://bedtools.readthedocs.org/en/latest/content/installation.html'
-bedtools_exe = ['intersectBed']
+bedtools_exe = ['bin/intersectBed']
 bedtools_folder_name = 'bedtools2' #unpacks to 'bedtools2'
 
 bedtools_tool = tc('bedtools',bedtools_url, bedtools_target, bedtools_exe, bedtools_instructions, folder_name=bedtools_folder_name)
-bedtools_tool.change_exe_fullpath(join(PATH_TOOLS,'bedtools2/bin'))
+#bedtools_tool.change_exe_fullpath(join(PATH_TOOLS,folder_name))
 TOOL_LIST.append(bedtools_tool)
 
+#rnaspades
+rnaspades_url = 'http://spades.bioinf.spbau.ru/rnaspades0.1.1/rnaSPAdes-0.1.1-Linux.tar.gz'
+rnaspades_target = join(PATH_TOOLS, 'rnaSPAdes-0.1.1-Linux')
+rnaspades_exe = ['bin/rnaspades.py']
+rnaspades_instructions = 'rnaspades instructions here'
 
+rnaspades_tool = tc('rnaspades', rnaspades_url, rnaspades_target, rnaspades_exe, rnaspades_instructions)
+TOOL_LIST.append(rnaspades_tool)
 
-# set up tools dictionary for use in all mmt
-#if(platform.system().lower() == 'linux')
+blastplus_url = 'ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.3.0+-x64-linux.tar.gz'
+blastplus_target = 'ncbi-blast-2.3.0+-x64-linux'
+blastplus_folder_name = 'ncbi-blast-2.3.0+'
+blastplus_instructions = 'blastplus instructions here'
+blastplus_exe = ['bin/makeblastdb','bin/blastx', 'bin/blastp']
+
+blastplus_tool = tc('blast', blastplus_url, blastplus_target,blastplus_exe,blastplus_instructions,folder_name=blastplus_folder_name) 
+#blastplus_tool.change_exe_fullpath(join(PATH_TOOLS,folder_name))
+TOOL_LIST.append(blastplus_tool)
+
+bowtie2_url = 'http://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.2.6/bowtie2-2.2.6-linux-x86_64.zip' 
+bowtie2_urltype = 'zip'
+bowtie2_target = join(PATH_TOOLS,'bowtie2-2.2.6-linux-x86_64')
+bowtie2_instructions = 'bowtie2 instructions here'
+bowtie2_folder_name = 'bowtie2-2.2.6'
+bowtie2_exe = ['bowtie2-build','bowtie2']
+
+bowtie2_tool = tc('bowtie2', bowtie2_url, bowtie2_target, bowtie2_exe, bowtie2_instructions, urltype=bowtie2_urltype, folder_name=bowtie2_folder_name)
+TOOL_LIST.append(bowtie2_tool)
+
+express_url = 'http://bio.math.berkeley.edu/eXpress/downloads/express-1.5.1/express-1.5.1-linux_x86_64.tgz'
+express_urltype = '.tgz'
+express_target = join(PATH_TOOLS, 'express-1.5.1-linux_x86_64.tgz')
+express_instructions = 'express instructions here'
+express_exe = ['express']
+
+express_tool = tc('express',express_url, express_target, express_exe, express_instructions, urltype=express_urltype)
+TOOL_LIST.append(express_tool)
+
+##### tools we can't install ####
+cegma_url =  'http://korflab.ucdavis.edu/datasets/cegma/CEGMA_v2.5.tar.gz'
+cegma_target = join(PATH_TOOLS,'CEGMA_v2.5')
+cegma_exe = ['cegma']
+cegma_instructions = 'MMT cannot install cegma. Please see http://korflab.ucdavis.edu/datasets/cegma/#SCT3 for installation instructions.'
+cegma_tool = tc('cegma', cegma_url, cegma_target, cegma_exe, cegma_instructions, install=False)
+cegma_tool.change_exe_fullpath('') # they need to put cegma into their $path
+TOOL_LIST.append(cegma_tool)
+
+kallisto_url = 'https://github.com/pachterlab/kallisto/releases/download/v0.42.4/kallisto_linux-v0.42.4.tar.gz'
+kallisto_target = join(PATH_TOOLS, 'kallisto_linux-v0.42.4')
+kallisto_instructions = "As kallisto is distributed under a non-commercial license, MMT cannot download kallisto for you. Please see https://pachterlab.github.io/kallisto/about.html for information about kallisto. To use, install kallisto yourself and place tool in your $path variable"
+kallisto_exe = ['kallisto']
+kallisto_tool = tc("kallisto", kallisto_url, kallisto_target, kallisto_exe, kallisto_instructions, install=False)
+kallisto_tool.change_exe_fullpath('') # look for exe in $path
+TOOL_LIST.append(kallisto_tool)
+
+#PATH_RNAMMER = '/matta1/biotools/redhat/rnammer-1.2/rnammer'
+rnammer_url = ''
+rnammer_target = '' #join(PATH_TOOLS,'rnammer-1.2')
+rnammer_exe = ['RnammerTranscriptome.pl']
+rnammer_instructions = 'RNAMMER is freely available for academic use only. See http://www.cbs.dtu.dk/services/RNAmmer/ for download and installation instructions. RNAMMER is currently supported as an optional tool, but this support may be removed at any time in favor of openly licensed tools.'
+rnammer_tool = tc('rnammer', rnammer_url, rnammer_target, rnammer_exe, rnammer_instructions, install=False)
+#rnammer_tool.change_exe_fullpath('') # look for exe in $path
+TOOL_LIST.append(rnammer_tool)
+
+tmhmm_url = ''
+tmhmm_target = ''
+tmhmm_exe = ['tmhmm']
+tmhmm_instructions = 'TMHMM is freely available for academic use only. See http://www.cbs.dtu.dk/cgi-bin/nph-sw_request?tmhmm for download and installation instructions. TMHMM is currently supported as an optional tool, but this support may be removed at any time in favor of openly licensed tools.'
+tmhmm_tool = tc('tmhmm', tmhmm_url, tmhmm_target, tmhmm_exe, tmhmm_instructions, install=False)
+tmhmm_tool.change_exe_fullpath('') # look for exe in $path
+TOOL_LIST.append(tmhmm_tool)
+
+signalp_url = ''
+signalp_target = ''
+signalp_exe = ['signalp']
+signalp_instructions = 'Signalp is freely available for academic use only. See http://www.cbs.dtu.dk/cgi-bin/nph-sw_request?signalp for download and installation instructions. SignalP is currently supported as an optional tool, but this support may be removed at any time in favor of openly licensed tools.'
+signalp_tool = tc('signalp', signalp_url, signalp_target, signalp_exe, signalp_instructions, install=False)
+signalp_tool.change_exe_fullpath('') # look for exe in $path
+TOOL_LIST.append(signalp_tool)
+
 TOOLS_DICT = {tool.name: tool for tool in TOOL_LIST}
-
-
-""" TOOLS/INFO TO ADD !!!!!!
-PATH_TRANSDECODER = 'TransDecoder'
-PATH_TRIMMOMATIC_ADAPTERS_SINGLE = join(PATH_TOOLS,'Trimmomatic-0.35/adapters/TruSeq3-SE.fa')
-PATH_TRIMMOMATIC_ADAPTERS_PAIRED = join(PATH_TOOLS,'Trimmomatic-0.35/adapters/TruSeq3-PE.fa')
-
-''' set these up as executables that we just look for in the $path '''
-PATH_BEDTOOLS = 'bedtools'
-PATH_BLASTP = 'blastp'
-PATH_BLASTX = 'blastx'
-PATH_BOWTIE2 = ''
-PATH_CEGMA = 'cegma'
-PATH_EXPRESS = 'express'
-PATH_KALLISTO = 'kallisto'
-
-'''optional tools -- set up the same way as above? just don't check for them with mmt setup; only install instructions in tools'''
-PATH_RNAMMER = '/matta1/biotools/redhat/rnammer-1.2/rnammer'
-PATH_RNAMMER_PL = 'RnammerTranscriptome.pl'
-PATH_SIGNALP = 'signalp'
-PATH_RNASPADES = 'rnaspades.py'
-PATH_TMHMM = 'tmhmm'
-
-
-"""

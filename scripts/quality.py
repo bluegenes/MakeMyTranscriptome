@@ -1,23 +1,28 @@
 import argparse
 import os
+from os.path import basename,join
 import sys
 from tasks_v2 import Supervisor, Task
-import task_functions_v2 as tf
+import functions_general as fg
+import functions_quality as fq
 import time
 
-def gen_quality_supervisor(transrate_fastq1, transrate_fastq2, transrate_unpaired,  dependency_set, busco_refs, cpu=12, cegma_flag=False, transrate_reference=''):
+def gen_quality_supervisor(transrate_fq1, transrate_fq2, transrate_unp, dependency_set, busco_refs, cpu=12, cegma_flag=False, transrate_ref='', assembly_name=fg.NAME_ASSEMBLY, assembly_path= fg.GEN_PATH_ASSEMBLY(), out_dir=fg.GEN_PATH_QUALITY_FILES(), transrate_dir=fg.GEN_PATH_TRANSRATE_DIR(), reads_dir=fg.GEN_PATH_ASSEMBLY_FILES()):
     tasks = []
-    cegma = tf.cegma_task(cpu, []) 
     for busco_ref in busco_refs:
-        tasks.append(tf.busco_task(busco_ref, int(cpu/2), []))
-    assembly_stats = tf.assembly_stats_task([])
-    transrate = tf.transrate_task(transrate_fastq1, transrate_fastq2, transrate_unpaired, "transrate_quality", int(round(float(cpu), 4)), [], transrate_reference)
-    reference_name = os.path.basename(transrate_reference)
-#    transrateRef = tf.transrate_to_reference_task("transrate_" + reference_name, transrate_reference, int(round(float(cpu), 4)), [])
+        tasks.append(fq.busco_task(assembly_path, assembly_name, out_dir, busco_ref, int(cpu/2), []))
+    assembly_stats = fq.assembly_stats_task(out_dir,assembly_path, [])
+    if transrate_fq1 == None:
+        transrate_fq1 = []
+    if transrate_fq2 == None:
+        transrate_fq2 = []
+    if transrate_unp == None:
+        transrate_unp = []
+    transrate = fq.transrate_task(reads_dir,assembly_path,assembly_name,transrate_fq1,transrate_fq2,transrate_unp,out_dir,transrate_dir,int(round(float(cpu),4)),[],transrate_ref)
     tasks.append(transrate)
-    #tasks.append(transrateRef)
     tasks.append(assembly_stats)
     if(cegma_flag):
+        cegma = fq.cegma_task(out_dir,assembly_path, cpu, []) 
         tasks.append(cegma)
     return Supervisor(tasks=tasks,dependencies=dependency_set)
 
