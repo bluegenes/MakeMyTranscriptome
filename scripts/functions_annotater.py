@@ -78,15 +78,16 @@ def rnammer_task(path_assembly, out_dir, tasks):
 
 def transdecoder_longorfs_task(path_assembly, path_transdecoder_output, cpu_cap, tasks):
     assembly_name = os.path.basename(path_assembly).split('.fa')[0]
-    trgs = ['{0!s}/longest_orfs.pep'.format(path_transdecoder_output),'{0!s}/longest_orfs.gff3'.format(path_transdecoder_output),
-    '{0!s}/longest_orfs.cds'.format(path_transdecoder_output)]
+    longorf_outbase = os.path.join(path_transdecoder_output, assembly_name + '.fasta.transdecoder_dir') 
+    trgs = ['{0!s}/longest_orfs.pep'.format(longorf_outbase),'{0!s}/longest_orfs.gff3'.format(longorf_outbase),
+    '{0!s}/longest_orfs.cds'.format(longorf_outbase)]
     cmd = ("mkdir -p {0!s}; cd {0!s}; {1!s} -t {2!s}").format(path_transdecoder_output,
             fg.tool_path_check(TOOLS_DICT['transdecoder'].full_exe[0]),path_assembly,cpu_cap)
-    name = 'TransDecoder_LongORFs' + assembly_name
+    name = 'TransDecoder_LongORFs_' + assembly_name
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap) 
 
-def transdecoder_predict_orfs_task(path_assembly,path_transdecoder_output,cpu_cap,tasks,pfam_input='',blastp_input=''):
+def transdecoder_predict_orfs_task(path_assembly,path_transdecoder_output,tasks,pfam_input='',blastp_input=''):
     ''' Use transdecoder to predict ORF's from input fasta file. 
         Required for  downstream blastp, pfam, tmhmm, signalp.
         Targets: *transdecoder.*
@@ -101,10 +102,10 @@ def transdecoder_predict_orfs_task(path_assembly,path_transdecoder_output,cpu_ca
     assembly_name = os.path.basename(path_assembly).split('.fa')[0]
     trgs = ['{0!s}/{1!s}.fasta.transdecoder.pep'.format(path_transdecoder_output,assembly_name)]
     cmd = ("mkdir -p {0!s}; cd {0!s}; {1!s} -t {2!s} {3!s} {4!s}").format(path_transdecoder_output,
-            fg.tool_path_check(TOOLS_DICT['transdecoder'].full_exe[1]),path_assembly,cpu_cap,pfam, blastp)
+            fg.tool_path_check(TOOLS_DICT['transdecoder'].full_exe[1]),path_assembly,pfam, blastp)
     name = 'TransDecoder_' + assembly_name + retain_pfam + retain_blastp
     out,err = fg.GEN_LOGS(name)
-    return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
+    return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 def signalp_task(path_orfs,out_dir,tasks):
     out_name = os.path.basename(path_orfs).split('.')[0]

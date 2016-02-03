@@ -9,7 +9,6 @@ import time
 
 def gen_quality_supervisor(transrate_fq1, transrate_fq2, transrate_unp, dependency_set, busco_refs, cpu=12, cegma_flag=False, transrate_ref='', assembly_name=fg.NAME_ASSEMBLY, assembly_path= fg.GEN_PATH_ASSEMBLY(), out_dir=fg.GEN_PATH_QUALITY_FILES(), transrate_dir=fg.GEN_PATH_TRANSRATE_DIR(), reads_dir=fg.GEN_PATH_ASSEMBLY_FILES()):
     tasks = []
-    cegma = fq.cegma_task(out_dir,assembly_path, cpu, []) 
     for busco_ref in busco_refs:
         tasks.append(fq.busco_task(assembly_path, assembly_name, out_dir, busco_ref, int(cpu/2), []))
     assembly_stats = fq.assembly_stats_task(out_dir,assembly_path, [])
@@ -23,6 +22,7 @@ def gen_quality_supervisor(transrate_fq1, transrate_fq2, transrate_unp, dependen
     tasks.append(transrate)
     tasks.append(assembly_stats)
     if(cegma_flag):
+        cegma = fq.cegma_task(out_dir,assembly_path, cpu, []) 
         tasks.append(cegma)
     return Supervisor(tasks=tasks,dependencies=dependency_set)
 
