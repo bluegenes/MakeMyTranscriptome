@@ -22,7 +22,7 @@ class Task:
     class TaskException(Exception):
         pass
 
-    def __init__(self, command, dependencies=[], targets=[], cpu=1, name='Anonymous_Task', stderr=None, stdout=None, error_check=None):
+    def __init__(self, command, dependencies=[], targets=[], cpu=1, name='Anonymous_Task', stderr=None, stdout=None, error_check=None, max_wall_time=float('inf')):
         try:
             if(stderr is not None):
                 f = open(stderr, 'a')
@@ -44,6 +44,7 @@ class Task:
         self.process = None
         self.exit_code = None
         self.soft_finished_status = False
+        self.start_time = None
 
     def checkDependencies(self):
         for d in self.dependencies:
@@ -75,12 +76,19 @@ class Task:
             self.opened_files.append(out)
         else:
             out = None
+        self.start = time.time()
         temp = subprocess.Popen(self.command,shell=True,stdout=out,stderr=err)
         self.process = temp
 
     def finished(self):
         if(self.soft_finished_status):
             return True
+        if((time.time()-self.start_time)/60 > self.max_wall_time):
+            err_mess = ('Task {0!s} has been running for greater than its maximum wall time, '
+                        '{1!s}m, and has been aborted. This is likely an external error and '
+                        'trying again is recommended.').format(self.name, self.max_wall_time)
+            self.killRun()
+            raise self.TaskException(err_mess)
         if(self.process==None):
             return False
         self.process.poll()
@@ -154,7 +162,7 @@ class Supervisor:
     history_log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.task_log')
 
 
-    def __init__(self, tasks=[], dependencies=[], cpu=12, name='Supervisor', delay=1, force_run=False, email=None, email_interval=30, log=None):
+    def __init__(self, tasks=[], dependencies=[], cpu=float('inf'), name='Supervisor', delay=1, force_run=False, email=None, email_interval=30, log=None):
         self.cpu = cpu
         self.name = name
         self.delay = delay
