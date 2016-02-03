@@ -125,10 +125,10 @@ reds = sns.color_palette("Reds", 5)
 greys = sns.color_palette("Greys", 2)
 colors = get_colors(cogDF["Category"].unique(), blues, reds, greens, greys)
 
-groupedCogDF = cogDF.groupby(["Category", "Description"], as_index=False)["Counts"].sum()
-groupedCogDF['longDescription'] = groupedCogDF["Category"].map(describe)
-sumCogPlot = sns.factorplot("Description", "Counts", hue="longDescription", size=6,aspect=2, data=groupedCogDF, kind='bar', palette=colors)
-sumCogPlot.savefig('cogMultiple.png', format='png')
+#groupedCogDF = cogDF.groupby(["Category", "Description"], as_index=False)["Counts"].sum()
+#groupedCogDF['longDescription'] = groupedCogDF["Category"].map(describe)
+#sumCogPlot = sns.factorplot("Description", "Counts", hue="longDescription", size=6,aspect=2, data=groupedCogDF, kind='bar', palette=colors)
+#sumCogPlot.savefig('cogMultiple.png', format='png')
 #sumCogPlot.savefig('rabbitfish_cogMultiple.png', format='png')
 
 
