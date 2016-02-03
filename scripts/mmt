@@ -65,6 +65,7 @@ assembler_input.add_argument('--subsample_seed',help='A seed used to initialize 
 assembler_input.add_argument('--truncate',help='snip reads down to this size if longer than this size. Default is no truncations.',type=int,default=-1)
 #ANNOTATION ARGS
 annotation_input = argparse.ArgumentParser(add_help=False)
+annotation_input.add_argument('-improve_orf_prediction',action='store_true',help='use hmmer->pfam;diamond-blastp->swissprot results for transdecoder ORF prediction.')
 annotation_input.add_argument('-signalp',action='store_true',help='Use this flag to execute signalP during annotation. Only use if you have installed signalP.')
 annotation_input.add_argument('-tmhmm',action='store_true',help='Use this flag to execute tmhmm during annotation. Only use if you have installed tmhmm.')
 annotation_input.add_argument('-rnammer',action='store_true',help='Use this flag to execute rnammer during annotation. Only use if you have installed rnammer.')
@@ -312,7 +313,8 @@ def go_annotation(args, dep):
     return gen_annotation_supervisor(
         args.cpu, args.uniref90, args.nr, args.blastplus, args.signalp,
         args.tmhmm, args.rnammer, dep, path_assembly= fg.GEN_PATH_ASSEMBLY(),
-	assembly_name=fg.NAME_ASSEMBLY, out_dir=fg.GEN_PATH_ANNOTATION_FILES())
+	assembly_name=fg.NAME_ASSEMBLY, out_dir=fg.GEN_PATH_ANNOTATION_FILES(),
+	improve_orfs=args.improve_orf_prediction)
 
 def go_expression(path_assembly, out_dir, args, dep):
     assembly_name = os.path.basename(path_assembly).split('.fa')[0]
