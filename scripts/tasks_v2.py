@@ -83,7 +83,7 @@ class Task:
     def finished(self):
         if(self.soft_finished_status):
             return True
-        if((time.time()-self.start_time)/60 > self.max_wall_time):
+        if(self.start_time is not None and float(time.time()-self.start_time)/60 > self.max_wall_time):
             err_mess = ('Task {0!s} has been running for greater than its maximum wall time, '
                         '{1!s}m, and has been aborted. This is likely an external error and '
                         'trying again is recommended.').format(self.name, self.max_wall_time)
