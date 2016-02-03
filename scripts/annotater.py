@@ -19,9 +19,9 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
             annot_table_opts[name] = task.targets[0]
     gene_trans_map = fan.gene_trans_map_task(path_assembly,out_dir,[])
     task_insert(gene_trans_map, 'geneTransMap')
-    predict_orfs = fan.predict_orfs_task(cpumod(cpu, 2), [])
+    predict_orfs = fan.predict_orfs_task(path_assembly, out_dir, cpumod(cpu, 2), [])
     task_insert(predict_orfs, 'transdecoder')
-    pfam = fan.pfam_task(cpumod(cpu, 2), [predict_orfs])
+    pfam = fan.pfam_task(predict_orfs.targets[0], out_dir,cpumod(cpu, 2), [predict_orfs])
 #    task_insert(pfam, 'pfam') # having trouble with pfam parsing errors
     tasks.append(pfam)
     if(blast_flag):
@@ -72,18 +72,18 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
             expand = fan.blast_augment_task(fd.PATH_NR, dmnd_pnr.targets[0], [dmnd_pnr])
             task_insert(expand, 'nrP')
     if(tmhmm_flag):
-        tmhmm = fan.tmhmm_task([predict_orfs])
+        tmhmm = fan.tmhmm_task(predict_orfs.targets[0], out_dir,[predict_orfs])
         task_insert(tmhmm, 'tmhmm')
     if(signalp_flag):
-        signalp = fan.signalp_task([predict_orfs])
+        signalp = fan.signalp_task(predict_orfs.targets[0], out_dir, [predict_orfs])
         task_insert(signalp, 'signalP')
     if(rnammer_flag):
-        rnammer = fan.rnammer_task([])
+        rnammer = fan.rnammer_task(path_assembly,[])
         task_insert(rnammer, 'rnammer')
     
-    annot = fan.annot_table_task(annot_table_opts, tasks[:])
+    annot = fan.annot_table_task(path_assembly,out_dir,annot_table_opts, tasks[:])
     tasks.append(annot)
-    pipeplot = fan.pipeplot_task(annot.targets[0],[annot])
+    pipeplot = fan.pipeplot_task(annot.targets[0],out_dir,[annot])
     tasks.append(pipeplot)
 #    kegg = fan.kegg_task([annot])
 #    tasks.append(kegg)

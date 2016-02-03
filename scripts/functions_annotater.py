@@ -50,7 +50,7 @@ def diamond_task(blast_type, out_dir, path_query, ref, cpu_cap, tasks):
     cmd = ('{0!s} {1!s} --db {2!s} --query {3!s} --daa {4!s} --tmpdir {5!s} '
            '--max-target-seqs 20 --sensitive --threads {6!s} --evalue 0.001; {0!s} view '
            '--daa {4!s}.daa --out {7!s};').format(
-           tool_path_check(TOOLS_DICT['diamond'].full_exe[0]), blast_type, ref, path_query, pseudo_trgs[0], out_dir,
+           fg.tool_path_check(TOOLS_DICT['diamond'].full_exe[0]), blast_type, ref, path_query, pseudo_trgs[0], out_dir,
            cpu_cap, trgs[0])
     name = 'diamond_{0!s}_{1!s}_{2!s}'.format(blast_type, base_ref, query_name)
     out, err = fg.GEN_LOGS(name)
@@ -90,31 +90,35 @@ def predict_orfs_task(path_assembly, out_dir,cpu_cap, tasks):
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
-def signalp_task(tasks):
-    trgs = ['{0!s}/{1!s}.signalp'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
-    cmd = '{2!s} -f short -n {1!s} {0!s}'.format(GEN_PATH_PEP(),trgs[-1],PATH_SIGNALP)
+def signalp_task(path_orfs,out_dir,tasks):
+    out_name = os.path.basename(path_orfs).split('.')[0]
+    trgs = ['{0!s}/{1!s}.signalp'.format(out_dir,out_name)]
+    cmd = '{0!s} -f short -n {1!s} {2!s}'.format(fg.tool_path_check(TOOLS_DICT['signalp'].full_exe[0]),trgs[-1],path_orfs)
     name = 'signalp'
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
-def tmhmm_task(tasks):
-    trgs = ['{0!s}/{1!s}.tmhmm'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
-    cmd = 'cd {0!s}; {1!s} --short < {2!s} > {3!s}'.format(GEN_PATH_ANNOTATION_FILES(),PATH_TMHMM,GEN_PATH_PEP(),trgs[0])
+def tmhmm_task(path_orfs,out_dir,tasks):
+    out_name = os.path.basename(path_orfs).split('.')[0]
+    trgs = ['{0!s}/{1!s}.tmhmm'.format(out_dir, out_name)] 
+    cmd = 'cd {0!s}; {1!s} --short < {2!s} > {3!s}'.format(out_dir,fg.tool_path_check(TOOLS_DICT['tmhmm'].full_exe[0]),path_orfs,trgs[0])
     name = 'tmhmm'
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
-def pfam_task(cpu_cap, tasks):
-    trgs = ['{0!s}/{1!s}.pfam'.format(GEN_PATH_ANNOTATION_FILES(),NAME_ASSEMBLY)]
+def pfam_task(path_orfs,out_dir, cpu_cap, tasks):
+    out_name = os.path.basename(path_orfs).split('.')[0]
+    trgs = ['{0!s}/{1!s}.pfam'.format(out_dir,out_name)]
     cmd = '{4!s} --cpu {0!s} --domtblout {1!s} {2!s} {3!s}'.format(cpu_cap,
-            trgs[0],PATH_PFAM_DATABASE,GEN_PATH_PEP(),tool_path_check(TOOLS_DICT['hmmer'].full_exe[0]))
+            trgs[0],PATH_PFAM_DATABASE,path_orfs,fg.tool_path_check(TOOLS_DICT['hmmer'].full_exe[0]))
     name = 'pfam'
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
-def annot_table_task(opts, tasks):
+def annot_table_task(path_assembly,out_dir,opts, tasks):
+    out_name = os.path.basename(path_assembly).split('.fa')[0]
     suffixes = ['annotation.txt','annotation_by_gene.txt']
-    trgs = ['{0!s}/{1!s}_{2!s}'.format(GEN_PATH_DIR(),NAME_ASSEMBLY,sufx) for sufx in suffixes]
+    trgs = ['{0!s}/{1!s}_{2!s}'.format(os.path.dirname(path_assembly),out_name,sufx) for sufx in suffixes]
     cmd = (
         'python {0!s}/annot_table_main.py --fasta {1!s} --outfile {2!s}/{3!s} '
         '--ko2path {4!s}/orthology_pathway.list --sp2enzyme '
@@ -125,41 +129,43 @@ def annot_table_task(opts, tasks):
         '--sp2nog {4!s}/idmapping.eggNOG --sp2ortho {4!s}/idmapping.orthodb '
         '--sp2bioc {4!s}/idmapping.biocyc --sp2goentrez '
         '{4!s}/idmapping_selected.tab ').format(
-        PATH_SCRIPTS, GEN_PATH_ASSEMBLY(), GEN_PATH_DIR(), NAME_ASSEMBLY,
-        PATH_DATABASES)
+        fg.PATH_SCRIPTS, path_assembly, os.path.dirname(path_assembly), out_name,
+        fg.PATH_DATABASES)
     cmd += ' '.join(['--'+k+' '+opts[k] for k in opts])
-    name = 'build_annotation_table'
-    out, err = GEN_LOGS(name)
+    name = 'build_annotation_table_' + out_name
+    out, err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
-def kegg_task(tasks):
+def kegg_task(out_dir, annotation_table, tasks, kegg_map_id='ko01100'):
     '''    Defines the kegg task. Uses PATH_SCRIPTS, 
         Params : 
     '''
-    trgs = ['{0!s}/ko01100.pdf'.format(GEN_PATH_ANNOTATION_FILES()),
-            '{0!s}/ko01100_KO.txt'.format(GEN_PATH_ANNOTATION_FILES())]
-    cmd = ('python {0!s}/color_pathways2.py --path ko01100 --transcriptomeKO '
-            '{1!s}/uniq_ko_annots.txt --output {2!s}').format(PATH_SCRIPTS,PATH_DATABASES,GEN_PATH_ANNOTATION_FILES())
-    name='draw_kegg_maps'
-    out,err = GEN_LOGS(name)
+    trgs = ['{0!s}/{1!s}.pdf'.format(out_dir,kegg_map_id),
+            '{0!s}/{1!s}_KO.txt'.format(out_dir,kegg_map_id)]
+    cmd = ('python {0!s}/color_pathways2.py --path {1!}s --transcriptomeKO '
+            #'{2!s}/uniq_ko_annots.txt --output {3!s}').format(fg.PATH_SCRIPTS,kegg_map_id,fg.PATH_DATABASES,out_dir)
+            '{2!s} --output {3!s}').format(fg.PATH_SCRIPTS,kegg_map_id,annotation_table,out_dir)
+    name='draw_kegg_maps_' + os.path.basename(annotation_table)
+    out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
-def pipeplot_task(annotation_table, tasks):
+def pipeplot_task(annotation_table,out_dir,tasks):
     trgs = []
     cmd = 'mkdir -p {0!s}/plots ; cd {0!s}/plots ; python {1!s}/pipePlot.py -i {2!s} ;'.format(
-            GEN_PATH_ANNOTATION_FILES(),PATH_SCRIPTS,annotation_table)
+            out_dir,fg.PATH_SCRIPTS,annotation_table)
     name = 'pipeplot'
-    out,err = GEN_LOGS(name)
+    out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def assembly_to_bed_task(path_assembly,assembly_name,out_dir, tasks):
+def assembly_to_bed_task(path_assembly,out_dir, tasks):
     '''
     '''
+    assembly_name = os.path.basename(path_assembly).split('.fa')[0]
     trgs = ['{0!s}/{1!s}.bed'.format(out_dir,assembly_name)]
     cmd = 'python {0!s}/fasta_to_bed_count_length.py {1!s} {2!s}'.format(
-            PATH_SCRIPTS,path_assembly,trgs[0])
-    name = 'fasta_to_bed'
-    out,err = GEN_LOGS(name)
+            fg.PATH_SCRIPTS,path_assembly,trgs[0])
+    name = 'fasta_to_bed_' + assembly_name
+    out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 

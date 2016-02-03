@@ -311,7 +311,7 @@ def go_filter(args, transrate_task, dep):
 def go_annotation(args, dep):
     return gen_annotation_supervisor(
         args.cpu, args.uniref90, args.nr, args.blastplus, args.signalp,
-        args.tmhmm, args.rnammer, dep, assembly_path= fg.GEN_PATH_ASSEMBLY(),
+        args.tmhmm, args.rnammer, dep, path_assembly= fg.GEN_PATH_ASSEMBLY(),
 	assembly_name=fg.NAME_ASSEMBLY, out_dir=fg.GEN_PATH_ANNOTATION_FILES())
 
 def go_expression(path_assembly, out_dir, args, dep):
