@@ -322,7 +322,8 @@ def go_expression(path_assembly, out_dir, args, dep):
         args.fastq1, args.fastq2, args.paired_names, args.unpaired,
         args.unpaired_names, args.cpu, args.sample_info, args.model, dep, 
 	args.intersectbed, args.express, assembly_name=fg.NAME_ASSEMBLY, 
-	assembly_path= fg.GEN_PATH_ASSEMBLY(), out_dir=fg.GEN_PATH_EXPRESSION_FILES())
+	assembly_path= fg.GEN_PATH_ASSEMBLY(), out_dir=fg.GEN_PATH_EXPRESSION_FILES(),
+	gene_trans_map=os.path.join(fg.GEN_PATH_ANNOTATION_FILES(),fg.NAME_ASSEMBLY+ '.gene_trans_map'))
 
 def go_manage_db(args, dep, log_files=True):
     if(args.which=='annotation'): 
