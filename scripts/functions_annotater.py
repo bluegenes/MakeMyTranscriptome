@@ -132,6 +132,15 @@ def pfam_task(path_orfs,out_dir, cpu_cap, tasks):
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
+def pfam_seq_task(path_orfs,out_dir, cpu_cap, tasks):
+    out_name = os.path.basename(path_orfs).split('.')[0]
+    trgs = ['{0!s}/{1!s}.pfam_tblout'.format(out_dir,out_name)]
+    cmd = '{0!s} --cpu {1!s} --tblout {2!s} {3!s} {4!s}'.format(
+        fg.tool_path_check(TOOLS_DICT['hmmer'].full_exe[0]),cpu_cap,trgs[0],PATH_PFAM_DATABASE, path_orfs)
+    name = 'pfam_tblout_' + out_name
+    out,err = fg.GEN_LOGS(name)
+    return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
+
 def annot_table_task(path_assembly,out_dir,opts, tasks):
     out_name = os.path.basename(path_assembly).split('.fa')[0]
     suffixes = ['annotation.txt','annotation_by_gene.txt']
