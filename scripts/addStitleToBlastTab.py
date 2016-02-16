@@ -10,6 +10,8 @@ args = parser.parse_args()
 blastFile = []
 hitList = []
 hitDt = {}
+header = ['query_id', 'subject_id', 'percent_identity', 'alignment_length', 'mismatches', 'gap_opens', 'query_start', 'query_end', 'subject_start', 'subject_end', 'evalue', 'bitscore', 'full_name', 'subject_length']
+
 with open(args.blast, 'r') as f:
     for line in f:
         line = line.rstrip().split('\t')
@@ -24,6 +26,8 @@ with open(args.db2Name, 'r') as f:
         if line[0] in hitSet:
             hitDt[line[0]] = line[1:]
     f.close()
+
+sys.stdout.write('\t'.join(header) + '\n')
 
 for line in blastFile:
     extraInfo = hitDt.get(line[1], [])
