@@ -32,8 +32,7 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
         predict_orfs = fan.transdecoder_predict_orfs_task(path_assembly,transd_dir,[longorfs])
     task_insert(predict_orfs, 'transdecoder', 1)
     pfam = fan.pfam_task(predict_orfs.targets[0], out_dir,cpumod(cpu, 2), [predict_orfs])
-    task_insert(pfam, 'pfam') # having trouble with pfam parsing errors
-    tasks.append(pfam)
+    task_insert(pfam, 'pfam') 
     if(blast_flag):
         blastx_sprot = fan.blast_task('blastx', out_dir, path_assembly, fd.PATH_SWISS_PROT, int(cpu/2), [])
         task_insert(blastx_sprot, 'spX')

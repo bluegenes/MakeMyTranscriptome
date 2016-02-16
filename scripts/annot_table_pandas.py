@@ -31,37 +31,38 @@ def get_orf_info(orf_bed):
 
 def get_blast_info(query_lengths, blastFile, blastType='blastx', blastDB = 'sp', bestWords=False):
     blastInfo = pd.read_table(blastFile, header=0)
-    blastInfo['hit_id'] = blastInfo['subject_id'].astype(str) + '_' +  blastInfo['full_name'].astype(str)
-    bestEval = blastInfo.iloc[blastInfo.groupby(['query_id']).apply(lambda x: x['evalue'].idxmin())]  
-    bestEval.set_index('query_id', inplace=True)
-    bestEval.drop_duplicates(keep='first', inplace=True)
-    infoToAdd = bestEval.loc[:, ['hit_id', 'subject_length']]
+    blastInfo.loc[:,'hit_id'] = blastInfo.loc[:, 'subject_id'].astype(str) + '_' +  blastInfo.loc[:, 'full_name'].astype(str)
     if bestWords:
+        bestWordsDF = blastInfo.copy()
         query_lengthsDF = query_lengths.to_frame() #calculate query coverage
         if blastType == 'blastx':
             query_lengthsDF.rename(columns={'Transcript_Length': 'query_length'}, inplace=True)
         else:
             query_lengthsDF.rename(columns={'ORF_Length': 'query_length'}, inplace=True)
-        blastInfo = blastInfo.merge(query_lengthsDF,  how='outer',left_on='query_id',right_index=True).dropna()
-        blastInfo['query_coverage'] = blastInfo['alignment_length'].astype(float)/ blastInfo['query_length'].astype(float) 
+        bestWordsDF = bestWordsDF.merge(query_lengthsDF,  how='outer',left_on='query_id',right_index=True).dropna()
+        bestWordsDF.loc[:,'query_coverage'] = bestWordsDF.loc[:,'alignment_length'].astype(float)/ bestWordsDF['query_length'].astype(float) 
         # get the words from each entry
-        blastInfo['words'] = blastInfo['full_name'].str.strip().str.lower().str.replace(',','').str.replace(':','').str.replace('-like','').str.replace(' isoform','_isoform').str.replace('\[\S*', '').str.replace('\S*\]', '')
-        blastInfo['words'] = blastInfo['words'].str.replace('and','').str.replace('or', '').str.replace('similar', '').str.replace('protein','').str.replace('hypothetical', '').str.replace('quality','').str.replace('unnamed','').str.replace('product','').str.split()
-        blastInfo['multiplier'] = blastInfo['percent_identity'].astype(float) * blastInfo['query_coverage'].astype(float)
+        bestWordsDF.loc[:,'words'] = bestWordsDF.loc[:,'full_name'].str.strip().str.lower().str.replace(',','').str.replace(':','').str.replace('-like','').str.replace(' isoform','_isoform').str.replace('\[\S*', '').str.replace('\S*\]', '')
+        bestWordsDF.loc[:,'words'] = bestWordsDF.loc[:,'words'].str.replace('and','').str.replace('or', '').str.replace('similar', '').str.replace('protein','').str.replace('hypothetical', '').str.replace('quality','').str.replace('unnamed','').str.replace('product','').str.split()
+        bestWordsDF.loc[:,'multiplier'] = bestWordsDF.loc[:,'percent_identity'].astype(float) * bestWordsDF.loc[:,'query_coverage'].astype(float)
        # this is no *quite* doing what we want --> want to use all 20 matches to get scores, then assess that way. right now, we're just picking the top total # words really
-        blastInfo['wordDt']= blastInfo.apply(wordsToScoreDt, axis = 1)
-        blastInfo['score'] = blastInfo.apply(get_total_score, axis = 1)
+        bestWordsDF.loc[:,'wordDt']= bestWordsDF.apply(wordsToScoreDt, axis = 1)
+        bestWordsDF.loc[:,'score'] = bestWordsDF.apply(get_total_score, axis = 1)
         #get the best word score
-        bestWordScore = blastInfo.iloc[blastInfo.groupby([cNames[0]]).apply(lambda x: x['score'].idxmax())]
+        bestWordScore = bestWordsDF.iloc[bestWordsDF.groupby([cNames[0]]).apply(lambda x: x['score'].idxmax())]
         bestWordScore.set_index(cNames[0], inplace=True)
         bestWordScore.drop_duplicates(keep='first', inplace=True) 
         #here we need to add a column for best word hit name
-        infoToAdd['best_word'] = bestWordScore.loc[:, 'hit_id']
+        #infoToAdd['best_word'] = bestWordScore.loc[:, 'hit_id']
+    blastInfo = blastInfo.iloc[blastInfo.groupby(['query_id']).apply(lambda x: x['evalue'].idxmin())]
+    blastInfo.set_index('query_id', inplace=True)
+    blastInfo.drop_duplicates(keep='first',inplace=True)
+    blastInfo= blastInfo.loc[:, ['hit_id', 'subject_length']]
     query_name, db_name = get_colnames(blastType,blastDB)
     hit_name = db_name + '_' + blastType
     # change column names to reflect the database + the blast type  
-    infoToAdd.rename(columns={'query_id': query_name, 'hit_id': hit_name, 'subject_length': hit_name + '_length'}, inplace=True)
-    return(infoToAdd)
+    blastInfo.rename(columns={'query_id': query_name, 'hit_id': hit_name, 'subject_length': hit_name + '_length'}, inplace=True)
+    return(blastInfo)
 
 def wordsToScoreDt(df_row):
     wordlist = list(set(df_row['words']))
@@ -95,8 +96,9 @@ def split_pfam_list(pfamRow):
 
 def get_pfam_info(pfam_file):
     pfamD = pd.read_table(pfam_file, header=None, comment='#')
-    s= pfamD[0].str.split('\s*').apply(split_pfam_list)
-    pfamDF = s.to_frame()[0].apply(lambda x: pd.Series(x.split('\t')))
+    #pfamD= pfamD.iloc[:,0].str.split('\s*').apply(split_pfam_list)
+    pfamD= pfamD.iloc[:,0].str.split().apply(split_pfam_list)
+    pfamDF = pfamD.to_frame().iloc[:,0].apply(lambda x: pd.Series(x.split('\t')))
     ## to have the description included, replace '1' with '22' in both lines below
     groupORF = pfamDF.groupby(3)[1].apply(lambda x: ','.join(x)).reset_index()
     groupORF.rename(columns={3:'ORF_id', 1:'PFAM'}, inplace=True)
@@ -127,7 +129,8 @@ def main(args):
     initDF.rename(columns = {0:'Gene_id'}, inplace=True)
     transcript_lengths = get_transcript_length(args.fasta)
     initDF = initDF.join(transcript_lengths)
-    initDF = initDF.join(get_blast_info(transcript_lengths, args.spX, blastDB='sp', blastType='blastx'))
+    blastXinfo = get_blast_info(transcript_lengths, args.spX, blastDB='sp', blastType='blastx')
+    initDF = initDF.join(blastXinfo)
     orfInfo = get_orf_info(args.transdecoder_bed)
     orfLengths = orfInfo.loc[:, ['Longest_ORF_id', 'ORF_length']].set_index('Longest_ORF_id')
     initDF = initDF.join(orfInfo)
@@ -139,7 +142,6 @@ def main(args):
     blastpDF = get_blast_info(orfLengths, args.spP, blastDB='sp', blastType='blastp')
     initDF = initDF.merge(blastpDF, how='left', left_on='Longest_ORF_id', right_index=True, copy=False)
     pfamDF = get_pfam_info(args.pfam)
-    #import pdb; pdb.set_trace()
     initDF = initDF.merge(pfamDF, how='left', left_on='Longest_ORF_id', right_index=True, copy=False) 
     if args.ur90P is not None:
         ur90blastpDF = get_blast_info(orfLengths,args.ur90P, blastDB='ur90', blastType='blastp')
@@ -159,7 +161,7 @@ def main(args):
     #change this --> within the functions where we create these:
     #initDF.drop('spHitX',axis=1, inplace=True)
     #initDF.drop('spHitP',axis=1, inplace=True)
-    initDF.to_csv(args.outfile, index_label='Transcript_id', sep='\t', na_rep='.')
+    initDF.to_csv(args.outfile + '_annotation.txt', index_label='Transcript_id', sep='\t', na_rep='.')
 
 
 # now map sp id's to other databases

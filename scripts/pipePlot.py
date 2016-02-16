@@ -183,9 +183,9 @@ pathPlot.savefig('keggPaths.png', format = 'png')
 """ Ortholog Hit Ratio """
 ###################################################################################
 hitRatioDF = reportDF.copy()
-hitRatioDF.Sprot_BLASTX_Length = hitRatioDF.loc[:,"Sprot_BLASTX_Length"].replace({'.':np.nan})
+hitRatioDF.swissprot_blastx_length = hitRatioDF.loc[:,"swissprot_blastx_length"].replace({'.':np.nan})
 hitRatioDF.dropna()
-hitRatioDF.loc[:,("Sprot_BLASTX_Length", "Transcript_Length")] = hitRatioDF.loc[:, ("Sprot_BLASTX_Length", "Transcript_Length")].astype(float)
+hitRatioDF.loc[:,("swissprot_blastx_length", "Transcript_Length")] = hitRatioDF.loc[:, ("swissprot_blastx_length", "Transcript_Length")].astype(float)
 hitRatioDF["orthologHitRatio"] = hitRatioDF.Transcript_Length/hitRatioDF.Sprot_BLASTX_Length
 data = np.array(hitRatioDF['orthologHitRatio'])
 linspaceBins = np.linspace(0,2.5,num =50 )
@@ -198,9 +198,9 @@ plt.savefig('orthologHitRatio_moreBins.png', format='png')
 ###################################################################################
 """ Length of blast hits vs no hits """
 ###################################################################################
-hits =  reportDF[(reportDF.Sprot_BLASTX_Length != '.')]
+hits =  reportDF[(reportDF.swissprot_blastx_length != '.')]
 hitsTranscriptLengths = np.array(hits['Transcript_Length'])
-noHits = reportDF[(reportDF.Sprot_BLASTX_Length == '.')]
+noHits = reportDF[(reportDF.swissprot_blastx_length == '.')]
 noHitsTranscriptLengths = np.array(noHits['Transcript_Length'])
 lengthBins = np.linspace(200,1500,num =50 )
 plt.figure()
