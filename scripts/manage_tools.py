@@ -23,7 +23,7 @@ else:
 
 tool_supervisor_log = '{0!s}/.tool_supervisor_log'.format(PATH_TOOLS)
 
-def tool_check(fullpaths_exe, exe, allow_path=False):
+def tool_check(t,fullpaths_exe, exe, allow_path=False):
     external_tools = False
     path_var = False
     if all(exists(x) for x in fullpaths_exe):
@@ -31,12 +31,15 @@ def tool_check(fullpaths_exe, exe, allow_path=False):
     if allow_path:
         if all(which(x) for x in exe):
             path_var = True
+	elif all(which(os.path.basename(x)) for x in exe): # is this necessary?
+	    path_var = True
+	    t.exe = [os.path.basename(x)) for x in exe]
     return any([external_tools, path_var]) # return both vals to distinguish btwn our installs vs path installs...
 
 def check_tools(toolsD):
     toolsToInstall = {}
     for name, t in toolsD.items():
-        if not tool_check(t.full_exe,t.exe):
+        if not tool_check(t,t.full_exe,t.exe):
             toolsToInstall[name] = t
     return toolsToInstall
 
@@ -71,7 +74,7 @@ def safe_retrieve(source, target, urltype):
         os.rename(temp, target+extension)
     except:
         print("WARNING : could not retrieve " + source)
-    try:	
+    try:        
         expand_target(target, extension)
     except:
         print("WARNING : could not extract " + target+extension)
@@ -131,14 +134,16 @@ def main(install=False, toolList = [], tool_check=True, cpu=4):
     if(install and platform.system().lower() == 'linux'):
         for name, tool in toolsD.items():
             if tool.install: # don't download tools that are not openly licensed or do not provide linux binaries
-	        partial_get(tool.urltype, tool.url, tool.target)
+                partial_get(tool.urltype, tool.url, tool.target)
                 install_task = tool.install_task
                 if install_task is not None:
                     tasks.append(install_task)
             else:
-	        print(tool.instructions)
+                print(tool.instructions)
     else:
         for name, tool in toolsD.items():
+            print('\n Installation instructions for: ' + tool.name)
+            print('\n\t Download linux binary at this link: ' + tool.url)
             print(tool.instructions)
     run_tasks(tasks, cpu)
     write_log(log_table)
@@ -151,7 +156,7 @@ if(__name__ == '__main__'):
     parser.add_argument('-t', '--tool', action='append', default=[])
     parser.add_argument('--cpu', type=int, default=4)
     args = parser.parse_args()
-    if args.hard:
-        args.install = True
+    #if args.hard:
+    #    args.install = True
     main(args.install, args.tool, not args.hard, args.cpu)
 
