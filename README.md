@@ -1,5 +1,7 @@
 ###MakeMyTranscriptome (MMT) is an automated pipeline for *de novo* transcriptomics.
 
+[![Join the chat at https://gitter.im/bluegenes/MakeMyTranscriptome](https://badges.gitter.im/bluegenes/MakeMyTranscriptome.svg)](https://gitter.im/bluegenes/MakeMyTranscriptome?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 For a full guide, check out the [Wiki](http://github.com/bluegenes/makeMyTranscriptome/wiki)
 
 
