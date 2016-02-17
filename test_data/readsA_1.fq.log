@@ -1,0 +1,28 @@
+[prinseq-lite-0.20.4] [02/17/2016 13:15:49] Executing PRINSEQ with command: "perl prinseq-lite.pl -fastq /ni2/tessa_projects/manageDBtest/test_data/readsA_1.fq -fastq2 /ni2/tessa_projects/manageDBtest/test_data/readsA_2.fq -out_format 3 -trim_qual_right 20 -trim_qual_left 20 -trim_qual_type min -trim_qual_rule lt -trim_qual_window 1 -trim_qual_step 1 -trim_tail_left 8 -trim_tail_right 8 -log -min_len 55 -out_good /ni2/tessa_projects/manageDBtest/assemblies/testing/assembly_files/prinseq_output_0 -out_bad null"
+[prinseq-lite-0.20.4] [02/17/2016 13:15:49] Parsing and processing input data: "/ni2/tessa_projects/manageDBtest/test_data/readsA_1.fq" and "/ni2/tessa_projects/manageDBtest/test_data/readsA_2.fq"
+[prinseq-lite-0.20.4] [02/17/2016 13:15:55] Done parsing and processing input data
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Input sequences (file 1): 30,575
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Input bases (file 1): 2,323,700
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Input mean length (file 1): 76.00
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Input sequences (file 2): 30,575
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Input bases (file 2): 2,323,700
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Input mean length (file 2): 76.00
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Good sequences (pairs): 25,892
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Good bases (pairs): 3,935,176
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Good mean length (pairs): 151.98
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Good sequences (singletons file 1): 1,441 (4.71%)
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Good bases (singletons file 1): 109,375
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Good mean length (singletons file 1): 75.90
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Good sequences (singletons file 2): 1,206 (3.94%)
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Good bases (singletons file 2): 91,496
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Good mean length (singletons file 2): 75.87
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Bad sequences (file 1): 3,242 (10.60%)
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Bad bases (file 1): 246,392
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Bad mean length (file 1): 76.00
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Bad sequences (file 2): 1,441 (4.71%)
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Bad bases (file 2): 109,516
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Bad mean length (file 2): 76.00
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] Sequences filtered by specified parameters:
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] trim_qual_left: 3116
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] trim_tail_left: 5
+[prinseq-lite-0.20.4] [02/17/2016 13:15:56] min_len: 3598
