@@ -87,7 +87,7 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
         signalp = fan.signalp_task(predict_orfs.targets[0], out_dir, [predict_orfs])
         task_insert(signalp, 'signalP')
     if(rnammer_flag):
-       print('\nrnammer is no longer supported.\n' 
+       print('\nrnammer is no longer supported.\n')
        #rnammer = fan.rnammer_task(path_assembly,[])
        # task_insert(rnammer, 'rnammer')
     
