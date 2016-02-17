@@ -13,10 +13,11 @@ def cpumod(cpu, k): return int(round(float(cpu)/k))
 def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_flag, tmhmm_flag, rnammer_flag, dependency_set, path_assembly=fg.GEN_PATH_ASSEMBLY(), assembly_name=fg.NAME_ASSEMBLY,out_dir=fg.GEN_PATH_ANNOTATION_FILES(), improve_orfs=False):
     tasks = []
     annot_table_opts = {}
-    def task_insert(task, name=None):
+    def task_insert(task, name=None, index=0):
         tasks.append(task)
         if(name != None):
-            annot_table_opts[name] = task.targets[0]
+            annot_table_opts[name] = task.targets[index]
+	    
     gene_trans_map = fan.gene_trans_map_task(path_assembly,out_dir,[])
     task_insert(gene_trans_map, 'geneTransMap')
     transd_dir = os.path.join(out_dir,'transdecoder')
@@ -29,10 +30,9 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
         predict_orfs=fan.transdecoder_predict_orfs_task(path_assembly,transd_dir,[longorfs,pfam_transd,blastp_transd],pfam_transd.targets[0],blastp_transd.targets[0])
     else:
         predict_orfs = fan.transdecoder_predict_orfs_task(path_assembly,transd_dir,[longorfs])
-    task_insert(predict_orfs, 'transdecoder')
+    task_insert(predict_orfs, 'transdecoder', 1)
     pfam = fan.pfam_task(predict_orfs.targets[0], out_dir,cpumod(cpu, 2), [predict_orfs])
-#    task_insert(pfam, 'pfam') # having trouble with pfam parsing errors
-    tasks.append(pfam)
+    task_insert(pfam, 'pfam') 
     if(blast_flag):
         blastx_sprot = fan.blast_task('blastx', out_dir, path_assembly, fd.PATH_SWISS_PROT, int(cpu/2), [])
         task_insert(blastx_sprot, 'spX')
@@ -76,7 +76,7 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
             dmnd_task_insert(dmnd_xnr)
             expand = fan.blast_augment_task(fd.PATH_NR, dmnd_xnr.targets[0], [dmnd_xnr])
             task_insert(expand, 'nrX')
-            dmnd_pnr = fan.diamondP_task('blastp',out_dir, predict_orfs.targets[0], fd.PATH_NR, cpumod(cpu, 2), dmnd_dependencies+[predict_orfs])
+            dmnd_pnr = fan.diamond_task('blastp',out_dir, predict_orfs.targets[0], fd.PATH_NR, cpumod(cpu, 2), dmnd_dependencies+[predict_orfs])
             dmnd_task_insert(dmnd_pnr)
             expand = fan.blast_augment_task(fd.PATH_NR, dmnd_pnr.targets[0], [dmnd_pnr])
             task_insert(expand, 'nrP')
@@ -87,8 +87,9 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
         signalp = fan.signalp_task(predict_orfs.targets[0], out_dir, [predict_orfs])
         task_insert(signalp, 'signalP')
     if(rnammer_flag):
-        rnammer = fan.rnammer_task(path_assembly,[])
-        task_insert(rnammer, 'rnammer')
+       print('\nrnammer is no longer supported.\n')
+       #rnammer = fan.rnammer_task(path_assembly,[])
+       # task_insert(rnammer, 'rnammer')
     
     annot = fan.annot_table_task(path_assembly,out_dir,annot_table_opts, tasks[:])
     tasks.append(annot)

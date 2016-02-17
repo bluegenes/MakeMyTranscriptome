@@ -17,6 +17,7 @@ NAME_OUT_DIR = 'mmt_test_output'
 
 ''' static path variables '''
 PATH_ROOT = dirname(dirname(abspath(__file__)))
+PATH_TEST = join(PATH_ROOT, 'test_data')
 PATH_SCRIPTS = join(PATH_ROOT, 'scripts')
 PATH_DATABASES = join(PATH_ROOT, 'databases')
 PATH_ASSEMBLIES = join(PATH_ROOT, 'assemblies')
@@ -33,8 +34,6 @@ PATH_NOG_CATEGORIES = join(PATH_DATABASES, 'nog_categories')
 
 # Dynamic path variable functions
 def GEN_PATH_DIR(): return os.path.join(PATH_ASSEMBLIES, NAME_OUT_DIR)
-
-#def GEN_ASSEMBLY_NAME(): return NAME_ASSEMBLY
 
 def GEN_PATH_ASSEMBLY_FILES(): return os.path.join(GEN_PATH_DIR(), 'assembly_files')
 
@@ -63,15 +62,15 @@ def GEN_PATH_ANNOT_TABLE(): return os.path.join(GEN_PATH_DIR(), NAME_ASSEMBLY+'a
 def GEN_LOGS(x): return (os.path.join(GEN_PATH_LOGS(), x+'.out_log'),
                          os.path.join(GEN_PATH_LOGS(), x+'.err_log'))
 
-def tool_path_check(name):
-    temp = os.path.join(PATH_TOOLS, name)
-    if(os.path.exists(temp)):
-        return temp
+def tool_path_check(full_exe):
+    name = os.path.basename(full_exe)
+    if(os.path.exists(full_exe)):
+        return full_exe
     elif(which(name)):
         print('WARNING : MMT has not installed '+name+'. MMT will use the version found in your path variable instead.')
         return name
     else:
-        print('INSTALLATION ERROR : MMT has not installed '+name+' and did not find this program in your path variable. Steps requiring '+name+'will not be performed.') 
+        print('INSTALLATION ERROR : MMT has not installed '+name+' and did not find this program in your path variable. Steps requiring '+name+' will not be performed.') 
 
 def build_dir_task(tasks):
     '''

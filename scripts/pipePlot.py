@@ -20,8 +20,6 @@ parser.add_argument('-i','--input',help='the countstable file.')
 args = parser.parse_args()
 
 reportDF=pd.io.parsers.read_table(args.input, header=0, index_col = False,sep='\t')
-#reportDF=pd.io.parsers.read_table('Axolotl_no_rmdup_good_summarized_annotation.txt', header=0, index_col = False)
-#reportDF=pd.io.parsers.read_table('rabbitfish_highq_rmdup_repaired_sumTrin_annotation.txt', header=0, index_col = False)
 descriptions=open(PATH_NOG_CATEGORIES,'r')
 
 sns.set(style="white")
@@ -84,7 +82,8 @@ def get_colors(functions, c1, c2, c3, c4):
     return newPalette
 
 
-# PFAM
+# PFAM --> this has changed now
+
 pTerms = re.compile('(PF\d*)\.\d*[\^]([^\^]*)[\^]([^\^]*)[\^]')
 
 def getMultiplePFAMMatches(pfamEntry):
@@ -125,23 +124,12 @@ reds = sns.color_palette("Reds", 5)
 greys = sns.color_palette("Greys", 2)
 colors = get_colors(cogDF["Category"].unique(), blues, reds, greens, greys)
 
-#groupedCogDF = cogDF.groupby(["Category", "Description"], as_index=False)["Counts"].sum()
-#groupedCogDF['longDescription'] = groupedCogDF["Category"].map(describe)
-#sumCogPlot = sns.factorplot("Description", "Counts", hue="longDescription", size=6,aspect=2, data=groupedCogDF, kind='bar', palette=colors)
-#sumCogPlot.savefig('cogMultiple.png', format='png')
-#sumCogPlot.savefig('rabbitfish_cogMultiple.png', format='png')
+groupedCogDF = cogDF.groupby(["Category", "Description"], as_index=False)["Counts"].sum()
+groupedCogDF['longDescription'] = groupedCogDF["Category"].map(describe)
+sumCogPlot = sns.factorplot("Description", "Counts", hue="longDescription", size=6,aspect=2, data=groupedCogDF, kind='bar', palette=colors)
+sumCogPlot.savefig('cogMultiple.png', format='png')
 
 
-######### WHAT WAS I TRYING TO ACCOMPLISH HERE????? ###########
-#observations = pd.DataFrame(cogDF["Category"].value_counts()).sort_index()
-#observations = observations.rename(columns={0:"Total #"}, inplace=True)
-#cogsPlusObservations = groupedCogDF.merge(observations,left_on="Category", right_index=True)
-
-#observations = observations.rename(columns={0:"Total #"}, inPlace=True)
-#cogsPlusObservations["% (observations/#genes)"] = 100*(cogsPlusObservations["Total #"]/numGenes)
-#cogsPlusObservations["% (observations/#transcripts)"] = 100*(cogsPlusObservations["Total #"]/numTranscripts)
-#cogsPlusObservations["% (observations/#nog hits)"] = 100*(cogsPlusObservations["Total #"]/numNogHits)
-#cogsPlusObservations["% (category observations/#total observations)"] = 100*(cogsPlusObservations["Total #"]/cogsPlusObservations["Total #"].sum())
 '''
 ################################################################################################
 """          PFAM            """
@@ -183,24 +171,23 @@ pathPlot.savefig('keggPaths.png', format = 'png')
 """ Ortholog Hit Ratio """
 ###################################################################################
 hitRatioDF = reportDF.copy()
-hitRatioDF.Sprot_BLASTX_Length = hitRatioDF.loc[:,"Sprot_BLASTX_Length"].replace({'.':np.nan})
+hitRatioDF.swissprot_blastx_length = hitRatioDF.loc[:,"swissprot_blastx_length"].replace({'.':np.nan})
 hitRatioDF.dropna()
-hitRatioDF.loc[:,("Sprot_BLASTX_Length", "Transcript_Length")] = hitRatioDF.loc[:, ("Sprot_BLASTX_Length", "Transcript_Length")].astype(float)
-hitRatioDF["orthologHitRatio"] = hitRatioDF.Transcript_Length/hitRatioDF.Sprot_BLASTX_Length
+hitRatioDF.loc[:,("swissprot_blastx_length", "Transcript_Length")] = hitRatioDF.loc[:, ("swissprot_blastx_length", "Transcript_Length")].astype(float)
+hitRatioDF["orthologHitRatio"] = hitRatioDF.Transcript_Length/hitRatioDF.swissprot_blastx_length
 data = np.array(hitRatioDF['orthologHitRatio'])
 linspaceBins = np.linspace(0,2.5,num =50 )
 plt.figure()
 plt.hist(data,linspaceBins)
 plt.title("Ortholog Hit Ratio")
 plt.savefig('orthologHitRatio_moreBins.png', format='png')
-#plt.savefig('rabbitfish_orthologHitRatio_moreBins.png', format='png')
 
 ###################################################################################
 """ Length of blast hits vs no hits """
 ###################################################################################
-hits =  reportDF[(reportDF.Sprot_BLASTX_Length != '.')]
+hits =  reportDF[(reportDF.swissprot_blastx_length != '.')]
 hitsTranscriptLengths = np.array(hits['Transcript_Length'])
-noHits = reportDF[(reportDF.Sprot_BLASTX_Length == '.')]
+noHits = reportDF[(reportDF.swissprot_blastx_length == '.')]
 noHitsTranscriptLengths = np.array(noHits['Transcript_Length'])
 lengthBins = np.linspace(200,1500,num =50 )
 plt.figure()
@@ -212,7 +199,6 @@ plt.xlabel("Sequence Length")
 plt.ylabel("Number of Sequences")
 plt.legend()
 plt.savefig('lengths_hits_noHits.png', format='png')
-#plt.savefig('rabbitfish_lengths_hits_noHits.png', format='png')
 
 
 
@@ -220,26 +206,33 @@ plt.savefig('lengths_hits_noHits.png', format='png')
 ####### get basic summary stats
 ###################################################################################
 summaryDF = reportDF.replace({'.':None})
+
 info = {}
 info['Genes'] = len(pd.unique(summaryDF["Gene_id"].dropna()))
 info['Transcripts'] = len(pd.unique(summaryDF["Transcript_id"].dropna()))
 info['NOG Database Hits'] =len(summaryDF["eggNOG"].dropna())
-info['BLASTX hits to Swiss Prot'] = len(summaryDF["Sprot_BLASTX"].dropna())
-info['BLASTP hits (ORFs) to Swiss Prot'] = len(summaryDF["Sprot_BLASTP"].dropna())
-info['BLASTX hits to UniRef90'] = len(summaryDF["Uniref90_BLASTX"].dropna())
-info['BLASTP hits to UniRef90'] = len(summaryDF["Uniref90_BLASTP"].dropna())
-info['PFAM Domains'] =len(summaryDF["PFAM"].dropna())
-info['rRNA'] = len(summaryDF['RNAMMER'].dropna())
-info['predicted ORFs'] = len(summaryDF['Prot_id'].dropna())
-info['BLASTX hit to "closest" species'] = len(summaryDF['Closest_BLASTX'].dropna())
-info['BLASTX hit to NR'] = len(summaryDF['BLAST_NR_BestWords'].dropna())
-info['Transmembrane Domains'] =  len(summaryDF['TmHMM'].dropna())
-info['Signal Peptide Sequence'] = len(summaryDF['SignalP'].dropna())
+info['BLASTX hits to Swiss Prot'] = len(summaryDF["swissprot_blastx"].dropna())
+info['BLASTP hits (ORFs) to Swiss Prot'] = len(summaryDF["swissprot_blastp"].dropna())
+info['# transcripts with ORFs'] = len(summaryDF['Longest_ORF_id'].dropna())
+if 'uniref90_blastx' in summaryDF.columns:
+    info['BLASTX hits to UniRef90'] = len(summaryDF["uniref90_blastx"].dropna())
+if 'uniref90_blastp' in summaryDF.columns:
+    info['BLASTP hits to UniRef90'] = len(summaryDF["uniref90_blastp"].dropna())
+if 'PFAM' in summaryDF.columns:
+    info['PFAM Domains'] =len(summaryDF["PFAM"].dropna())
+if 'reciprocal_blast' in summaryDF.columns:
+    info['BLASTX hit to "closest" species'] = len(summaryDF['reciprocal_blast'].dropna())
+if 'nr_blastx' in summaryDF:
+    info['BLASTX hit to NR -- best E-value'] = len(summaryDF['nr_blastx'].dropna())
+#    info['BLASTX hit to NR -- hit with most common words'] = len(summaryDF['BLAST_NR_BestWords'].dropna())
+if 'tmhmm' in summaryDF.columns:
+    info['Transmembrane Domains'] =  len(summaryDF['tmhmm'].dropna())
+if 'signalp' in summaryDF.columns:
+    info['Signal Peptide Sequence'] = len(summaryDF['signalp'].dropna())
 
 infoDF = pd.DataFrame.from_dict(info.items())
 infoDF.columns = ['Description', 'Number']
 infoDF.to_csv('annotation.summary', sep='\t', index=False, header=False) #write top families to file
-#infoDF.to_csv('rabbitfish_annotation.summary', sep='\t', index=False, header=False) #write top families to file
 
 
 

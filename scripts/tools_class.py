@@ -5,7 +5,7 @@ from os.path import join, exists, dirname
 from tasks_v2 import Task
 
 class ext_tool:
-    def __init__(self,name,url,target,executables,instructions,urltype='tar.gz',dependencies = [], folder_name = '', install=True):
+    def __init__(self,name,url,target,executables,instructions,web='',urltype='tar.gz',dependencies = [], folder_name = '', install=True):
 
         self.name = name
         self.url = url
@@ -23,6 +23,7 @@ class ext_tool:
 	if len(folder_name)>0:
 	    self.folder_name = join(dirname(self.target), folder_name)
             self.full_exe = [join(self.folder_name, x) for x in self.exe]
+	self.web = web
 	
     def set_install(self, cmd, task_deps=[], log_flag=True):
         install_trgs = self.full_exe

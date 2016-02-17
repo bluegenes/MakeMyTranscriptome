@@ -66,11 +66,11 @@ def express_task(assembly_path,out_dir,out_name,bam_input,tasks):
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def counts_to_table_task(gene_trans_map,out_dir,express_files,out_name,flag,tasks):
+def counts_to_table_task(gene_trans_map,out_dir,count_files,out_name,flag,tasks):
     '''
     '''
     trgs = ['{0!s}/{1!s}.countsTable'.format(out_dir,out_name)]
-    count_str = ' '.join(['--counts {0!s}'.format(f) for f in express_files])
+    count_str = ' '.join(['--counts {0!s}'.format(f) for f in count_files])
     cmd = ('python {0!s}/counts_to_table2.py --out {1!s} --inDir {2!s} '
             '--outDir {2!s} {3!s} {4!s} --geneTransMap {5!s}').format( 
             fg.PATH_SCRIPTS,out_name,out_dir,flag,count_str,gene_trans_map)
