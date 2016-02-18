@@ -43,9 +43,9 @@ If you just want to check the installed tools, omit the ```--install``` option. 
 
 We've included test data to check your installation:
 ```
-mmt full -test --email youremail@
+mmt full -test --email youremail
 ```
-A full test takes about 40 minutes on 12 cores (30 mins of which is the assembly with Trinity).
+A full test takes about 40 minutes on 12 threads (30 mins of which is the assembly with Trinity).
 
 
 
