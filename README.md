@@ -1,4 +1,4 @@
-###MakeMyTranscriptome (MMT): an automated pipeline for *de novo* transcriptomics.
+###MakeMyTranscriptome (MMT): an automated pipeline for *de novo* transcriptomics
 
 [![Join the chat at https://gitter.im/bluegenes/MakeMyTranscriptome](https://badges.gitter.im/bluegenes/MakeMyTranscriptome.svg)](https://gitter.im/bluegenes/MakeMyTranscriptome?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -15,7 +15,9 @@ MMT is composed of four principle tools:
 A fifth tool is currently being developed:
 - **compare** - compare MMT assemblies constructed with different parameters
 
-Each tool can be run individually, or all four can be executed as a single virtual tool, **full**. All tools make use of two additional convenience modules, **databases** and **tools** which check for required databases and tools, respectively. If you're working on a Linux machine, MMT can download the tools for you; otherwise, it will assess the tools you have available and print recommended installation instructions.
+Each tool can be run individually, or all can be executed as a single virtual tool, **full**. All tools make use of two additional convenience modules, **databases** and **tools** which check for required databases and tools, respectively. If you're working on a Linux machine, MMT can download the tools for you; otherwise, it will assess the tools you have available and print recommended installation instructions.
+
+One important note: if you already have an assembly, the **full** module can still be used to run all downstream steps: just provide your assembly wiht ```--assembly``` and MMT  will skip the assembly steps. At the moment, this means skipping read QC as well, but this can be addressed if there's interest.
 
 
 ### Quick Start Guide:
