@@ -39,7 +39,7 @@ mmt setup --install
 If you just want to check the installed tools, omit the ```--install``` parameter. In release v0.1, databases will be downloaded in setup, but we'll update in a future release to allow you to specify a database path if you've previously installed these databases.
 
 
-We've included some test data you can use to test your installation:
+We've included test data to check your installation:
 ```
 mmt full -test
 ```
