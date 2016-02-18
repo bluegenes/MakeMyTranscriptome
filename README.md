@@ -34,15 +34,16 @@ cd MakeMyTranscriptome
 To install tools and databases, run:
 
 ``` 
-mmt setup --install 
+mmt setup --install --email youremail
 ``` 
-If you just want to check the installed tools, omit the ```--install``` parameter. In release v0.1, databases will be downloaded in setup, but we'll update in a future release to allow you to specify a database path if you've previously installed these databases.
+If you just want to check the installed tools, omit the ```--install``` option. In release v0.1, databases will be downloaded in setup, but we'll update in a future release to allow you to specify a database path if you've previously installed these databases. Since downloading databases takes a while, we recommend using our ```--email``` option: MMT will email you with updates and when all databases have been installed.
 
 
 We've included test data to check your installation:
 ```
-mmt full -test
+mmt full -test --email youremail@
 ```
+A full test takes about 40 minutes on 12 cores (30 mins of which is the assembly with Trinity).
 
 
 
