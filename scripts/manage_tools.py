@@ -33,7 +33,7 @@ def tool_check(t,fullpaths_exe, exe, allow_path=False):
             path_var = True
 	elif all(which(os.path.basename(x)) for x in exe): # is this necessary?
 	    path_var = True
-	    t.exe = [os.path.basename(x)) for x in exe]
+	    t.exe = [os.path.basename(x) for x in exe]
     return any([external_tools, path_var]) # return both vals to distinguish btwn our installs vs path installs...
 
 def check_tools(toolsD):
