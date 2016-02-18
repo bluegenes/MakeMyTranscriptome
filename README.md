@@ -17,7 +17,7 @@ A fifth tool is currently being developed:
 
 Each tool can be run individually, or all can be executed as a single virtual tool, **full**. All tools make use of two additional convenience modules, **databases** and **tools** which check for required databases and tools, respectively. If you're working on a Linux machine, MMT can download the tools for you; otherwise, it will assess the tools you have available and print recommended installation instructions.
 
-One important note: if you already have an assembly, the **full** module can still be used to run all downstream steps: just provide your assembly wiht ```--assembly``` and MMT  will skip the assembly steps. At the moment, this means skipping read QC as well, but this can be addressed if there's interest.
+One important note: if you already have a transcriptome, the **full** module can still be used to perform all downstream analyses. If you provide your transcriptome with the ```--assembly``` option, MMT will simply skip the assembly steps (currently this means skipping read QC as well, but this can be addressed if there's interest). Similarly, if you do not provide a csv file, MMT will skip the expression steps.  
 
 
 ### Quick Start Guide:
