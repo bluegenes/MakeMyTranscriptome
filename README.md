@@ -22,8 +22,6 @@ One important note: if you already have a transcriptome, the **full** module can
 
 ### Quick Start Guide:
 
-MMT is a convenience tool that runs a number of bioinformatics tools in an automated fashion.
-
 First, download MMT via git (below) or click the "Download ZIP" button.
 ```
 git clone https://github.com/bluegenes/MakeMyTranscriptome.git
