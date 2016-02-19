@@ -43,7 +43,7 @@ We've included test data to check your installation:
 ```
 mmt full -test --email youremail
 ```
-A full test takes about 40 minutes on 12 threads (30 mins of which is the assembly with Trinity).
+A full test takes 20 minutes on 12 threads (13 mins of which is the assembly with Trinity).
 
 
 
