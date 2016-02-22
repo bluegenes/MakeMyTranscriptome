@@ -10,6 +10,7 @@ else:
     from py2_which import which_python2 as which
 
 import re
+import warnings
 
 ''' name variables '''
 NAME_ASSEMBLY = 'myassembly'
@@ -67,10 +68,11 @@ def tool_path_check(full_exe):
     if(os.path.exists(full_exe)):
         return full_exe
     elif(which(name)):
-        print('WARNING : MMT has not installed '+name+'. MMT will use the version found in your path variable instead.')
+        warnings.warn('MMT has not installed '+name+'. MMT will use the version found in your path variable instead.')
         return name
     else:
-        print('INSTALLATION ERROR : MMT has not installed '+name+' and did not find this program in your path variable. Steps requiring '+name+' will not be performed.') 
+        warnings.warn('INSTALLATION ERROR : MMT has not installed '+name+' and did not find this program in your path variable. Steps requiring '+name+' will not be performed.') 
+
 
 def build_dir_task(tasks):
     '''
