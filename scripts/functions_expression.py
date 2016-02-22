@@ -136,10 +136,10 @@ def salmon_task(index,left,right,out_name,gene_map,out_dir,cpu_cap,tasks):
 
 
 def salmon_unpaired_task(index,unpaired,out_name,gene_map,out_dir,cpu_cap,tasks):
-    trgs = []
+    trgs = ['{0!s}/{1!s}/quant.sf'.format(out_dir,out_name)]
     cmd = '{0!s} quant -i {1!s} -l U -r {2!s} -o {3!s}/{4!s} --geneMap {5!s} -p {6!s} --extraSensitive'.format(
             fg.tool_path_check(TOOLS_DICT['salmon'].full_exe[0]),index,unpaired,out_dir,out_name,gene_map,cpu_cap)
-    name = 'salmon_unpaired_' + os.path.basename(index)
+    name = 'salmon_unpaired_' + os.path.basename(index) + '_' + os.path.basename(unpaired)
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
