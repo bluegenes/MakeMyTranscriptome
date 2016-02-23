@@ -288,9 +288,9 @@ def handle_csv(args):
     args.fastq2 = paired_view['Read2']
     args.unpaired = unpaired_view['Read1']
     path_func = (lambda f: os.path.join(PATH_TEST, f)) if(args.test) else os.path.abspath
-    args.fastq1 = [path_func(f) for f in args.fastq1]
-    args.fastq2 = [path_func(f) for f in args.fastq2]
-    args.unpaired = [path_func(f) for f in args.unpaired]
+    args.fastq1 = [path_func(f.strip()) for f in args.fastq1]
+    args.fastq2 = [path_func(f.strip()) for f in args.fastq2]
+    args.unpaired = [path_func(f.strip()) for f in args.unpaired]
 
 
 ######################___go_functions___######################
