@@ -8,6 +8,7 @@ import sys
 import functions_general as fg
 from external_tools import TOOLS_DICT
 import re
+import warnings
 
 ''' static db variables '''
 PATH_BUSCO_REFERENCE = join(fg.PATH_DATABASES, 'busco')
@@ -72,7 +73,7 @@ def transrate_dep_generator(reads_dir,transrate_task, lefts, rights, singles, re
                    new_rights, cpu_cap, reference, transrate_dir)
             transrate_task.command = cmd
         else:
-            print('Unable to match input files with trimmed output. Continuing transrate using input files instead.')
+            warnings.warn('Unable to match input files with trimmed output. Continuing transrate using input files instead.')
         return True
     return ret
 
