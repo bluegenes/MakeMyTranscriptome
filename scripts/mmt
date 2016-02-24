@@ -152,7 +152,6 @@ def inherit_name_from_paired(paired_1):
     return base
 
 def set_test_args(args):
-    print PATH_TEST
     args.out_name = args.out_name if(args.out_name!=None) else 'test_v2'
     if(args.which=='full' or args.which=='assembly' or args.which=='expression' or args.which=='quality'):
         args.csv = os.path.join(PATH_TEST,'sample_info.csv')
@@ -548,7 +547,6 @@ def get_command():
 def write_assembly_history(args, task_status):
     json_log = os.path.join(fg.GEN_PATH_LOGS(), 'history.json')
     task_dict = {t.name:task_status[t] for t in task_status}
-    # print(vars(args))
     write_dict = {'args_actual': vars(args), 'tasks': task_dict, 'date': time.asctime(), 'opts': get_command()}
     if(os.path.isfile(json_log)):
         f = open(json_log, 'rb')
