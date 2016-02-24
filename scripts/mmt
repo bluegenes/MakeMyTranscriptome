@@ -5,7 +5,6 @@ import os
 import sys
 import json
 from tasks_v2 import Supervisor, Task
-#import task_functions_v2 as tf
 import functions_general as fg
 from functions_general import PATH_TEST
 from assembler import gen_assembly_supervisor
@@ -17,6 +16,7 @@ from itertools import chain
 from manage_database import read_log as read_db_log
 import time
 import pandas
+import warnings
 
 def do_args():
     #####################____Argument_Parsers____#####################
@@ -159,10 +159,10 @@ def inherit_name_from_paired(paired_1):
     return base
 
 def set_test_args(args):
-    print PATH_TEST
     args.out_name = args.out_name if(args.out_name!=None) else 'test_v2'
     if(args.which=='full' or args.which=='assembly' or args.which=='expression' or args.which=='quality'):
         args.csv = os.path.join(PATH_TEST,'sample_info.csv')
+        #args.excel = os.path.join(PATH_TEST,'sample_info.xlsx')
     if(args.which=='quality' or args.which=='annotation' or args.which=='expression'):
         args.assembly = os.path.join(PATH_TEST,'test.fasta')
 
@@ -271,12 +271,12 @@ def handle_read_input(args):
 
 
 def handle_csv(args):
-    if(args.excel != None):
-        panda_data = pandas.read_excel(args.excel)
-    elif(args.csv != None):
+    if(args.csv != None):
         panda_data = pandas.read_csv(args.csv)
+    elif(args.excel != None):
+        panda_data = pandas.read_excel(args.excel)
     else:
-        print('This line should never be printed. from handle_csv')
+        warnings.warn('No csv or excel, so we should not call this function. This line should never be printed.')
     if(args.which == 'expression' or args.which == 'full'):
         if(args.model is None):
             args.model = ' '.join(panda_data.keys()[3:])
