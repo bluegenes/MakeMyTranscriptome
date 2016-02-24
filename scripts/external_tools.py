@@ -24,6 +24,23 @@ trinity_website = 'https://github.com/trinityrnaseq/trinityrnaseq/wiki'
 trinity_tool = tc('trinity', trinity_source_url, trinity_source_target, trinity_exe, trinity_instructions, web=trinity_website)
 trinity_tool.set_install(trinity_cmd)
 TOOL_LIST.append(trinity_tool)
+#rcorrector
+rcorrector_url = 'https://github.com/mourisl/Rcorrector/archive/master.zip'
+rcorrector_urltype = 'zip'
+rcorrector_target = join(PATH_TOOLS, 'master')
+rcorrector_folder_name = 'Rcorrector-master'
+rcorrector_exe = ['rcorrector'] 
+rcorrector_instructions = '\n\t After downloading: \n\n\t\t unzip master.zip \n\t\t ' \
+                        'cd Rcorrector-master \n\t\t make \n ' \
+                        '\n\tThen: soft link /path/to/Rcorrector-master into the MMT "external_tools" folder\n' \
+                        '\t  Or:  add /path/to/Rcorrector-master to your $path variable\n'
+rcorrector_cmd = 'make'
+rcorrector_website = 'https://github.com/mourisl/Rcorrector'
+
+rcorrector_tool = tc('rcorrector', rcorrector_url, rcorrector_target, rcorrector_exe, rcorrector_instructions, web=rcorrector_website, urltype=rcorrector_urltype, folder_name=rcorrector_folder_name)
+rcorrector_tool.change_exe_fullpath(join(PATH_TOOLS,rcorrector_folder_name))
+rcorrector_tool.set_install(rcorrector_cmd)
+TOOL_LIST.append(rcorrector_tool)
 
 ### Trimmomatic ###
 trimmomatic_binary_url = 'http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.35.zip'

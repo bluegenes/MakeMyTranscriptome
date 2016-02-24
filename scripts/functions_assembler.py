@@ -88,6 +88,12 @@ def trimmomatic_task(out_dir,left, right, cpu_cap, basename, tasks):
     out, err = fg.GEN_LOGS(name)
     return Task(command=cmd, dependencies=tasks, name=name, stdout=out, stderr=err, targets=trgs, cpu=cpu_cap) 
 
+#def rcorrector_task(out_dir,left,right,cpu_cap,basename,tasks):
+#    trgs = 'something'
+#    cmd = 'perl run_rcorrector.pl -1 Sample/sample_read1.fq -2 Sample/sample_read2.fq'
+#    name = 'Rcorrector_' 
+#    out, err = fg.GEN_LOGS(name)
+#    return Task(command=cmd, dependencies=tasks, name=name, stdout=out, stderr=err, targets=trgs, cpu=cpu_cap)
 
 def remove_dups_task(out_dir,left, right, out_base, tasks):
     '''    Definies rmdup_fastq_paired tasks. Uses PATH_SCRIPTS, GEN_PATH_DIR()
