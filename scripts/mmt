@@ -161,8 +161,8 @@ def inherit_name_from_paired(paired_1):
 def set_test_args(args):
     args.out_name = args.out_name if(args.out_name!=None) else 'test_v2'
     if(args.which=='full' or args.which=='assembly' or args.which=='expression' or args.which=='quality'):
-        args.csv = os.path.join(PATH_TEST,'sample_info.csv')
-        #args.excel = os.path.join(PATH_TEST,'sample_info.xlsx')
+        #args.csv = os.path.join(PATH_TEST,'sample_info.csv')
+        args.excel = os.path.join(PATH_TEST,'sample_info.xlsx')
     if(args.which=='quality' or args.which=='annotation' or args.which=='expression'):
         args.assembly = os.path.join(PATH_TEST,'test.fasta')
 
@@ -280,8 +280,8 @@ def handle_csv(args):
     if(args.which == 'expression' or args.which == 'full'):
         if(args.model is None):
             args.model = ' '.join(panda_data.keys()[3:])
-    unpaired_view = panda_data.loc[(panda_data['Read2'] == ''), :]
-    paired_view = panda_data.loc[(panda_data['Read2'] != ''), :]
+    unpaired_view = panda_data.loc[panda_data['Read2'].isnull(), :]
+    paired_view = panda_data.loc[panda_data['Read2'].notnull(), :]
     args.paired_names = list(paired_view['Sample Basename'])
     args.unpaired_names = list(unpaired_view['Sample Basename'])
     args.fastq1 = paired_view['Read1']
