@@ -508,6 +508,26 @@ def run_expression(args):
     run_supers(args, supers)
 
 
+def run_filter(args):
+    if(args.test):
+        set_test_args(args)
+    check_fasta_input(args)
+    check_csv_input(args, False)
+    global_setup(args)
+    supers = []
+    deps = []
+    if not os.path.exists(fg.GEN_PATH_ASSEMBLY()): 
+        cp = fg.cp_assembly_task(fg.GEN_PATH_ASSEMBLY(),args.assembly, [])
+        supers.append(cp)
+        deps = [cp]
+    manage_tools = go_manage_tools(args, [])
+    supers.append(manage_tools)
+    deps.append(manage_tools)
+    filter_super = go_filter(fg.GEN_PATH_ASSEMBLY(),fg.NAME_ASSEMBLY,fg.GEN_PATH_FILTER_FILES(),None, deps, tpm_threshold=args.tpm_threshold) 
+    supers.append(filter_super)
+    run_supers(args, supers)
+
+
 def run_databases(args):
     s = go_manage_db(args, [], False)
     s.run()
