@@ -8,6 +8,7 @@ import os, glob, re, argparse
 from parse_qual_metrics import *
 import json 
 import pandas as pd
+#from task_functions_v2 import 
 
 ###########################################
 # set up our directory stucture, filenames
@@ -45,10 +46,11 @@ def writeAssemblyStats_csv(statsDF, outFi):
     statsDF.to_csv(outF, sep=',') # currently = just write everything, then pick back up in plotting for subsets, etc. 
     #future: change to printing several smaller (more directed/useful) comparison files
     
-def scrape_single_assembly(qualityDir,transrateDir, assembPath, d, fileD):
+def scrape_single_assembly(qualityDir,transrateDir, assembly_filesDir, assembPath, d, fileD):
     ''' Extracts information from all of the relevant files in an assembly directory.
     IF ADDING ANOTHER ASSESSMENT TOOL: Add a line for the tool here; add a file parser to parse_qual_metrics.py '''
     #set up dir paths
+    assemb_filesPath = os.path.join(assembPath, assembly_filesDir)
     qualityPath = os.path.join(assembPath, qualityDir)
     transratePath = os.path.join(qualityPath, transrateDir)
     #scrape info into a dict
@@ -70,24 +72,26 @@ def scrape_single_assembly(qualityDir,transrateDir, assembPath, d, fileD):
 	if prog == 'detonate':
 	    detonateD = detonate_parser(qualityPath, fileName)
 	    infoD.update(detonateD)
-	if prog == 'fastqc':
-	    fastqcPreTrimD = fastqc_parser(os.path.join(assembPath, fastqc_pre_trim), fileName)
-	    fastqcFinalD = fastqc_parser(os.path.join(assembPath, fastqc_final), fileName)
-	    infoD.update(fastqcPreTrimD)
-	    infoD.update(fastqcFinalD)
-    print d
-    print infoD
+#	if prog == 'fastqc':
+#	    fastqcPreTrimD = fastqc_parser(os.path.join(assemb_filesPath, fastqc_pre_trim), fileName)
+#	    print fastqcPreTrimD
+#	    fastqcFinalD = fastqc_parser(os.path.join(assemb_filesPath, fastqc_final), fileName)
+##            print fastqcFinalD
+#            infoD.update(fastqcPreTrimD)
+#	    infoD.update(fastqcFinalD)
+#    print d
+#    print infoD
     return infoD
 
 
-def main(assembDir, qualityDir, transrateDir, outN, transratePostAssemblyDir): 
+def main(assembDir, qualityDir, transrateDir, assembly_filesDir, outN, transratePostAssemblyDir): 
     outFile = os.path.join(assembDir, outN)  #general output filename (for both .csv and .json) 
     assembliesD = {} 
     for d in os.walk(assembDir).next()[1]: # list *only* directories
         if is_assembly_dir(assembDir,d, qualityDir, transrateDir):
             assemblyPath = os.path.join(assembDir, d)
 	    assemblyName = d 
-	    assembliesD[assemblyName] = scrape_single_assembly(qualityDir,transrateDir, assemblyPath, d, fileD) 
+	    assembliesD[assemblyName] = scrape_single_assembly(qualityDir,transrateDir,assembly_filesDir, assemblyPath, d, fileD) 
         print assembliesD
     assembliesDF = pd.DataFrame.from_dict(assembliesD)
     writeAssemblyStats_csv(assembliesDF, outFile)
@@ -100,9 +104,10 @@ if(__name__ == '__main__'):
     parser.add_argument('-a','--assemblies_home', help='The directory that contains the assembly directories.')
     parser.add_argument('-o','--outBase', help='output assembly stats basename. Results will print to outBase.csv and outBase.json')
     parser.add_argument('-q','--qualityDir', help='optional: alternative name for quality directory', default='quality_files')
-    parser.add_argument('-t','--transrateDir', help='optional: alternative name for transrate directory', default='transrate_quality')
+    parser.add_argument('-t','--transrateDir', help='optional: alternative name for transrate directory', default='transrate')
     parser.add_argument('--transratePostAssemblyDir', help='optional: alternative name for transrate directory', default='transrate_post_assembly')
+    parser.add_argument('--assembly_filesDir', help='optional: alternative name for transrate directory', default='assembly_files')
     args = parser.parse_args()
-    main(args.assemblies_home, args.qualityDir, args.transrateDir, args.outBase, args.transratePostAssemblyDir)
+    main(args.assemblies_home, args.qualityDir, args.transrateDir, args.assembly_filesDir, args.outBase, args.transratePostAssemblyDir)
 
 
