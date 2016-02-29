@@ -2,6 +2,7 @@
 import os
 import argparse
 import sys
+import warnings
 
 
 def quants_to_dict(quantFiles, tpm_index):
@@ -21,7 +22,7 @@ def quants_to_dict(quantFiles, tpm_index):
 
 def main(assembly, quant_files, tpm_threshold, out, tpm_col_index):
     if len(quant_files) == 0:
-        print('WARNING : No quant files passed in; '+ assembly + 'cannot be filtered.')
+        warnings.warn('No quant files passed in; '+ assembly + 'cannot be filtered.')
     else:
         quantD = quants_to_dict(quant_files, tpm_col_index)
         filteredSet = set([contig for contig,tpm in quantD.items() if tpm >= tpm_threshold])

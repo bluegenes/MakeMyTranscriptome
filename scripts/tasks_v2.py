@@ -6,12 +6,21 @@ import subprocess
 import pickle
 from itertools import chain
 import warnings
+import platform
 
 
 def time_to_hms(delta):
     m, s = divmod(delta, 60)
     h, m = divmod(m, 60)
     return (h, m, s)
+
+
+def check_foreground():
+    if(not platform.system().lower().startswith('linux')):
+        return True
+    if(os.getpgrp() == os.tcgetpgrp(sys.stdout.fileno())):
+        return True
+    return False
 
 
 class Task:
@@ -275,7 +284,7 @@ class Supervisor:
             raise
         finally:
             self.write_history(history_update)
-            self.send_email('', subject='Pipeline Finished')
+            self.send_email('', subject='MMT Finished')
 
     def __removeTaskPath__(self, task):
         flag = True
@@ -313,10 +322,11 @@ class Supervisor:
     def log(self, message):
         self.log_str += message
         self.log_file.write(message)
-        print(message)
+        if(check_foreground()):
+            print(message)
         if(time.time() > self.last_email + self.email_interval):
             self.last_email = time.time()
-            self.send_email(self.log_str, 'Pipeline Running Update')
+            self.send_email(self.log_str, 'MMT Running Update')
             self.log_str = ''
 
     def finished(self):
@@ -388,5 +398,6 @@ if(__name__=='__main__'):
     s4 = Supervisor([t5,t6],name='s4',dependencies=[t1])
     s = Supervisor([s3,s4],force_run=False)
     s.run()
+    
 
 
