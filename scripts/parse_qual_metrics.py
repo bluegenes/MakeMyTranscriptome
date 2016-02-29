@@ -7,6 +7,10 @@ import os, glob, fnmatch, re, argparse
 # use fadapa to parse FastQC metrics
 from fadapa import Fadapa
 import pandas as pd
+import json
+import time
+from tasks_v2 import Supervisor
+
 
 def cegma_parser(cegmaDir, filename):
     '''        CEGMA PARSER
@@ -161,7 +165,25 @@ def fastqc_parser(fastqcDir, filename):
     return fastqcD
 
 
-
-
-
-
+def get_history(history):
+    ''' extracts information from the history.json file in an assembly directory
+    '''
+    f = open(history)
+    history_dict = json.load(f)
+    f.close()
+    task_info = {}
+    for d in history_dict:
+        for task_name in d['tasks']:
+            t = d['tasks'][task_name]
+            if (t['state'] == Supervisor.STATE_FINISHED):
+                d_date = time.strptime(d['date'])
+                if(task_name in task_info):
+                    if(d_date > task_info[task_name]['date']):
+                        wall_time = t['stop'] - t['start']
+                        task_info[t] = {'wall_time': wall_time,
+                                        'date': d_date}
+                else:
+                    wall_time = t['stop'] - t['start']
+                    task_info[task_name] = {'wall_time': wall_time,
+                                            'date': d_date}
+    return task_info
