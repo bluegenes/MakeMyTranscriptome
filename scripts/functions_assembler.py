@@ -92,7 +92,7 @@ def rcorrector_task(out_dir,left,right,cpu_cap,basename,tasks):
     form = lambda s, i : s.format(out_dir, os.path.basename(i))
     trgs = [form('{0!s}/{1!s}.cor.fq', left),
             form('{0!s}/{1!s}.cor.fq', right)]
-    cmd = ('perl {0!s} -1 {1!s} -2 {2!s} -t {3!s}').format(fg.tool_path_check(TOOLS_DICT['rcorrector'].full_exe[0],
+    cmd = ('perl {0!s} -1 {1!s} -2 {2!s} -t {3!s}').format(fg.tool_path_check(TOOLS_DICT['rcorrector'].full_exe[0]),
            left,right,cpu_cap)
     name = 'Rcorrector_' + basename 
     out, err = fg.GEN_LOGS(name)
