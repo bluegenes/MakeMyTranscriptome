@@ -29,7 +29,7 @@ rcorrector_url = 'https://github.com/mourisl/Rcorrector/archive/master.zip'
 rcorrector_urltype = 'zip'
 rcorrector_target = join(PATH_TOOLS, 'master')
 rcorrector_folder_name = 'Rcorrector-master'
-rcorrector_exe = ['rcorrector'] 
+rcorrector_exe = ['run_rcorrector.pl'] 
 rcorrector_instructions = '\n\t After downloading: \n\n\t\t unzip master.zip \n\t\t ' \
                         'cd Rcorrector-master \n\t\t make \n ' \
                         '\n\tThen: soft link /path/to/Rcorrector-master into the MMT "external_tools" folder\n' \
@@ -41,6 +41,24 @@ rcorrector_tool = tc('rcorrector', rcorrector_url, rcorrector_target, rcorrector
 rcorrector_tool.change_exe_fullpath(join(PATH_TOOLS,rcorrector_folder_name))
 rcorrector_tool.set_install(rcorrector_cmd)
 TOOL_LIST.append(rcorrector_tool)
+### seqtk ###
+seqtk_url = 'https://github.com/lh3/seqtk/archive/master.zip'
+seqtk_urltype = 'zip'
+seqtk_target = join(PATH_TOOLS, 'master')
+seqtk_folder_name = 'seqtk-master'
+seqtk_exe = ['seqtk'] 
+seqtk_instructions = '\n\t After downloading: \n\n\t\t unzip master.zip \n\t\t ' \
+                        'cd seqtk-master \n\t\t make \n ' \
+                        '\n\tThen: soft link /path/to/seqtk-master into the MMT "external_tools" folder\n' \
+                        '\t  Or:  add /path/to/seqtk-master to your $path variable\n'
+seqtk_cmd = 'make'
+seqtk_website = 'https://github.com/lh3/seqtk'
+
+seqtk_tool = tc('seqtk', seqtk_url, seqtk_target, seqtk_exe,seqtk_instructions, web=seqtk_website, urltype=seqtk_urltype, folder_name=seqtk_folder_name)
+seqtk_tool.change_exe_fullpath(join(PATH_TOOLS,seqtk_folder_name))
+seqtk_tool.set_install(seqtk_cmd)
+TOOL_LIST.append(seqtk_tool)
+
 
 ### Trimmomatic ###
 trimmomatic_binary_url = 'http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.35.zip'
