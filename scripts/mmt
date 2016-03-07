@@ -97,7 +97,7 @@ def do_args():
     database_selector.add_argument('-v', '--vertebrata', help = 'use vertebrate BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
     database_selector.add_argument('--arthropoda', help = 'use arthropod BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
     database_selector.add_argument('-f', '--fungi', help = 'use fungi BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
-    database_selector.add_argument('-b', '--bacteria', help = 'use bacteria BUSCO database. If used with "databases" tool, download this database.',action='store_false',default=False)
+    database_selector.add_argument('-b', '--bacteria', help = 'use bacteria BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
     database_selector.add_argument('--fresh', help= 'download new version of all databases', default=False)
     #currently this option does nothing, bc it requires an updated busco.py
     database_selector.add_argument('-p', '--plantae', help = 'use plantae BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
