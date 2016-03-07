@@ -51,6 +51,20 @@ def busco_parser(buscoDir, filename):
             buscoInfo[buscoDB + '_number_searched'] = info[4]
     return buscoInfo
 
+
+def get_busco_info(short_summary_file):
+    ''' Parses a busco short summary file for information '''
+    busco_db = os.path.basename(short_summary_file).split('_')[-1]
+    busco_db = "busco_"+busco_db
+    with open(short_summary_file) as f:
+        re_string = 'C:(\d+\.?\d*)%\[D:(\d+\.?\d*)%\],F:(\d+\.?\d*)%,M:(\d+\.?\d*)%,n:(\d*)'
+        info = re.search(re_string, f.read()).groups()
+        info_keys = ['_%_complete', '_%_duplicated', '_%_fragmented', '_%_missing',
+                     '_number_searched']
+        info_keys = [busco_db+k for k in info_keys]
+        return {k: v for k, v in zip(info_keys, info)}
+
+
 def detonate_parser(detonateDir, filename):
     '''        DETONATE PARSER
         Extracts the score from the DETONATE .score file
@@ -83,7 +97,7 @@ def transrate_parser(transrateDir, filename):
             transrateInfo = dict(zip(headers, values))
     return transrateInfo
 
-
+"""
 #don't actually need this here, though it does what I need. Just need pandas w/in assembly scrape...
 def transrate_pandas_parser(transrateDir, filename):
     '''TRANSRATE PARSER -- using pandas to avoid incompatible diff transrate run issues
@@ -99,6 +113,7 @@ def transrate_pandas_parser(transrateDir, filename):
         transrateDF = pd.io.parsers.read_csv(transrateF[0], header=0)
         transrateInfo = transrateDF.to_dict()
     return transrateInfo
+"""
 
 
 
