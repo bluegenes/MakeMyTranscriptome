@@ -7,7 +7,7 @@ import time
 
 
 relative_paths = {'transrate': 'quality_files/transrate/',
-                  'busco': 'assembly_files',
+                  'busco': 'quality_files',
                   'fastqc': 'assembly_files',
                   'cegma': 'quality_files',
                   'history': 'log_files'}
