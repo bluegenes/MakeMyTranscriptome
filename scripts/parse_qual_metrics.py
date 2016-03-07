@@ -139,7 +139,7 @@ def fastqc_parser(fastqcDir, filename):
     '''
     fastqcD = {}
     fastqcF = sorted(glob.glob(os.path.join(fastqcDir, "*_fastqc", filename)))
-    print(fastqcF)
+
     #use fnmatch to handle paired vs unpaired:
     fastqc1 = fnmatch.filter(fastqcF, '*_1_*') 
     fastqc2 = fnmatch.filter(fastqcF, '*_2_*')
@@ -195,8 +195,8 @@ def get_history(history):
                 if(task_name in task_info):
                     if(d_date > task_info[task_name]['date']):
                         wall_time = t['stop'] - t['start']
-                        task_info[t] = {'wall_time': wall_time,
-                                        'date': d_date}
+                        task_info[task_name] = {'wall_time': wall_time,
+                                                'date': d_date}
                 else:
                     wall_time = t['stop'] - t['start']
                     task_info[task_name] = {'wall_time': wall_time,

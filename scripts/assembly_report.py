@@ -77,8 +77,10 @@ def get_data(assembly_dir):
     return data
 
 
-def create_report(assembly_dir, json_target, human_target):
+def create_report(assembly_dir, json_target=None, human_target=None):
     data = get_data(assembly_dir)
+    if(json_target == None):
+        json_target = os.path.join(assembly_dir, 'log_files', 'report.json')
     f = open(json_target, 'w')
     json.dump(data, f, sort_keys=True, indent=4)
     f.close()
