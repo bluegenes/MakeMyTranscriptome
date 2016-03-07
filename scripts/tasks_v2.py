@@ -18,8 +18,11 @@ def time_to_hms(delta):
 def check_foreground():
     if(not platform.system().lower().startswith('linux')):
         return True
-    if(os.getpgrp() == os.tcgetpgrp(sys.stdout.fileno())):
-        return True
+    try:
+        if(os.getpgrp() == os.tcgetpgrp(sys.stdout.fileno())):
+            return True
+    except OSError as e:
+        pass
     return False
 
 
