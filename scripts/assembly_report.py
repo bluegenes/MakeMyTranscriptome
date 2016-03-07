@@ -3,6 +3,7 @@ import glob
 import argparse
 import parse_qual_metrics as parsers
 import json
+import time
 
 
 relative_paths = {'transrate': 'quality_files/transrate/',
@@ -37,7 +38,7 @@ def get_busco_info(assembly_dir):
 def get_fastqc_data(assembly_dir):
     ret = {}
     fastqc_dir_pattern = os.path.join(assembly_dir, relative_paths['fastqc'], fastqc_pre_trim)
-    ret['fastqc_pre_trimming'] = parsers.fastqc_parser(fastqc_dir_pattern, 'fastqc_data.txt')
+    # ret['fastqc_pre_trimming'] = parsers.fastqc_parser(fastqc_dir_pattern, 'fastqc_data.txt')
     fastqc_dir_pattern = os.path.join(assembly_dir, relative_paths['fastqc'], fastqc_post_trim)
     ret['fastqc_post_trimming'] = parsers.fastqc_parser(fastqc_dir_pattern, 'fastqc_data.txt')
     fastqc_dir_pattern = os.path.join(assembly_dir, relative_paths['fastqc'], fastqc_final)
@@ -58,7 +59,10 @@ def get_cegma_info(assembly_dir):
 def get_history_info(assembly_dir):
     files = glob.glob(os.path.join(assembly_dir, relative_paths['history'], 'history.json'))
     if(len(files) > 0):
-        return parsers.get_history(files[0])
+        hist_data = parsers.get_history(files[0])
+        for t in hist_data:
+            hist_data[t]['date'] = time.strftime("%a %b %d %H:%M:%S %Y", hist_data[t]['date'])
+        return hist_data
     else:
         return {}
 
@@ -67,7 +71,7 @@ def get_data(assembly_dir):
     data = {}
     data['busco'] = get_busco_info(assembly_dir)
     data['transrate'] = get_transrate_info(assembly_dir)
-    data.update(get_fastqc_data(assembly_dir))
+    # data.update(get_fastqc_data(assembly_dir))
     data['cegma'] = get_cegma_info(assembly_dir)
     data['task_info'] = get_history_info(assembly_dir)
     return data
@@ -91,10 +95,10 @@ if(__name__ == '__main__'):
     parser.add_argument('-q', '--qualityDir', default='quality_files', help=(
         'optional: alternative name for quality directory'))
     parser.add_argument('-t', '--transrateDir', default='transrate', help=(
-        'optional: alternative name for transrate directory',))
+        'optional: alternative name for transrate directory'))
     parser.add_argument('--transratePostAssemblyDir', default='transrate_post_assembly', help=(
         'optional: alternative name for transrate directory'))
     parser.add_argument('--assembly_filesDir', default='assembly_files', help=(
         'optional: alternative name for transrate directory'))
     args = parser.parse_args()
-    main(args.assembly_dir, args.json, args.out)
+    create_report(args.assembly_dir, args.json, args.out)
