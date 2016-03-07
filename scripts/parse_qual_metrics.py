@@ -141,17 +141,18 @@ def fastqc_parser(fastqcDir, filename):
     fastqcF = sorted(glob.glob(os.path.join(fastqcDir, "*_fastqc", filename)))
 
     #use fnmatch to handle paired vs unpaired:
-    fastqc1 = fnmatch.filter(fastqcF, '*_1_*') 
-    fastqc2 = fnmatch.filter(fastqcF, '*_2_*')
+    fastqc1 = fnmatch.filter(fastqcF, '*_\d_1_*') 
+    fastqc2 = fnmatch.filter(fastqcF, '*_\d_2_*')
+    matched = [(fnmatch.filter(fastqc1,'*_'+int(k)+'_1_*')[0], fnmatch.filter(fastqc2,'*_'+int(k)+'_2_*')[0]) for k in range(len(fastqc1))]
     fastqcU = [x for x in fastqcF if x not in set(fastqc1 + fastqc2)]
     if len(fastqcF) <1: #no files (just in case)
         fastqcD = {}
         #fastqcD['fastqc'] = 'no fastqc information'
     else:
-        for fq1 in fastqc1: #paired files 
-            fq2 = fq1.replace('_1_', '_2_') # don't use fastqc2 list to prevent any order f-ups
-            f_1 = Fadapa(fq1)
-            f_2 = Fadapa(fq2)
+        for pair in matched: #paired files 
+            #for ffq2 = fq1.replace('_1_', '_2_') # don't use fastqc2 list to prevent any order f-ups
+            f_1 = Fadapa(pair[0])
+            f_2 = Fadapa(pair[1])
             basicStats1 = f_1.clean_data('Basic Statistics')
             fName = basicStats1[1][1].rsplit('_1')[0]
             numSeqsD1 = basicStats1[4][1]

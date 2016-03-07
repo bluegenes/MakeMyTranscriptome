@@ -71,7 +71,7 @@ def get_data(assembly_dir):
     data = {}
     data['busco'] = get_busco_info(assembly_dir)
     data['transrate'] = get_transrate_info(assembly_dir)
-    # data.update(get_fastqc_data(assembly_dir))
+    data.update(get_fastqc_data(assembly_dir))
     data['cegma'] = get_cegma_info(assembly_dir)
     data['task_info'] = get_history_info(assembly_dir)
     return data
