@@ -181,7 +181,7 @@ class Supervisor:
         self.dependencies = dependencies
         self.force_run = force_run
         self.email = email
-        self.email_interval = email_interval
+        self.email_interval = email_interval * 60
         self.last_email = time.time()
         self.log_path = log if(log is not None) else name+'.run_log'
         self.log_str = ''
