@@ -18,14 +18,11 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
         tasks.append(task)
         if(name != None):
             annot_table_opts[name] = task.targets[index]
-    if gene_trans_map is not None:
-        annot_table_opts['geneTransMap'] = gene_trans_map
-        salmon_gene_map = fex.salmon_gene_map_task(out_dir,assembly_name,gene_trans_map,[])
-    else:
-        gene_trans_map = fan.gene_trans_map_task(path_assembly,out_dir,[])
-        task_insert(gene_trans_map, 'geneTransMap')
-        salmon_gene_map = fex.salmon_gene_map_task(out_dir,assembly_name,gene_trans_map.targets[0],[])
-    tasks.append(salmon_gene_map)
+    #if gene_trans_map is not None:
+    annot_table_opts['geneTransMap'] = gene_trans_map
+    #else:
+        #gene_trans_map = fan.gene_trans_map_task(path_assembly,out_dir,[])
+	#task_insert(gene_trans_map, 'geneTransMap')
     transd_dir = os.path.join(out_dir,'transdecoder')
     longorfs = fan.transdecoder_longorfs_task(path_assembly,  transd_dir, cpumod(cpu, 2), [])
     tasks.append(longorfs)

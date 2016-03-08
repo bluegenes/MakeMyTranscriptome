@@ -19,7 +19,7 @@ PATH_NOG_CATEGORIES = join(fg.PATH_DATABASES, 'nog_categories')
 def gene_trans_map_task(path_assembly,out_dir,tasks):
     assembly_name = os.path.basename(path_assembly).split('.fa')[0]
     trgs = ['{0!s}/{1!s}.gene_trans_map'.format(out_dir, assembly_name)]
-    cmd = '{0!s} {1!s} > {2!s}'.format(fg.tool_path_check(TOOLS_DICT['trinity'].full_exe[1]),path_assembly,trgs[0])
+    cmd = 'perl {0!s} {1!s} > {2!s}'.format(fg.tool_path_check(TOOLS_DICT['trinity'].full_exe[1]),path_assembly,trgs[0])
     name = 'gene_trans_map_' + assembly_name
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)

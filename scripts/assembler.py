@@ -103,6 +103,8 @@ def gen_assembly_supervisor(out_dir, fastq1, fastq2, unpaired, dependency_set, n
     else:
         trinity = fa.trinity_task(path_assembly, out_dir, fastq1, fastq2, unpaired, cpu, int(cpu/2), 120, 120, normalize_flag, assembler_dependencies)
 	tasks.append(trinity)
+	gene_trans_map = fan.gene_trans_map_task(path_assembly,out_dir,[trinity])
+	tasks.append(gene_trans_map)
     assembler_main_task = tasks[-1]
     return Supervisor(tasks=tasks)
 
