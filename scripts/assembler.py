@@ -53,6 +53,7 @@ def gen_paired_trimmomatic_supervisor(out_dir,fq1, fq2, unpaired, dependency_set
 
 
 def gen_assembly_supervisor(out_dir, fastq1, fastq2, unpaired, dependency_set, no_trim=False, rnaSPAdes=False, rmdup=False, subset_size=50000000, cpu=12, subset_seed='I am a seed value', normalize_flag=False, truncate_opt=-1, trimmomatic_flag=False, path_assembly=fg.GEN_PATH_ASSEMBLY()):
+    trinity_memory = 160 # make this a user option
     tasks = []
     tasks.append(fa.fastqc_task(out_dir,fastq1+fastq2+unpaired,'pre_trimming',min(cpu,len(fastq1+fastq2+unpaired)), []))
     assembler_dependencies = []
@@ -78,7 +79,7 @@ def gen_assembly_supervisor(out_dir, fastq1, fastq2, unpaired, dependency_set, n
         tasks.append(subset)
         assembler_dependencies = [subset]
         if subset_size < 10**15: # some subsetting may have occurred
-	    late_fastqc = fa.fastqc_task(out_dir, subset.targets, 'final_reads_paired',int(round(float(cpu)/2)),[subset])
+            late_fastqc = fa.fastqc_task(out_dir, subset.targets, 'final_reads_paired',int(round(float(cpu)/2)),[subset])
             tasks.append(late_fastqc)
         if(truncate_opt >= 0):
             truncate = fa.truncate_task(out_dir, fastq1[0], fastq2[0], truncate_opt, [subset])
@@ -101,8 +102,10 @@ def gen_assembly_supervisor(out_dir, fastq1, fastq2, unpaired, dependency_set, n
         rnaspades = fa.rnaspades_task(path_assembly, out_dir,fastq1, fastq2, unpaired, cpu, assembler_dependencies)
         tasks.append(rnaspades)
     else:
-        trinity = fa.trinity_task(path_assembly, out_dir, fastq1, fastq2, unpaired, cpu, int(cpu/2), 120, 120, normalize_flag, assembler_dependencies)
-	tasks.append(trinity)
+        trinity = fa.trinity_task(path_assembly, out_dir, fastq1, fastq2, unpaired, cpu, int(cpu/2), trinity_memory, trinity_memory, normalize_flag, assembler_dependencies)
+        tasks.append(trinity)
+        gene_trans_map = fan.gene_trans_map_task(path_assembly,out_dir,[trinity])
+        tasks.append(gene_trans_map)
     assembler_main_task = tasks[-1]
     return Supervisor(tasks=tasks)
 

@@ -111,7 +111,8 @@ busco_plant_tool = tc('busco_plant', busco_plant_url, busco_plant_target, busco_
 TOOL_LIST.append(busco_plant_tool)
 
 ### HMMER ###
-hmmer_linux_url = 'http://selab.janelia.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz'
+hmmer_linux_url = 'http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz' 
+#'http://selab.janelia.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz'
 hmmer_linux_target = join(PATH_TOOLS, 'hmmer-3.1b2-linux-intel-x86_64')
 hmmer_exe = ['binaries/hmmscan','binaries/hmmpress']
 hmmer_instructions = '\n\t After downloading the binary: \n\n\t\t tar zxf hmmer-3.1b2-linux-intel-x86_64.tar.gz \n\n ' \

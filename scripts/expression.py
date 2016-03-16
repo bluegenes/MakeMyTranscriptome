@@ -3,19 +3,17 @@ import os
 from os.path import join, dirname, basename
 import sys
 from tasks_v2 import Supervisor, Task
-#import task_functions_v2 as tf
 import functions_general as fg
 import functions_annotater as fan
 import functions_expression as fex
 
-def gen_expression_supervisor(fastq1,fastq2,paired_names,unpaired,unpaired_names,cpu,sample_info,model,dependency_set,run_intersectbed=False,run_express=False, assembly_name=fg.NAME_ASSEMBLY, assembly_path= fg.GEN_PATH_ASSEMBLY(), out_dir=fg.GEN_PATH_EXPRESSION_FILES(), gene_trans_map=''):
+def gen_expression_supervisor(fastq1,fastq2,paired_names,unpaired,unpaired_names,cpu,sample_info,model,gene_trans_map,dependency_set,run_intersectbed=False,run_express=False, assembly_name=fg.NAME_ASSEMBLY, assembly_path= fg.GEN_PATH_ASSEMBLY(), out_dir=fg.GEN_PATH_EXPRESSION_FILES()):
+    salmon_tasks, express_tasks, bowtie_e_tasks, bowtie_i_tasks,sam_sort_tasks, intersect_tasks = [],[],[],[],[],[]
     fasta_to_bed = fan.assembly_to_bed_task(assembly_path, out_dir,[])
     build_salmon = fex.build_salmon_task(assembly_path, assembly_name, out_dir,cpu,[])
-#    gene_trans_map = assembly_path.rsplit('.fa')[0] + '.gene_trans_map'
     salmon_gene_map = fex.salmon_gene_map_task(out_dir,assembly_name,gene_trans_map,[])
     build_bowtie = fex.build_bowtie_task(assembly_path,assembly_name, out_dir,[])
     bowtie2_index = join(dirname(build_bowtie.targets[0]), basename(build_bowtie.targets[0]).split('.')[0])
-    salmon_tasks, express_tasks, bowtie_e_tasks, bowtie_i_tasks,sam_sort_tasks, intersect_tasks = [],[],[],[],[],[]
     for i in range(len(fastq1)):
         salmon = fex.salmon_task(build_salmon.targets[0],fastq1[i],fastq2[i],paired_names[i]+'_salmon', salmon_gene_map.targets[0],out_dir,int(cpu/2),[build_salmon, salmon_gene_map])
         salmon_tasks.append(salmon)
