@@ -150,7 +150,7 @@ def main(args):
         nrblastpDF = get_blast_info(orfLengths, args.nrP, blastDB='nr', blastType='blastp') #bestWords = True (when this is working)
         initDF = initDF.merge(nrblastpDF, how='left', left_on='Longest_ORF_id', right_index=True, copy=False)
     if args.signalP is not None:
-        sigpDF = get_signalp(args.signalp) 
+        sigpDF = get_signalp(args.signalP) 
         initDF = initDF.merge(sigpDF, how='left', left_on='Longest_ORF_id', right_index=True, copy=False)
     if args.tmhmm is not None:
         tmhmmDF = get_tmhmm(args.tmhmm)
@@ -161,6 +161,8 @@ def main(args):
     #change this --> within the functions where we create these:
     #initDF.drop('spHitX',axis=1, inplace=True)
     #initDF.drop('spHitP',axis=1, inplace=True)
+    summary = initDF.describe().transpose()
+    summary.to_csv(args.outfile+'_annotation_summary', sep='\t')
     initDF.to_csv(args.outfile + '_annotation.txt', index_label='Transcript_id', sep='\t', na_rep='.')
 
 
