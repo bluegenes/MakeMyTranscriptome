@@ -171,6 +171,7 @@ def set_test_args(args):
 def set_subsample_size(args):
     args.subsample_size = 10**15 if(args.subsample_size<=0) else args.subsample_size*10**6
 
+# need to modify this to allow excel input for DE
 def gen_sample_info(args):
     args.sample_info = os.path.join(fg.GEN_PATH_EXPRESSION_FILES(),'sample_info.tsv')
     si = open(args.sample_info,'w')
@@ -202,6 +203,8 @@ def global_setup(args):
     if(args.which=='assembly'):
         if(args.csv!=None):
             base = inherit_name(args.csv)
+        elif(args.excel!=None):
+            base = inherit_name(args.excel)
         elif(args.fastq1!=[]):
             base = inherit_name_from_paired(args.fastq1[0])
         else:
@@ -425,7 +428,7 @@ def run_full(args):
 #        gene_trans_map_good = fan.gene_trans_map_task(assembly_path, out_dir,[])
 
         filtering_tasks = [tr_good_cp_task, filtered_full_task, tr_good_filter] 
-    if(args.csv !=None): #csv is required so we have metadata
+    if(args.csv !=None or args.excel !=None): #csv is required so we have metadata
         check_csv_input(args)# since it wasn't required earlier, we need to check that it exists, is proper file. 
         gen_sample_info(args)
         expression_super = go_expression(fg.GEN_PATH_ASSEMBLY(),fg.GEN_PATH_EXPRESSION_FILES(), args, deps)

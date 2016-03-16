@@ -34,12 +34,13 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
     else:
         predict_orfs = fan.transdecoder_predict_orfs_task(path_assembly,transd_dir,[longorfs])
     task_insert(predict_orfs, 'transdecoder', 1)
-    pfam = fan.pfam_task(predict_orfs.targets[0], out_dir,cpumod(cpu, 2), [predict_orfs])
+    #pfam = fan.pfam_task(predict_orfs.targets[0], out_dir,cpumod(cpu, 2), [predict_orfs])
+    pfam = fan.pfam_task(predict_orfs.targets[0], out_dir,cpu, [predict_orfs])
     task_insert(pfam, 'pfam') 
     if(blast_flag):
-        blastx_sprot = fan.blast_task('blastx', out_dir, path_assembly, fd.PATH_SWISS_PROT, int(cpu/2), [])
+        blastx_sprot = fan.blast_task('blastx', out_dir, path_assembly, fd.PATH_SWISS_PROT, cpumod(cpu, 2), [])
         task_insert(blastx_sprot, 'spX')
-        blastp_sprot = fan.blast_task('blastp',out_dir, predict_orfs.targets[0],fd.PATH_SWISS_PROT, int(cpu/2), [predict_orfs])
+        blastp_sprot = fan.blast_task('blastp',out_dir, predict_orfs.targets[0],fd.PATH_SWISS_PROT, cpumod(cpu, 2), [predict_orfs])
         task_insert(blastp_sprot, 'spP')
 
         if(uniref90_flag):
@@ -95,6 +96,7 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
        #rnammer = fan.rnammer_task(path_assembly,[])
        # task_insert(rnammer, 'rnammer')
     '''
+    # need more intelligent annot table -- if pfam fails, for example, we can still generate an annot table
     annot = fan.annot_table_task(path_assembly,out_dir,annot_table_opts, tasks[:])
     tasks.append(annot)
     pipeplot = fan.pipeplot_task(annot.targets[0],out_dir,[annot])

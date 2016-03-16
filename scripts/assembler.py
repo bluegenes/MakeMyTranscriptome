@@ -53,6 +53,7 @@ def gen_paired_trimmomatic_supervisor(out_dir,fq1, fq2, unpaired, dependency_set
 
 
 def gen_assembly_supervisor(out_dir, fastq1, fastq2, unpaired, dependency_set, no_trim=False, rnaSPAdes=False, rmdup=False, subset_size=50000000, cpu=12, subset_seed='I am a seed value', normalize_flag=False, truncate_opt=-1, trimmomatic_flag=False, path_assembly=fg.GEN_PATH_ASSEMBLY()):
+    trinity_memory = 160 # make this a user option
     tasks = []
     tasks.append(fa.fastqc_task(out_dir,fastq1+fastq2+unpaired,'pre_trimming',min(cpu,len(fastq1+fastq2+unpaired)), []))
     assembler_dependencies = []
@@ -101,7 +102,7 @@ def gen_assembly_supervisor(out_dir, fastq1, fastq2, unpaired, dependency_set, n
         rnaspades = fa.rnaspades_task(path_assembly, out_dir,fastq1, fastq2, unpaired, cpu, assembler_dependencies)
         tasks.append(rnaspades)
     else:
-        trinity = fa.trinity_task(path_assembly, out_dir, fastq1, fastq2, unpaired, cpu, int(cpu/2), 120, 120, normalize_flag, assembler_dependencies)
+        trinity = fa.trinity_task(path_assembly, out_dir, fastq1, fastq2, unpaired, cpu, int(cpu/2), trinity_memory, trinity_memory, normalize_flag, assembler_dependencies)
 	tasks.append(trinity)
 	gene_trans_map = fan.gene_trans_map_task(path_assembly,out_dir,[trinity])
 	tasks.append(gene_trans_map)
