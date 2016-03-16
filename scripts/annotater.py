@@ -4,22 +4,28 @@ from tasks_v2 import Supervisor, Task
 #import task_functions_v2 as tf
 import functions_general as fg
 import functions_annotater as fan
+import functions_expression as fex
 import functions_databases as fd
 
 
 def cpumod(cpu, k): return int(round(float(cpu)/k))
 
 
-def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_flag, tmhmm_flag, rnammer_flag, dependency_set, path_assembly=fg.GEN_PATH_ASSEMBLY(), assembly_name=fg.NAME_ASSEMBLY,out_dir=fg.GEN_PATH_ANNOTATION_FILES(), improve_orfs=False):
+def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_flag, tmhmm_flag, rnammer_flag, dependency_set, gene_trans_map, path_assembly=fg.GEN_PATH_ASSEMBLY(), assembly_name=fg.NAME_ASSEMBLY,out_dir=fg.GEN_PATH_ANNOTATION_FILES(), improve_orfs=False):
     tasks = []
     annot_table_opts = {}
     def task_insert(task, name=None, index=0):
         tasks.append(task)
         if(name != None):
             annot_table_opts[name] = task.targets[index]
-	    
-    gene_trans_map = fan.gene_trans_map_task(path_assembly,out_dir,[])
-    task_insert(gene_trans_map, 'geneTransMap')
+    if gene_trans_map is not None:
+        annot_table_opts['geneTransMap'] = gene_trans_map
+        salmon_gene_map = fex.salmon_gene_map_task(out_dir,assembly_name,gene_trans_map,[])
+    else:
+        gene_trans_map = fan.gene_trans_map_task(path_assembly,out_dir,[])
+        task_insert(gene_trans_map, 'geneTransMap')
+        salmon_gene_map = fex.salmon_gene_map_task(out_dir,assembly_name,gene_trans_map.targets[0],[])
+    tasks.append(salmon_gene_map)
     transd_dir = os.path.join(out_dir,'transdecoder')
     longorfs = fan.transdecoder_longorfs_task(path_assembly,  transd_dir, cpumod(cpu, 2), [])
     tasks.append(longorfs)

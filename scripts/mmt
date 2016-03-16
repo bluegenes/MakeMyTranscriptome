@@ -70,6 +70,7 @@ def do_args():
     assembler_input.add_argument('--truncate',help='snip reads down to this size if longer than this size. Default is no truncations.',type=int,default=-1)
     #ANNOTATION ARGS
     annotation_input = argparse.ArgumentParser(add_help=False)
+    annotation_input.add_argument('--gene_trans_map',help='tab separated file (gene_name \t transcript_name)', default = None)
     annotation_input.add_argument('-improve_orf_prediction',action='store_true',help='use hmmer->pfam;diamond-blastp->swissprot results for transdecoder ORF prediction.')
     annotation_input.add_argument('-signalp',action='store_true',help='Use this flag to execute signalP during annotation. Only use if you have installed signalP.')
     annotation_input.add_argument('-tmhmm',action='store_true',help='Use this flag to execute tmhmm during annotation. Only use if you have installed tmhmm.')
@@ -101,7 +102,7 @@ def do_args():
     database_selector.add_argument('--fresh', help= 'download new version of all databases', default=False)
     #currently this option does nothing, bc it requires an updated busco.py
     database_selector.add_argument('-p', '--plantae', help = 'use plantae BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
-    #ANNOTATIOM DATABASE SELECTOR ARGS 
+    #ANNOTATION DATABASE SELECTOR ARGS 
     annot_database_selector = argparse.ArgumentParser(add_help=False)
     annot_database_selector.add_argument('-blastplus',action='store_true',help='Use the blast+ tool suite instead of diamond to align your transcripts to the references. If used with "databases" tool, download this database.')
     annot_database_selector.add_argument('-uniref90',help='Use this flag to enable the uniref-90 diamond-blast runs as part of the annotation pipeline. If used with "databases" tool, download this database.',action='store_true')
@@ -319,7 +320,7 @@ def go_filter(args, transrate_task, dep):
 def go_annotation(args, dep):
     return gen_annotation_supervisor(
         args.cpu, args.uniref90, args.nr, args.blastplus, args.signalp,
-        args.tmhmm, args.rnammer, dep, path_assembly= fg.GEN_PATH_ASSEMBLY(),
+        args.tmhmm, args.rnammer, dep, args.gene_trans_map, path_assembly= fg.GEN_PATH_ASSEMBLY(),
         assembly_name=fg.NAME_ASSEMBLY, out_dir=fg.GEN_PATH_ANNOTATION_FILES(),
         improve_orfs=args.improve_orf_prediction)
 

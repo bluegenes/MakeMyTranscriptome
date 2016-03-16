@@ -103,7 +103,7 @@ def transdecoder_predict_orfs_task(path_assembly,path_transdecoder_output,tasks,
     trgs = ['{0!s}/{1!s}.fasta.transdecoder.pep'.format(path_transdecoder_output,assembly_name),'{0!s}/{1!s}.fasta.transdecoder.bed'.format(path_transdecoder_output,assembly_name)]
     cmd = ("mkdir -p {0!s}; cd {0!s}; {1!s} -t {2!s} {3!s} {4!s}").format(path_transdecoder_output,
             fg.tool_path_check(TOOLS_DICT['transdecoder'].full_exe[1]),path_assembly,pfam, blastp)
-    name = 'TransDecoder_Predict' + assembly_name + retain_pfam + retain_blastp
+    name = 'TransDecoder_Predict_' + assembly_name + retain_pfam + retain_blastp
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
