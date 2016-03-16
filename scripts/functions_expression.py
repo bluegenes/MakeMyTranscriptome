@@ -120,7 +120,7 @@ def build_salmon_task(path_assembly,assembly_name,out_dir,cpu_cap,tasks):
 def salmon_gene_map_task(out_dir,assembly_name,gene_trans_map,tasks):
     ''' salmon requires gene_trans_map in reverse column order (transcript \\t gene \\n)'''
     trgs = ['{0!s}/{1!s}.trans_gene_map'.format(out_dir,assembly_name)] 
-    cmd = 'join -t, -o 1.2,1.1 {0!s} {0!s} > {1!s}'.format(gene_trans_map, trgs[0]) 
+    cmd = '''awk '{{ print $2 " " $1}}' {0!s} > {1!s}'''.format(gene_trans_map, trgs[0]) 
     name = 'salmon_gene_map_task_' + assembly_name
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
