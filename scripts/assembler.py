@@ -79,7 +79,7 @@ def gen_assembly_supervisor(out_dir, fastq1, fastq2, unpaired, dependency_set, n
         tasks.append(subset)
         assembler_dependencies = [subset]
         if subset_size < 10**15: # some subsetting may have occurred
-	    late_fastqc = fa.fastqc_task(out_dir, subset.targets, 'final_reads_paired',int(round(float(cpu)/2)),[subset])
+            late_fastqc = fa.fastqc_task(out_dir, subset.targets, 'final_reads_paired',int(round(float(cpu)/2)),[subset])
             tasks.append(late_fastqc)
         if(truncate_opt >= 0):
             truncate = fa.truncate_task(out_dir, fastq1[0], fastq2[0], truncate_opt, [subset])
@@ -103,9 +103,9 @@ def gen_assembly_supervisor(out_dir, fastq1, fastq2, unpaired, dependency_set, n
         tasks.append(rnaspades)
     else:
         trinity = fa.trinity_task(path_assembly, out_dir, fastq1, fastq2, unpaired, cpu, int(cpu/2), trinity_memory, trinity_memory, normalize_flag, assembler_dependencies)
-	tasks.append(trinity)
-	gene_trans_map = fan.gene_trans_map_task(path_assembly,out_dir,[trinity])
-	tasks.append(gene_trans_map)
+        tasks.append(trinity)
+        gene_trans_map = fan.gene_trans_map_task(path_assembly,out_dir,[trinity])
+        tasks.append(gene_trans_map)
     assembler_main_task = tasks[-1]
     return Supervisor(tasks=tasks)
 

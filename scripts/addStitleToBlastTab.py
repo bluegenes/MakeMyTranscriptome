@@ -17,8 +17,8 @@ header = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart
 with open(args.blast, 'r') as f:
     for line in f:
         line = line.rstrip().split('\t')
-	blastFile.append(line)
-	hitList.append(line[1])
+        blastFile.append(line)
+        hitList.append(line[1])
 
 hitSet = set(hitList)
 #potentially huge file --> don't want this in memory

@@ -389,7 +389,7 @@ def run_full(args):
         assembly_super = go_assembly(args, [])
         supers.append(assembly_super)
         deps.append(assembly_super) 
-	args.gene_trans_map = fg.GEN_PATH_GENE_TRANS_MAP()
+        args.gene_trans_map = fg.GEN_PATH_GENE_TRANS_MAP()
     else: #run everything else BUT assembly
         check_fasta_input(args) 
         check_read_inputs(args, False) # get read input from either the csv or command-line inputs
