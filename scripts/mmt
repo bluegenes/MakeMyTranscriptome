@@ -494,8 +494,8 @@ def run_annotation(args):
     if args.gene_trans_map == None:
         if os.path.exists(fg.GEN_PATH_GENE_TRANS_MAP()):
             args.gene_trans_map = fg.GEN_PATH_GENE_TRANS_MAP()
-	else:
-	    gtm = fan.gene_trans_map_task(args.assembly,fg.GEN_PATH_ASSEMBLY_FILES(),[])
+        else:
+            gtm = fan.gene_trans_map_task(args.assembly,fg.GEN_PATH_ASSEMBLY_FILES(),[])
             supers.append(gtm)
             deps.append(gtm)
             args.gene_trans_map = gtm.targets[0]
@@ -529,10 +529,10 @@ def run_expression(args):
         if os.path.exists(fg.GEN_PATH_GENE_TRANS_MAP()):
             args.gene_trans_map = fg.GEN_PATH_GENE_TRANS_MAP()
         else:
-	    gtm = fan.gene_trans_map_task(args.assembly,fg.GEN_PATH_ASSEMBLY_FILES(),[])
-	    supers.append(gtm)
-	    deps.append(gtm)
-	    args.gene_trans_map = gtm.targets[0]
+            gtm = fan.gene_trans_map_task(args.assembly,fg.GEN_PATH_ASSEMBLY_FILES(),[])
+            supers.append(gtm)
+            deps.append(gtm)
+            args.gene_trans_map = gtm.targets[0]
             warnings.warn('No gene_trans_map provided. Attempting to generate a Trinity Gene Trans Map.') 
     expression_super = go_expression(fg.GEN_PATH_ASSEMBLY(),fg.GEN_PATH_EXPRESSION_FILES(), args, deps)
     supers.append(expression_super)
