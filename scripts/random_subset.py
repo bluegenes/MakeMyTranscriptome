@@ -57,20 +57,20 @@ def fq_parser(fq):
 
 def paired_fq_parser(fq1, fq2):
     iters = [zip(fq_parser(f1), fq_parser(f2)) for f1, f2 in zip(fq1, fq2)]
-    print(iters)
     for e1, e2 in chain(*iters):
         yield (e1, e2)
 
 
 def GenRandomizedSubset_v2(fq1, fq2, numbins, samplesize, target1, target2, seed=None):
-    entry_count = 0
-    for e in paired_fq_parser(fq1, fq2):
-        entry_count += 1
-    if(samplesize < 1 and samplesize > 0):
-        samplesize = samplesize * entry_count
+    if(samplesize > 1):
+        entry_count = 0
+        for e in paired_fq_parser(fq1, fq2):
+            entry_count += 1
+        p_val = float(samplesize)/entry_count
+    elif(samplesize > 0):
+        p_val = float(samplesize)
     if(samplesize <= 0):
-        samplesize = entry_count*2
-    p_val = float(samplesize)/entry_count
+        p_val = 2
     t1 = open(target1, 'w')
     t2 = open(target2, 'w')
     seed_time = seed if(seed is not None) else str(time.time())
