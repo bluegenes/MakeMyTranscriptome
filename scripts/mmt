@@ -18,6 +18,8 @@ from manage_database import read_log as read_db_log
 import time
 import pandas
 import warnings
+import assembly_report
+
 
 def do_args():
     #####################____Argument_Parsers____#####################
@@ -566,6 +568,7 @@ def run_supers(args, supers):
         build_log(args, total.task_status)
         raise
     build_log(args, total.task_status)
+    create_report(args)
 
 
 def get_command():
@@ -627,6 +630,10 @@ def build_log(args, task_status):
     f.write(fg.GEN_PATH_LOGS())
     f.write('\n\n\n')
     f.close()
+
+
+def create_report(args):
+    assembly_report.create_report(fg.GEN_PATH_DIR())
 
 
 if(__name__ == '__main__'):
