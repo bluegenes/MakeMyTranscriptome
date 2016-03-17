@@ -10,7 +10,8 @@ relative_paths = {'transrate': 'quality_files/transrate/',
                   'busco': 'quality_files',
                   'fastqc': 'assembly_files',
                   'cegma': 'quality_files',
-                  'history': 'log_files'}
+                  'history': 'log_files',
+                  'summary': 'annotation_files'}
 
 buscoDirBase = "run_busco_*"
 buscoShortSum = 'short_summary*'
@@ -24,6 +25,7 @@ transrateFile = "*assemblies.csv"
 transrateReadCountF = "*read_count.txt"
 detonateFile = "*.score"
 fastqcFile = "fastqc_data.txt"
+summaryFile = 'annotation_summary.json'
 
 
 def get_busco_info(assembly_dir):
@@ -67,6 +69,15 @@ def get_history_info(assembly_dir):
         return {}
 
 
+def get_summary_info(assembly_dir):
+    files = glob.glob(os.path.join(assembly_dir, relative_paths['summary'], summaryFile))
+    if(len(files) > 0):
+        f = open(files[0])
+        data = json.load(f)
+        f.close()
+        return data
+
+
 def get_data(assembly_dir):
     data = {}
     data['busco'] = get_busco_info(assembly_dir)
@@ -74,12 +85,13 @@ def get_data(assembly_dir):
     data.update(get_fastqc_data(assembly_dir))
     data['cegma'] = get_cegma_info(assembly_dir)
     data['task_info'] = get_history_info(assembly_dir)
+    data['annot_summary'] = get_summary_info(assembly_dir)
     return data
 
 
 def create_report(assembly_dir, json_target=None, human_target=None):
     data = get_data(assembly_dir)
-    if(json_target == None):
+    if(json_target is None):
         json_target = os.path.join(assembly_dir, 'log_files', 'report.json')
     f = open(json_target, 'w')
     json.dump(data, f, sort_keys=True, indent=4)
