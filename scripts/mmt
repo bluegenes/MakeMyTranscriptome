@@ -568,7 +568,6 @@ def run_supers(args, supers):
         build_log(args, total.task_status)
         raise
     build_log(args, total.task_status)
-    create_report(args)
 
 
 def get_command():
@@ -596,6 +595,7 @@ def write_assembly_history(args, task_status):
 
 def build_log(args, task_status):
     write_assembly_history(args, task_status)
+    create_report(args)
     master_log = os.path.join(fg.GEN_PATH_DIR(), 'master.log')
     f = open(master_log, 'a')
     f.write('##################__'+args.which+'__'+time.asctime()+'__##################\n')
