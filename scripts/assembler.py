@@ -33,6 +33,7 @@ def gen_paired_prinseq_supervisor(out_dir,fastq1,fastq2,unpaired,dependency_set,
 def gen_unpaired_trimmomatic_supervisor(out_dir,fq1, fq2, unpaired, dependency_set, cpu_cap):
     tasks = []
     count = len(fq1)
+#    cpu_mod = min(len(fq1),cpu_cap)
     cpu_mod = int(round(float(cpu_cap)/len(unpaired)))
     for i in unpaired:
         trim_task = fa.trimmomatic_unpaired_task(out_dir,i, cpu_mod, 'trimmomatic_output_'+str(count), dependency_set)
@@ -44,6 +45,7 @@ def gen_unpaired_trimmomatic_supervisor(out_dir,fq1, fq2, unpaired, dependency_s
 def gen_paired_trimmomatic_supervisor(out_dir,fq1, fq2, unpaired, dependency_set, cpu_cap):
     tasks = []
     count = 0
+#    cpu_mod = min(len(fq1),cpu_cap) 
     cpu_mod = int(round(float(cpu_cap)/len(fq1)))
     for i1, i2 in zip(fq1, fq2):
         trim_task = fa.trimmomatic_task(out_dir,i1, i2, cpu_mod, 'trimmomatic_output_'+str(count), dependency_set)
@@ -52,7 +54,7 @@ def gen_paired_trimmomatic_supervisor(out_dir,fq1, fq2, unpaired, dependency_set
     return Supervisor(tasks=tasks)
 
 
-def gen_assembly_supervisor(out_dir, fastq1, fastq2, unpaired, dependency_set, no_trim=False, rnaSPAdes=False, rmdup=False, subset_size=50000000, cpu=12, subset_seed='I am a seed value', normalize_flag=False, truncate_opt=-1, trimmomatic_flag=False, path_assembly=fg.GEN_PATH_ASSEMBLY()):
+def gen_assembly_supervisor(out_dir, fastq1, fastq2, unpaired, dependency_set, no_trim=False, rnaSPAdes=False, rmdup=False, subset_size=50000000, cpu=12, subset_seed='I am a seed value', normalize_flag=False, truncate_opt=-1, trimmomatic_flag=True, path_assembly=fg.GEN_PATH_ASSEMBLY()):
     trinity_memory = 160 # make this a user option
     tasks = []
     tasks.append(fa.fastqc_task(out_dir,fastq1+fastq2+unpaired,'pre_trimming',min(cpu,len(fastq1+fastq2+unpaired)), []))

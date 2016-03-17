@@ -10,8 +10,8 @@ args = parser.parse_args()
 blastFile = []
 hitList = []
 hitDt = {}
-#header = ['query_id', 'subject_id', 'percent_identity', 'alignment_length', 'mismatches', 'gap_opens', 'query_start', 'query_end', 'subject_start', 'subject_end', 'evalue', 'bitscore', 'full_name', 'subject_length']
-header = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend', 'sstart', 'send', 'evalue', 'bitscore', 'stitle', 'slen']
+header = ['query_id', 'subject_id', 'percent_identity', 'alignment_length', 'mismatches', 'gap_opens', 'query_start', 'query_end', 'subject_start', 'subject_end', 'evalue', 'bitscore', 'full_name', 'subject_length']
+#header = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend', 'sstart', 'send', 'evalue', 'bitscore', 'stitle', 'slen']
 
 
 with open(args.blast, 'r') as f:
