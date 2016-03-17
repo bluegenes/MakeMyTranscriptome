@@ -167,7 +167,7 @@ def annot_table_task(path_assembly,out_dir,opts, tasks):
 def gff3_task(path_assembly, out_path, opts, tasks):
     trgs = [out_path]
     cmd = ('python {0!s}/annot_table_gff3.py --fasta {1!s} --outfile {2!s} '
-           ).format(PATH_SCRIPTS, path_assembly, out_path)
+           ).format(fg.PATH_SCRIPTS, path_assembly, out_path)
     cmd += ' '.join(['--'+k+' '+opts[k] for k in opts])
     name = 'build_gff3_' + os.path.basename(out_path)
     out, err = fg.GEN_LOGS(name)
