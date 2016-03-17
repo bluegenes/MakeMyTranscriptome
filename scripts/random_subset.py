@@ -34,21 +34,9 @@ USAGE MESSAGE :
 '''
 import argparse
 import random
-from itertools import chain
+from itertools import chain, izip
 import time
 
-'''	Generates a psuedorandom subset of paired fastq files filename1 and 
-	filename2. It first seperates all entries into numbins sequential subsets. 
-	A random sample is then taken from each of those subsets.
-	Params:
-		filename1- Path to a fastq file
-		filename2- Path to the fastq file that is paired with filename1
-		linecount- the linecount of filename1/2
-		numbins- the number of bins to divide the files into
-		samplesize- the size of the sample in number of fastq files
-		filename1target- path to write sample from filename1 to
-		filename2target- path to write sample from filename2 to
-'''
 
 def fq_parser(fq):
 	f = open(fq)
@@ -63,7 +51,8 @@ def fq_parser(fq):
 
 
 def paired_fq_parser(fq1,fq2):
-	iters = [zip(fq_parser(f1),fq_parser(f2)) for f1,f2 in zip(fq1,fq2)]
+	iters = [izip(fq_parser(f1),fq_parser(f2)) for f1,f2 in izip(fq1,fq2)]
+	print(iters)
 	for e1,e2 in chain(*iters):
 		yield (e1,e2)
 
