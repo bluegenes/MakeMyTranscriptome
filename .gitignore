@@ -1,4 +1,4 @@
 
 databases/*
 scripts/*.pyc
-
+test_data/*log

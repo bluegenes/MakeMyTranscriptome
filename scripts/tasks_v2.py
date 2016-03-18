@@ -6,12 +6,24 @@ import subprocess
 import pickle
 from itertools import chain
 import warnings
+import platform
 
 
 def time_to_hms(delta):
     m, s = divmod(delta, 60)
     h, m = divmod(m, 60)
     return (h, m, s)
+
+
+def check_foreground():
+    if(not platform.system().lower().startswith('linux')):
+        return True
+    try:
+        if(os.getpgrp() == os.tcgetpgrp(sys.stdout.fileno())):
+            return True
+    except OSError as e:
+        pass
+    return False
 
 
 class Task:
@@ -169,7 +181,7 @@ class Supervisor:
         self.dependencies = dependencies
         self.force_run = force_run
         self.email = email
-        self.email_interval = email_interval
+        self.email_interval = email_interval * 60
         self.last_email = time.time()
         self.log_path = log if(log is not None) else name+'.run_log'
         self.log_str = ''
@@ -313,7 +325,8 @@ class Supervisor:
     def log(self, message):
         self.log_str += message
         self.log_file.write(message)
-        print(message)
+        if(check_foreground()):
+            print(message)
         if(time.time() > self.last_email + self.email_interval):
             self.last_email = time.time()
             self.send_email(self.log_str, 'MMT Running Update')
@@ -388,5 +401,6 @@ if(__name__=='__main__'):
     s4 = Supervisor([t5,t6],name='s4',dependencies=[t1])
     s = Supervisor([s3,s4],force_run=False)
     s.run()
+    
 
 
