@@ -11,8 +11,10 @@ def _scrape_assembly(root, depth=1, link_flag=False):
     if(depth < 0):
         return {}
     dirs = set(os.listdir(root))
+    # ask is assembly directory
     if(all(d in dirs for d in assembly_dir_identifiers)):
         f = os.path.join(root, relative_path_report)
+        # ask if report already exists.
         if(os.path.isfile(f)):
             f = open(f)
             ret = {}
