@@ -161,9 +161,20 @@ def main(args):
     #change this --> within the functions where we create these:
     #initDF.drop('spHitX',axis=1, inplace=True)
     #initDF.drop('spHitP',axis=1, inplace=True)
-    summary = initDF.describe().transpose()
-    summary.to_csv(args.outfile+'_annotation_summary', sep='\t')
+#    summary = initDF.describe().transpose()
+#    summary.to_csv(args.outfile+'_annotation_summary', sep='\t')
     initDF.to_csv(args.outfile + '_annotation.txt', index_label='Transcript_id', sep='\t', na_rep='.')
+    summary = initDF.count()
+#    summary['Transcript_id'] =initDF['Transcript_id'].nunique()
+#    summary['Gene_id'] =initDF['Gene_id'].nunique()
+#    summary['eggNOG_function'] =initDF['eggNOG_function'].nunique()
+#    summary['Kegg_Pathway'] = initDF['Kegg_Pathway'].nunique()
+#    summary['Kegg_Orthology '] = initDF['Kegg_Orthology'].nunique()
+#    summary['swissprot_blastx_unique'] = initDF['swissprot_blastx'].nunique()
+#    summary['swissprot_blastp_unique'] = initDF['swissprot_blastp'].nunique()
+#    summary['PFAM_unique'] = initDF['PFAM'].nunique()
+    summary.to_json(args.outfile + '_annotation_summary.json')
+
 
 
 # now map sp id's to other databases

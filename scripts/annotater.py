@@ -37,8 +37,8 @@ def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_f
     gff3_dependencies.append(predict_orfs)
     gff3_opts['transdecoder_gff3'] = predict_orfs.targets[2]
     task_insert(predict_orfs, 'transdecoder', 1)
-    #pfam = fan.pfam_task(predict_orfs.targets[0], out_dir,cpumod(cpu, 2), [predict_orfs])
-    pfam = fan.pfam_task(predict_orfs.targets[0], out_dir,cpu, [predict_orfs])
+    pfam = fan.pfam_task(predict_orfs.targets[0], out_dir,cpumod(cpu, 4), [predict_orfs])
+    #pfam = fan.pfam_task(predict_orfs.targets[0], out_dir,cpu, [predict_orfs])
     task_insert(pfam, 'pfam', gff3_flag=True) 
     if(blast_flag):
         blastx_sprot = fan.blast_task('blastx', out_dir, path_assembly, fd.PATH_SWISS_PROT, cpumod(cpu, 2), [])

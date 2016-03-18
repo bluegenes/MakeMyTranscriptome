@@ -114,7 +114,7 @@ TOOL_LIST.append(busco_plant_tool)
 hmmer_linux_url = 'http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz' 
 #'http://selab.janelia.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz'
 hmmer_linux_target = join(PATH_TOOLS, 'hmmer-3.1b2-linux-intel-x86_64')
-hmmer_exe = ['binaries/hmmscan','binaries/hmmpress']
+hmmer_exe = ['binaries/hmmscan','binaries/hmmpress', 'binaries/hmmsearch']
 hmmer_instructions = '\n\t After downloading the binary: \n\n\t\t tar zxf hmmer-3.1b2-linux-intel-x86_64.tar.gz \n\n ' \
                         '\tThen: soft link /path/to/hmmer-3.1b2-linux-intel-x86_64 into the MMT "external_tools" folder\n' \
                         '\t  Or: add /path/to/hmmer-3.1b2-linux-intel-x86_64/binaries to your $path variable\n'
