@@ -127,11 +127,10 @@ i = 1 # now that gene is the 0th index of the dict, indexing from counts starts 
 for file in countFiles:
     if opts.eXpress:
         cD = countsFromExpress(file, i, contigD)
-        countFileNames = [name.split('/')[-2] for name in countFiles] #if haven't pulled results.xprs out of it's well-named directory
-        #countFileNames = [name.split('/')[-1] for name in countFiles]
+        countFileNames = [os.path.basename(name)  for name in countFiles]    
     elif opts.salmon:
     	cD = countsFromSalmon(file, i, contigD)
-        countFileNames = [name.split('/')[-2] for name in countFiles] #if haven't pulled quant.sf out of it's well-named directory
+        countFileNames = [os.path.basename(name)  for name in countFiles]    
     elif opts.kallisto:
     	cD = countsFromKallisto(file, i, contigD)
         countFileNames = [name.split('/')[-2] for name in countFiles] #if haven't pulled abundance.txt out of it's well-named directory
@@ -140,7 +139,7 @@ for file in countFiles:
         countFileNames = [name.split('/')[-2] for name in countFiles] #if haven't pulled samples.isoforms.results  out of it's well-named directory
     else:
         cD = countsFromBed(file, i, contigD)
-	countFileNames = [name.split('/')[-1] for name in countFiles]
+        countFileNames = [os.path.basename(name)  for name in countFiles]    
     i = i + 1
 
 geneD = getGeneDictionary(cD)
