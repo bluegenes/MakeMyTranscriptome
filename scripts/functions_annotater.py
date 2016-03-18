@@ -100,7 +100,9 @@ def transdecoder_predict_orfs_task(path_assembly,path_transdecoder_output,tasks,
         blastp = '--retain_blastp_hits ' + blastp_input
         retain_blastp = '_retain_blastp'
     assembly_name = os.path.basename(path_assembly).split('.fa')[0]
-    trgs = ['{0!s}/{1!s}.fasta.transdecoder.pep'.format(path_transdecoder_output,assembly_name),'{0!s}/{1!s}.fasta.transdecoder.bed'.format(path_transdecoder_output,assembly_name)]
+    trgs = ['{0!s}/{1!s}.fasta.transdecoder.pep'.format(path_transdecoder_output,assembly_name),
+            '{0!s}/{1!s}.fasta.transdecoder.bed'.format(path_transdecoder_output,assembly_name),
+            '{0!s}/{1!s}.fasta.transdecoder.gff3'.format(path_transdecoder_output,assembly_name)]
     cmd = ("mkdir -p {0!s}; cd {0!s}; {1!s} -t {2!s} {3!s} {4!s}").format(path_transdecoder_output,
             fg.tool_path_check(TOOLS_DICT['transdecoder'].full_exe[1]),path_assembly,pfam, blastp)
     name = 'TransDecoder_Predict_' + assembly_name + retain_pfam + retain_blastp
@@ -161,6 +163,15 @@ def annot_table_task(path_assembly,out_dir,opts, tasks):
     name = 'build_annotation_table_' + out_name
     out, err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
+
+def gff3_task(path_assembly, out_path, opts, tasks):
+    trgs = [out_path]
+    cmd = ('python {0!s}/annot_table_gff3.py --fasta {1!s} --outfile {2!s} '
+           ).format(fg.PATH_SCRIPTS, path_assembly, out_path)
+    cmd += ' '.join(['--'+k+' '+opts[k] for k in opts])
+    name = 'build_gff3_' + os.path.basename(out_path)
+    out, err = fg.GEN_LOGS(name)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
 
 def kegg_task(annotation_table, out_dir,tasks, kegg_map_id='ko01100'):
     ''' color pathways found in transcriptome on a given kegg map'''
