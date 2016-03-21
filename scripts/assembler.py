@@ -53,62 +53,58 @@ def gen_paired_trimmomatic_supervisor(out_dir,fq1, fq2, unpaired, dependency_set
         tasks.append(trim_task)
     return Supervisor(tasks=tasks)
 
+def gen_trimming_supervisor(out_dir,fq1,fq2,unpaired,no_trim,trimmomatic_flag,rmdup,subset_size,subset_seed,truncate_opt,dependency_set,cpu_cap):
+    tasks = []
+    deps = []
+    if (not no_trim):
+        if(fq1 != []):
+            if(trimmomatic_flag):
+                paired_sup = gen_paired_trimmomatic_supervisor(out_dir,fq1, fq2, unpaired, dependency_set, cpu_cap)
+            else:
+                paired_sup = gen_paired_prinseq_supervisor(out_dir,fq1, fq2, unpaired,  dependency_set, rmdup)
+            fq1 = [paired_sup.targets[x] for x in range(0, len(paired_sup.targets), 2)]
+            fq2 = [paired_sup.targets[x] for x in range(1, len(paired_sup.targets), 2)]
+            tasks.append(paired_sup)
+            tasks.append(fa.fastqc_task(out_dir, fq1+fq2, 'post_trimming_paired',int(round(float(cpu_cap)/2)),[paired_sup]))
+	    deps.append(paired_sup)
+        if(unpaired != []):
+            if(trimmomatic_flag):
+                unpaired_sup = gen_unpaired_trimmomatic_supervisor(out_dir,fq1,fq2, unpaired, dependency_set, cpu_cap)
+            else:
+                unpaired_sup = gen_unpaired_prinseq_supervisor(out_dir,fq1,fq2,unpaired,dependency_set,rmdup)
+            unpaired = unpaired_sup.targets
+            tasks.append(unpaired_sup)
+            tasks.append(fa.fastqc_task(out_dir,unpaired, 'post_trimming_unpaired',int(round(float(cpu_cap)/2)),[unpaired_sup]))
+            deps.append(unpaired_sup)
+    subset = fa.subset_task(out_dir, fq1, fq2, 'final_reads', subset_size, subset_seed, deps)
+    fq1 = [subset.targets[0]]
+    fq2 = [subset.targets[1]]
+    tasks.append(subset)
+    if(truncate_opt >= 0):
+        truncate = fa.truncate_task(out_dir, fastq1[0], fastq2[0], truncate_opt, [subset])
+        fq1 = [truncate.targets[0]]
+        fq2 = [truncate.targets[1]]
+        deps.append(truncate)
+        tasks.append(truncate)
+    if any([truncate_opt>=0, subset_size < 10**15]): # some subsetting may have occurred
+        late_fastqc = fa.fastqc_task(out_dir, subset.targets, 'final_reads_paired',cpu_cap,deps)
+        tasks.append(late_fastqc)
+    return Supervisor(tasks=tasks)
 
 def gen_assembly_supervisor(out_dir, fastq1, fastq2, unpaired, dependency_set, no_trim=False, rnaSPAdes=False, rmdup=False, subset_size=50000000, cpu=12, subset_seed='I am a seed value', normalize_flag=False, truncate_opt=-1, trimmomatic_flag=True, path_assembly=fg.GEN_PATH_ASSEMBLY()):
     trinity_memory = 160 # make this a user option
     tasks = []
     tasks.append(fa.fastqc_task(out_dir,fastq1+fastq2+unpaired,'pre_trimming',min(cpu,len(fastq1+fastq2+unpaired)), []))
-    assembler_dependencies = []
-    transrate_fastq1 = fastq1
-    transrate_fastq2 = fastq2
-    transrate_unpaired = unpaired
-    if(fastq1 != []):
-        if(not no_trim):
-            if(trimmomatic_flag):
-                paired_sup = gen_paired_trimmomatic_supervisor(out_dir,fastq1, fastq2, unpaired, [], cpu)
-            else:
-                paired_sup = gen_paired_prinseq_supervisor(out_dir,fastq1, fastq2, unpaired, [], rmdup)
-            fastq1 = [paired_sup.targets[x] for x in range(0, len(paired_sup.targets), 2)]
-            fastq2 = [paired_sup.targets[x] for x in range(1, len(paired_sup.targets), 2)]
-            transrate_fastq1 = fastq1
-            transrate_fastq2 = fastq2
-            tasks.append(paired_sup)
-            tasks.append(fa.fastqc_task(out_dir, fastq1+fastq2, 'post_trimming_paired',int(round(float(cpu)/2)),[paired_sup]))
-        subset_dependencies = [paired_sup] if(not no_trim) else []
-        subset = fa.subset_task(out_dir, fastq1, fastq2, 'final_reads', subset_size, subset_seed, subset_dependencies)
-        fastq1 = [subset.targets[0]]
-        fastq2 = [subset.targets[1]]
-        tasks.append(subset)
-        assembler_dependencies = [subset]
-        if subset_size < 10**15: # some subsetting may have occurred
-            late_fastqc = fa.fastqc_task(out_dir, subset.targets, 'final_reads_paired',int(round(float(cpu)/2)),[subset])
-            tasks.append(late_fastqc)
-        if(truncate_opt >= 0):
-            truncate = fa.truncate_task(out_dir, fastq1[0], fastq2[0], truncate_opt, [subset])
-            fastq1 = [truncate.targets[0]]
-            fastq2 = [truncate.targets[1]]
-            assembler_dependencies = [truncate]
-            tasks.append(truncate)
-    if(unpaired != []):
-        if(not no_trim):
-            if(trimmomatic_flag):
-                unpaired_sup = gen_unpaired_trimmomatic_supervisor(out_dir,fastq1, fastq2, unpaired, [], cpu)
-            else:
-                unpaired_sup = gen_unpaired_prinseq_supervisor(out_dir,fastq1, fastq2, unpaired, [], rmdup)
-            unpaired = unpaired_sup.targets
-            transrate_unpaired = unpaired
-            tasks.append(unpaired_sup)
-            tasks.append(fa.fastqc_task(out_dir,unpaired, 'post_trimming_unpaired',int(round(float(cpu)/2)),[unpaired_sup]))
-            assembler_dependencies.append(unpaired_sup)
+    trim_reads = gen_trimming_supervisor(out_dir,fastq1,fastq2,unpaired,no_trim,trimmomatic_flag,rmdup,subset_size,subset_seed, truncate_opt,[],cpu)
+    tasks.append(trim_reads)
     if(rnaSPAdes):
-        rnaspades = fa.rnaspades_task(path_assembly, out_dir,fastq1, fastq2, unpaired, cpu, assembler_dependencies)
+        rnaspades = fa.rnaspades_task(path_assembly, out_dir,fastq1, fastq2, unpaired, cpu, [trim_reads])
         tasks.append(rnaspades)
     else:
-        trinity = fa.trinity_task(path_assembly, out_dir, fastq1, fastq2, unpaired, cpu, int(cpu/2), trinity_memory, trinity_memory, normalize_flag, assembler_dependencies)
+        trinity = fa.trinity_task(path_assembly, out_dir, fastq1, fastq2, unpaired, cpu, int(cpu/2), trinity_memory, trinity_memory, normalize_flag, [trim_reads])
         tasks.append(trinity)
         gene_trans_map = fan.gene_trans_map_task(path_assembly,out_dir,[trinity])
         tasks.append(gene_trans_map)
-    assembler_main_task = tasks[-1]
     return Supervisor(tasks=tasks)
 
 
