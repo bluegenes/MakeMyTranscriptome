@@ -33,7 +33,7 @@ countTable <-as.data.frame(lapply(countTableRaw,as.integer)) # eXpress results a
 row.names(countTable) <- row.names(countTableRaw) #add gene names back to integer dataframe
 colnames(countTable) <- gsub(pattern = ".bed", replacement = "", x = colnames(countTable))
 colnames(countTable) <- gsub(pattern = ".xprs", replacement = "", x = colnames(countTable))
-
+colnames(countTable) <-  gsub(pattern = "_salmon.quant.sf", replacement = "", x = colnames(countTable))
 # subset counts based on filenames, factors provided in the treatmentInfo file
 subsetCounts <- countTable[,colnames(countTable)%in%rownames(treatmentInfo)]
 
