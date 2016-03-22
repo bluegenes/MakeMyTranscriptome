@@ -427,7 +427,6 @@ def run_full(args):
     if args.filter_by_TPM:
         filter_super = go_filter(args, transrate_task, deps+[quality_super])
         supers.append(filter_super)
-        #task_map to get assembly_names
         filt_full_task = filter_super.task_map['filt_' + fg.NAME_ASSEMBLY + '_' + str(args.tpm_threshold) + 'tpm']
         tr_good_filter_task = filter_super.task_map['filt_' + tr_good_name + '_' + str(args.tpm_threshold) + 'tpm']
         filtering_tasks = [tr_good_cp_task, filt_full_task, tr_good_filter_task] 
