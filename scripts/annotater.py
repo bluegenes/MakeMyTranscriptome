@@ -10,7 +10,7 @@ import functions_databases as fd
 def cpumod(cpu, k): return int(round(float(cpu)/k))
 
 
-def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_flag, tmhmm_flag, rnammer_flag, dependency_set, path_assembly=fg.GEN_PATH_ASSEMBLY(), assembly_name=fg.NAME_ASSEMBLY,out_dir=fg.GEN_PATH_ANNOTATION_FILES(), improve_orfs=False):
+def gen_annotation_supervisor(cpu, uniref90_flag, nr_flag, blast_flag, signalp_flag, tmhmm_flag, rnammer_flag, dependency_set, gene_trans_map, path_assembly, assembly_name,out_dir, improve_orfs=False):
     tasks = []
     annot_table_opts = {}
     def task_insert(task, name=None, index=0):

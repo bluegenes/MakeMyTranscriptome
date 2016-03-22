@@ -282,8 +282,8 @@ def handle_csv(args):
             args.model = ' '.join(panda_data.keys()[3:])
     unpaired_view = panda_data.loc[panda_data['Read2'].isnull(), :]
     paired_view = panda_data.loc[panda_data['Read2'].notnull(), :]
-    args.paired_names = list(paired_view['Sample Basename'])
-    args.unpaired_names = list(unpaired_view['Sample Basename'])
+    args.paired_names = list(paired_view['Sample_Basename'])
+    args.unpaired_names = list(unpaired_view['Sample_Basename'])
     args.fastq1 = paired_view['Read1']
     args.fastq2 = paired_view['Read2']
     args.unpaired = unpaired_view['Read1']
@@ -301,17 +301,18 @@ def go_assembly(args, dep):
         args.subsample_size, args.cpu, args.subsample_seed, 
         args.trinity_normalization, args.truncate, args.trimmomatic,fg.GEN_PATH_ASSEMBLY())
 
-def go_quality(args, dep):
+def go_quality(args, dep, assembly_path, out_dir=fg.GEN_PATH_QUALITY_FILES(), transrate_cp=True):
+    assembly_name = os.path.basename(assembly_path).split('.fasta')[0]
     busco_args = {'arthropoda': args.arthropoda, 'metazoa': args.metazoa,
                   'vertebrata': args.vertebrata, 'eukaryota': args.eukaryota,
                   'fungi': args.fungi, 'bacteria': args.bacteria,
                   'plantae': args.plantae}
     busco_args = [k for k in busco_args if(busco_args[k])]
     return gen_quality_supervisor(
-        args.fastq1, args.fastq2, args.unpaired, dep, busco_args,
-        args.cpu, args.cegma, args.transrate_ref, assembly_name=fg.NAME_ASSEMBLY, 
-        assembly_path= fg.GEN_PATH_ASSEMBLY(), out_dir=fg.GEN_PATH_QUALITY_FILES(),
-        transrate_dir=fg.GEN_PATH_TRANSRATE_DIR(), reads_dir=fg.GEN_PATH_ASSEMBLY_FILES())
+        args.fastq1, args.fastq2, dep, busco_args, 
+	assembly_name, assembly_path, out_dir,fg.GEN_PATH_TRANSRATE_DIR(),
+	fg.GEN_PATH_ASSEMBLY_FILES(),fg.GEN_PATH_FILTER_FILES(),transrate_cp,
+	args.cpu, args.cegma, args.transrate_ref)
 
 def go_filter(args, transrate_task, dep):
     return gen_filter_supervisor(fg.GEN_PATH_ASSEMBLY(),fg.NAME_ASSEMBLY,fg.GEN_PATH_FILTER_FILES(), transrate_task, dep, tpm_threshold=args.tpm_threshold)
@@ -327,10 +328,9 @@ def go_expression(path_assembly, out_dir, args, dep):
     assembly_name = os.path.basename(path_assembly).split('.fa')[0]
     return gen_expression_supervisor(
         args.fastq1, args.fastq2, args.paired_names, args.unpaired,
-        args.unpaired_names, args.cpu, args.sample_info, args.model, dep, 
-        args.intersectbed, args.express, assembly_name=fg.NAME_ASSEMBLY, 
-        assembly_path= fg.GEN_PATH_ASSEMBLY(), out_dir=fg.GEN_PATH_EXPRESSION_FILES(),
-        gene_trans_map=os.path.join(fg.GEN_PATH_ANNOTATION_FILES(),fg.NAME_ASSEMBLY+ '.gene_trans_map'))
+        args.unpaired_names, args.cpu, args.sample_info, args.model, args.gene_trans_map, dep, 
+        assembly_name, path_assembly, out_dir,
+	args.express, args.intersectbed)
 
 def go_manage_db(args, dep, log_files=True):
     if(args.which=='annotation'): 
@@ -400,28 +400,28 @@ def run_full(args):
     supers.append(manage_db)
     annotation_super = go_annotation(args, deps+[manage_db])
     supers.append(annotation_super)
-    quality_super = go_quality(args, deps+[manage_db])
-
-    transrate_task = quality_super.task_map['transrate_' + fg.NAME_ASSEMBLY]
+    quality_super = go_quality(args,deps+[manage_db],fg.GEN_PATH_ASSEMBLY(), transrate_cp=True)
     supers.append(quality_super)
-    filtering_tasks = []
+    transrate_task = quality_super.task_map['transrate_' + fg.NAME_ASSEMBLY]
+    tr_good_name = 'good.'+ fg.NAME_ASSEMBLY
+    tr_good_cp_task = quality_super.task_map['setting_fasta_' + tr_good_name]
+    filtering_tasks = [tr_good_cp_task]
     if args.filter_by_TPM:
-        filter_super = go_filter(args, transrate_task, deps)
+        filter_super = go_filter(args, transrate_task, deps+[quality_super])
         supers.append(filter_super)
-        filtered_full_task = filter_super.task_map['filt_' + fg.NAME_ASSEMBLY + '_' + str(args.tpm_threshold) + 'tpm']
-        tr_good_name = 'good.'+ fg.NAME_ASSEMBLY
-        tr_good_cp_task = filter_super.task_map['setting_fasta_' + tr_good_name]
-        tr_good_filter = filter_super.task_map['filt_' + tr_good_name + '_' + str(args.tpm_threshold) + 'tpm']
-#        gene_trans_map_good = fan.gene_trans_map_task(assembly_path, out_dir,[])
-
-        filtering_tasks = [tr_good_cp_task, filtered_full_task, tr_good_filter] 
-    if(args.csv !=None): #csv is required so we have metadata
+        #task_map to get assembly_names
+        filt_full_task = filter_super.task_map['filt_' + fg.NAME_ASSEMBLY + '_' + str(args.tpm_threshold) + 'tpm']
+        tr_good_filter_task = filter_super.task_map['filt_' + tr_good_name + '_' + str(args.tpm_threshold) + 'tpm']
+        filtering_tasks = [tr_good_cp_task, filt_full_task, tr_good_filter_task] 
+    for task in filtering_tasks:
+        supers.append(go_quality(args, deps+[task], assembly_path=task.targets[0], out_dir=fg.GEN_PATH_FILTER_FILES(),transrate_cp=False))
+    if(args.csv !=None or args.excel !=None): #csv is required so we have metadata
         check_csv_input(args)# since it wasn't required earlier, we need to check that it exists, is proper file. 
         gen_sample_info(args)
         expression_super = go_expression(fg.GEN_PATH_ASSEMBLY(),fg.GEN_PATH_EXPRESSION_FILES(), args, deps)
         supers.append(expression_super)
         for task in filtering_tasks:
-            supers.append(go_expression(task.targets[0],fg.GEN_PATH_FILTER_FILES(),args,deps+[filter_super]))
+            supers.append(go_expression(task.targets[0],fg.GEN_PATH_FILTER_FILES(),args,deps+filtering_tasks))
     run_supers(args, supers)
 
 
@@ -459,7 +459,7 @@ def run_quality(args):
     manage_db = go_manage_db(args, [])
     supers.append(manage_db)
     deps.append(manage_db)
-    quality_super = go_quality(args, deps)
+    quality_super = go_quality(args, deps, fg.GEN_PATH_ASSEMBLY())
     supers.append(quality_super)
     run_supers(args, supers)
 

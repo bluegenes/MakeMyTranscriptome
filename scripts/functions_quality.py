@@ -45,7 +45,7 @@ def busco_task(assembly_path, assembly_name, out_dir,reference_name, cpu_cap, ta
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,cpu=cpu_cap,stdout=out,stderr=err)
 
 
-def transrate_dep_generator(reads_dir,transrate_task, lefts, rights, singles, reference, assembly_path, cpu_cap, transrate_dir, other_dependencies):
+def transrate_dep_generator(reads_dir,transrate_task, lefts, rights, reference, assembly_path, cpu_cap, transrate_dir, other_dependencies):
 
     def ret():
         for t in other_dependencies:
@@ -60,11 +60,11 @@ def transrate_dep_generator(reads_dir,transrate_task, lefts, rights, singles, re
         new_lefts = [k[0] for k in new_lefts if(len(k) > 0)]
         new_rights = [[g for g in assembly_files if(os.path.basename(f) in g)] for f in rights]
         new_rights = [k[0] for k in new_rights if(len(k) > 0)]
-        new_singles = [[g for g in assembly_files if(os.path.basename(f) in g)] for f in singles]
-        new_singles = [k[0] for k in new_singles if(len(k) > 0)]
-        if(len(new_lefts) == len(lefts) and len(new_rights) == len(rights) and len(new_singles) == len(singles)
-            and len(new_lefts)+len(new_singles) != 0):
-            new_lefts = ','.join(new_lefts+new_singles)
+#        new_singles = [[g for g in assembly_files if(os.path.basename(f) in g)] for f in singles]
+#        new_singles = [k[0] for k in new_singles if(len(k) > 0)]
+        if(len(new_lefts) == len(lefts) and len(new_rights) == len(rights)): #and len(new_singles) == len(singles)
+#            and len(new_lefts)+len(new_singles) != 0):
+            new_lefts = ','.join(new_lefts)#+new_singles)
             new_rights = ','.join(new_rights) 
             new_lefts = '--left '+new_lefts if(len(new_lefts) > 0) else ''
             new_rights = '--right '+new_rights if(len(new_rights) > 0) else ''
@@ -78,12 +78,11 @@ def transrate_dep_generator(reads_dir,transrate_task, lefts, rights, singles, re
     return ret
 
 
-def transrate_task(reads_dir, assembly_path, assembly_name,lefts, rights, singles, out_dir, transrate_dir, cpu_cap, tasks, reference = ''): #, cpu_cap, tasks):
+def transrate_task(reads_dir, assembly_path, assembly_name,lefts, rights, out_dir, transrate_dir, cpu_cap, tasks, reference = ''): #, cpu_cap, tasks):
     trgs = ['{0!s}/assemblies.csv'.format(transrate_dir),'{0!s}/{1!s}/good.{1!s}.fasta'.format(transrate_dir,assembly_name),'{0!s}/{1!s}/{1!s}.fasta_quant.sf'.format(transrate_dir,assembly_name)]
     orig_lefts = lefts
     orig_rights = rights
-    orig_singles = singles
-    lefts = ','.join(lefts+singles)
+    lefts = ','.join(lefts)
     rights = ','.join(rights) 
     lefts = '--left '+lefts if(len(lefts) > 0) else ''
     rights = '--right '+rights if(len(rights) > 0) else ''
@@ -94,7 +93,7 @@ def transrate_task(reads_dir, assembly_path, assembly_name,lefts, rights, single
     name = 'transrate_' + assembly_name
     out, err = fg.GEN_LOGS(name)
     temp_task = Task(command=cmd, dependencies=[], targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err, max_wall_time=720)
-    deps = transrate_dep_generator(reads_dir, temp_task, orig_lefts, orig_rights, orig_singles, reference, assembly_path, cpu_cap, transrate_dir, tasks)
+    deps = transrate_dep_generator(reads_dir, temp_task, orig_lefts, orig_rights, reference, assembly_path, cpu_cap, transrate_dir, tasks)
     temp_task.dependencies = [deps]
     return temp_task
 
@@ -106,7 +105,7 @@ def assembly_stats_task(out_dir,assembly,tasks):
     '''
     trgs = ['{0!s}/assembly_stats.json'.format(out_dir)]
     cmd = 'python {0!s}/assembly_stats.py {1!s} > {2!s}'.format(fg.PATH_SCRIPTS,assembly,trgs[0])
-    name = 'assembly_stats'
+    name = 'assembly_stats_' + os.path.basename(assembly)
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
