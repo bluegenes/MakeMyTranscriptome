@@ -50,6 +50,8 @@ def GEN_PATH_LOGS(): return os.path.join(GEN_PATH_DIR(), 'log_files')
 
 def GEN_PATH_ASSEMBLY(): return os.path.join(GEN_PATH_DIR(), NAME_ASSEMBLY+'.fasta')
 
+def GEN_PATH_GENE_TRANS_MAP(): return os.path.join(GEN_PATH_ASSEMBLY_FILES(), NAME_ASSEMBLY+'.gene_trans_map')
+
 def GEN_PATH_TRANSDECODER_DIR(): return os.path.join(GEN_PATH_ANNOTATION_FILES(), 'transdecoder')
 
 def GEN_PATH_TRANSRATE_DIR(): return os.path.join(GEN_PATH_QUALITY_FILES(), 'transrate')

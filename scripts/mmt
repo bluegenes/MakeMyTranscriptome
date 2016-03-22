@@ -6,6 +6,7 @@ import sys
 import json
 from tasks_v2 import Supervisor, Task
 import functions_general as fg
+import functions_annotater as fan
 from functions_general import PATH_TEST
 from assembler import gen_assembly_supervisor
 from annotater import gen_annotation_supervisor
@@ -17,6 +18,8 @@ from manage_database import read_log as read_db_log
 import time
 import pandas
 import warnings
+import assembly_report
+
 
 def do_args():
     #####################____Argument_Parsers____#####################
@@ -40,6 +43,7 @@ def do_args():
     # support assembly input
     assembly_input_parser = argparse.ArgumentParser(add_help=False)
     assembly_input_parser.add_argument('-a','--assembly',help='A fasta transcriptome assembly that needs to be annotated.')
+    assembly_input_parser.add_argument('--gene_trans_map', help='tab separated file (gene_name \t transcript_name)')
     # support read input 
     read_input_parser = argparse.ArgumentParser(add_help=False)
     read_input_parser.add_argument('-u','--unpaired',help='A comma seperated list of unpaired fastq files.')
@@ -64,7 +68,8 @@ def do_args():
     assembler_input.add_argument('-trinity_normalization',action='store_true',help='Use this flag to use the trinity normalization option')
     assembler_input.add_argument('-no_rmdup',help='Use thie flag to disable the removing duplicates portion of the pre-assembly read cleaning.',action='store_true')
     assembler_input.add_argument('-no_trim',help='Use this flag to disable all trimming portions of pre-assembly read cleaning. Duplicate and low quality reads will not be removed. Subsampling will still be executed.',action='store_true')
-    assembler_input.add_argument('-trimmomatic',help='Use trimmomatic instead of prinseq to trime reads',action='store_true')
+    assembler_input.add_argument('-trimmomatic',help='Use trimmomatic to trim reads', dest='trimmomatic',action='store_true', default=True)
+    assembler_input.add_argument('-prinseq',help='Use prinseq instead of trimmomatic instead of prinseq to trim reads', dest='trimmomatic',action='store_false')
     assembler_input.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The default value is 50.', default=50,type=float)
     assembler_input.add_argument('--subsample_seed',help='A seed used to initialize the random number generator used during random sampling.')
     assembler_input.add_argument('--truncate',help='snip reads down to this size if longer than this size. Default is no truncations.',type=int,default=-1)
@@ -97,11 +102,11 @@ def do_args():
     database_selector.add_argument('-v', '--vertebrata', help = 'use vertebrate BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
     database_selector.add_argument('--arthropoda', help = 'use arthropod BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
     database_selector.add_argument('-f', '--fungi', help = 'use fungi BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
-    database_selector.add_argument('-b', '--bacteria', help = 'use bacteria BUSCO database. If used with "databases" tool, download this database.',action='store_false',default=False)
+    database_selector.add_argument('-b', '--bacteria', help = 'use bacteria BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
     database_selector.add_argument('--fresh', help= 'download new version of all databases', default=False)
     #currently this option does nothing, bc it requires an updated busco.py
     database_selector.add_argument('-p', '--plantae', help = 'use plantae BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
-    #ANNOTATIOM DATABASE SELECTOR ARGS 
+    #ANNOTATION DATABASE SELECTOR ARGS 
     annot_database_selector = argparse.ArgumentParser(add_help=False)
     annot_database_selector.add_argument('-blastplus',action='store_true',help='Use the blast+ tool suite instead of diamond to align your transcripts to the references. If used with "databases" tool, download this database.')
     annot_database_selector.add_argument('-uniref90',help='Use this flag to enable the uniref-90 diamond-blast runs as part of the annotation pipeline. If used with "databases" tool, download this database.',action='store_true')
@@ -128,7 +133,7 @@ def do_args():
     quality_parser = subparsers.add_parser("quality", parents=[common_parser, out_parser, cpu_input_parser, csv_input_parser, read_input_parser, assembly_input_parser, database_selector, quality_input, filter_input, tool_args], description='Selected_tool : Quality. Executing this tool will perform a quality assessment of an existing assembly.', add_help=True)
     quality_parser.set_defaults(which='quality')
 
-    expression_parser = subparsers.add_parser("expression", parents=[common_parser, out_parser, cpu_input_parser, csv_input_parser, expression_input, tool_args], description='Selected_tool : Expression. Executing this tool will run a series of differential expression analyses and sumarize the output.',add_help=True)
+    expression_parser = subparsers.add_parser("expression", parents=[common_parser, out_parser, cpu_input_parser, csv_input_parser,assembly_input_parser,expression_input, tool_args], description='Selected_tool : Expression. Executing this tool will run a series of differential expression analyses and sumarize the output.',add_help=True)
     expression_parser.set_defaults(which='expression')
 
     database_parser = subparsers.add_parser('databases', parents=[cpu_input_parser, database_selector, annot_database_selector], description='Selected_tool : Databases. Executing this tool will check that all annotation databases are present and download if necessary. Optional: download new versions of all databases', add_help=True)
@@ -161,14 +166,15 @@ def inherit_name_from_paired(paired_1):
 def set_test_args(args):
     args.out_name = args.out_name if(args.out_name!=None) else 'test_v2'
     if(args.which=='full' or args.which=='assembly' or args.which=='expression' or args.which=='quality'):
-        #args.csv = os.path.join(PATH_TEST,'sample_info.csv')
-        args.excel = os.path.join(PATH_TEST,'sample_info.xlsx')
+        args.csv = os.path.join(PATH_TEST,'sample_info.csv')
+        #args.excel = os.path.join(PATH_TEST,'sample_info.xlsx')
     if(args.which=='quality' or args.which=='annotation' or args.which=='expression'):
         args.assembly = os.path.join(PATH_TEST,'test.fasta')
 
 def set_subsample_size(args):
     args.subsample_size = 10**15 if(args.subsample_size<=0) else args.subsample_size*10**6
 
+# need to modify this to allow excel input for DE
 def gen_sample_info(args):
     args.sample_info = os.path.join(fg.GEN_PATH_EXPRESSION_FILES(),'sample_info.tsv')
     si = open(args.sample_info,'w')
@@ -200,6 +206,8 @@ def global_setup(args):
     if(args.which=='assembly'):
         if(args.csv!=None):
             base = inherit_name(args.csv)
+        elif(args.excel!=None):
+            base = inherit_name(args.excel)
         elif(args.fastq1!=[]):
             base = inherit_name_from_paired(args.fastq1[0])
         else:
@@ -320,7 +328,7 @@ def go_filter(args, transrate_task, dep):
 def go_annotation(args, dep):
     return gen_annotation_supervisor(
         args.cpu, args.uniref90, args.nr, args.blastplus, args.signalp,
-        args.tmhmm, args.rnammer, dep, path_assembly= fg.GEN_PATH_ASSEMBLY(),
+        args.tmhmm, args.rnammer, dep, args.gene_trans_map, path_assembly= fg.GEN_PATH_ASSEMBLY(),
         assembly_name=fg.NAME_ASSEMBLY, out_dir=fg.GEN_PATH_ANNOTATION_FILES(),
         improve_orfs=args.improve_orf_prediction)
 
@@ -384,9 +392,10 @@ def run_full(args):
         deps.append(manage_tools)
         assembly_super = go_assembly(args, [])
         supers.append(assembly_super)
-        deps.append(assembly_super) # if transrate fails, all downstream fails ... need to change the dependency structure here.
+        deps.append(assembly_super) 
+        args.gene_trans_map = fg.GEN_PATH_GENE_TRANS_MAP()
     else: #run everything else BUT assembly
-        check_fasta_input(args) #fasta input is required --> check that it's a proper file
+        check_fasta_input(args) 
         check_read_inputs(args, False) # get read input from either the csv or command-line inputs
         global_setup(args)
         manage_tools = go_manage_tools(args, [])
@@ -396,6 +405,15 @@ def run_full(args):
             cp = fg.cp_assembly_task(fg.GEN_PATH_ASSEMBLY(),args.assembly, [])
             supers.append(cp)
             deps.append(cp)
+        if args.gene_trans_map == None:
+            if os.path.exists(fg.GEN_PATH_GENE_TRANS_MAP()):
+                args.gene_trans_map = fg.GEN_PATH_GENE_TRANS_MAP()
+            else:
+                gtm = fan.gene_trans_map_task(args.assembly,fg.GEN_PATH_ASSEMBLY_FILES(),[])
+                supers.append(gtm)
+                deps.append(gtm)
+                args.gene_trans_map = gtm.targets[0]
+                warnings.warn('No gene_trans_map provided. Attempting to generate a Trinity Gene Trans Map.')
     manage_db = go_manage_db(args, [])
     supers.append(manage_db)
     annotation_super = go_annotation(args, deps+[manage_db])
@@ -478,6 +496,15 @@ def run_annotation(args):
     manage_tools = go_manage_tools(args, [])
     supers.append(manage_tools)
     deps.append(manage_tools)
+    if args.gene_trans_map == None:
+        if os.path.exists(fg.GEN_PATH_GENE_TRANS_MAP()):
+            args.gene_trans_map = fg.GEN_PATH_GENE_TRANS_MAP()
+        else:
+            gtm = fan.gene_trans_map_task(args.assembly,fg.GEN_PATH_ASSEMBLY_FILES(),[])
+            supers.append(gtm)
+            deps.append(gtm)
+            args.gene_trans_map = gtm.targets[0]
+            warnings.warn('No gene_trans_map provided. Attempting to generate a Trinity Gene Trans Map.') 
     manage_db = go_manage_db(args, [])
     supers.append(manage_db)
     deps.append(manage_db)
@@ -503,6 +530,15 @@ def run_expression(args):
     manage_tools = go_manage_tools(args, [])
     supers.append(manage_tools)
     deps.append(manage_tools)
+    if args.gene_trans_map == None:
+        if os.path.exists(fg.GEN_PATH_GENE_TRANS_MAP()):
+            args.gene_trans_map = fg.GEN_PATH_GENE_TRANS_MAP()
+        else:
+            gtm = fan.gene_trans_map_task(args.assembly,fg.GEN_PATH_ASSEMBLY_FILES(),[])
+            supers.append(gtm)
+            deps.append(gtm)
+            args.gene_trans_map = gtm.targets[0]
+            warnings.warn('No gene_trans_map provided. Attempting to generate a Trinity Gene Trans Map.') 
     expression_super = go_expression(fg.GEN_PATH_ASSEMBLY(),fg.GEN_PATH_EXPRESSION_FILES(), args, deps)
     supers.append(expression_super)
     run_supers(args, supers)
@@ -581,6 +617,7 @@ def write_assembly_history(args, task_status):
 
 def build_log(args, task_status):
     write_assembly_history(args, task_status)
+    create_report(args)
     master_log = os.path.join(fg.GEN_PATH_DIR(), 'master.log')
     f = open(master_log, 'a')
     f.write('##################__'+args.which+'__'+time.asctime()+'__##################\n')
@@ -615,6 +652,10 @@ def build_log(args, task_status):
     f.write(fg.GEN_PATH_LOGS())
     f.write('\n\n\n')
     f.close()
+
+
+def create_report(args):
+    assembly_report.create_report(fg.GEN_PATH_DIR())
 
 
 if(__name__ == '__main__'):
