@@ -240,6 +240,8 @@ def check_csv_input(args, required=True):
             raise Exception('\n\nERROR : Invalid csv argument. '+args.csv+' does not exist.')
     if(args.csv is not None):
         handle_csv(args)
+        if(args.excel is not None):
+            os.remove(args.csv)
     elif required:
         raise Exception('\n\nERROR : csv input is required for execution of expression module.')
 
