@@ -172,7 +172,10 @@ def set_test_args(args):
         args.assembly = os.path.join(PATH_TEST,'test.fasta')
 
 def set_subsample_size(args):
-    args.subsample_size = 10**15 if(args.subsample_size<=0) else args.subsample_size*10**6
+    if(args.subsample_size <= 0):
+        args.subsample_size = 10**15
+    else:
+        args.subsample_size *= 10**6
 
 # need to modify this to allow excel input for DE
 def gen_sample_info(args):
@@ -191,30 +194,30 @@ def global_setup(args):
             os.makedirs(args.out_dir)
         except:
             raise Exception('\n\nERROR : invalid out_dir argument. Path does not exist.')
-    if(args.cpu<=0):
+    if(args.cpu <= 0):
         args.cpu = float('inf')
     fg.PATH_ASSEMBLIES = args.out_dir
-    if(args.which=='full'):
-        if(args.assembly!=None):
+    if(args.which == 'full'):
+        if(args.assembly is not None):
             base = inherit_name(args.assembly)
-        elif(args.csv!=None):
+        elif(args.csv is not None):
             base = inherit_name(args.csv)
-        elif(args.fastq1!=[]):
+        elif(args.fastq1 != []):
             base = inherit_name_from_paired(args.fastq1[0])
         else:
             base = inherit_name(args.unpaired[0])
-    if(args.which=='assembly'):
-        if(args.csv!=None):
+    if(args.which == 'assembly'):
+        if(args.csv is not None):
             base = inherit_name(args.csv)
-        elif(args.excel!=None):
+        elif(args.excel is not None):
             base = inherit_name(args.excel)
-        elif(args.fastq1!=[]):
+        elif(args.fastq1 != []):
             base = inherit_name_from_paired(args.fastq1[0])
         else:
             base = inherit_name(args.unpaired[0])
-    if(args.which=='annotation' or args.which=='quality' or args.which=='expression'):
+    if(args.which == 'annotation' or args.which == 'quality' or args.which == 'expression'):
         base = inherit_name(args.assembly)
-    fg.NAME_OUT_DIR = args.out_name if(args.out_name!=None) else base
+    fg.NAME_OUT_DIR = args.out_name if(args.out_name is not None) else base
     fg.NAME_ASSEMBLY = fg.NAME_OUT_DIR
     fg.build_dir_task([]).run()
 
@@ -222,15 +225,20 @@ def global_setup(args):
 #####################____Argument_Testers____#####################
 
 def check_csv_input(args, required=True):
-    if(args.csv is not None):
-        if(not os.path.isfile(args.csv)):
-            raise Exception('\n\nERROR : Invalid csv argument. '+args.csv+' does not exist.')
+    if(args.csv is not None and args.excel is not None):
+        raise Exception('\n\nERROR : both csv and excel input have been provided. Unable to determine which should be used. Please provide only one csv/excel file as input.')
     if(args.excel is not None):
         if(not os.path.isfile(args.excel)):
             raise Exception('\n\nERROR : Invalid excel argument. '+args.excel+' does not exist.')
-    if(args.csv is not None and args.excel is not None):
-        raise Exception('\n\nERROR : both csv and excel input have been provided. Unable to determine which should be used. Please provide only one csv/excel file as input.')
-    if(args.csv is not None or args.excel is not None):
+        else:
+            data = panda_data = pandas.read_excel(args.excel)
+            temp_file_path = PATH_TEST+'.csv_temp_file_'+os.path.basename(args.excel)
+            data.to_csv(temp_file_path)
+            args.csv = temp_file_path
+    if(args.csv is not None):
+        if(not os.path.isfile(args.csv)):
+            raise Exception('\n\nERROR : Invalid csv argument. '+args.csv+' does not exist.')
+    if(args.csv is not None):
         handle_csv(args)
     elif required:
         raise Exception('\n\nERROR : csv input is required for execution of expression module.')
@@ -281,8 +289,6 @@ def handle_read_input(args):
 def handle_csv(args):
     if(args.csv != None):
         panda_data = pandas.read_csv(args.csv)
-    elif(args.excel != None):
-        panda_data = pandas.read_excel(args.excel)
     else:
         warnings.warn('No csv or excel, so we should not call this function. This line should never be printed.')
     if(args.which == 'expression' or args.which == 'full'):
