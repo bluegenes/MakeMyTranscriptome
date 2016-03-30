@@ -232,7 +232,7 @@ def check_csv_input(args, required=True):
             raise Exception('\n\nERROR : Invalid excel argument. '+args.excel+' does not exist.')
         else:
             data = panda_data = pandas.read_excel(args.excel)
-            temp_file_path = PATH_TEST+'.csv_temp_file_'+os.path.basename(args.excel)
+            temp_file_path = PATH_TEST+'/csv_temp_file_'+os.path.basename(args.excel)
             data.to_csv(temp_file_path)
             args.csv = temp_file_path
     if(args.csv is not None):
