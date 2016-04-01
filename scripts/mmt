@@ -290,7 +290,9 @@ def handle_read_input(args):
 
 def handle_csv(args):
     if(args.csv != None):
-        panda_data = pandas.read_csv(args.csv)
+        cols = ['Sample_Basename', 'Read1', 'Read2']
+        panda_data = pandas.read_csv(args.csv, header=0)
+        panda_data.columns = cols + panda_data.columns[3:]
     else:
         warnings.warn('No csv or excel, so we should not call this function. This line should never be printed.')
     if(args.which == 'expression' or args.which == 'full'):
@@ -298,8 +300,8 @@ def handle_csv(args):
             args.model = ' '.join(panda_data.keys()[3:])
     unpaired_view = panda_data.loc[panda_data['Read2'].isnull(), :]
     paired_view = panda_data.loc[panda_data['Read2'].notnull(), :]
-    args.paired_names = list(paired_view['Sample Basename'])
-    args.unpaired_names = list(unpaired_view['Sample Basename'])
+    args.paired_names = list(paired_view['Sample_Basename'])
+    args.unpaired_names = list(unpaired_view['Sample_Basename'])
     args.fastq1 = paired_view['Read1']
     args.fastq2 = paired_view['Read2']
     args.unpaired = unpaired_view['Read1']
