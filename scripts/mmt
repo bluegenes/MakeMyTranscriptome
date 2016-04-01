@@ -233,7 +233,7 @@ def check_csv_input(args, required=True):
         else:
             data = panda_data = pandas.read_excel(args.excel)
             temp_file_path = PATH_TEST+'/csv_temp_file_'+os.path.basename(args.excel)
-            data.to_csv(temp_file_path)
+            data.to_csv(temp_file_path, index=False)
             args.csv = temp_file_path
     if(args.csv is not None):
         if(not os.path.isfile(args.csv)):
@@ -291,8 +291,10 @@ def handle_read_input(args):
 def handle_csv(args):
     if(args.csv != None):
         cols = ['Sample_Basename', 'Read1', 'Read2']
-        panda_data = pandas.read_csv(args.csv, header=0)
-        panda_data.columns = cols + panda_data.columns[3:]
+	panda_data = pandas.read_csv(args.csv, header=0)
+	cols.extend(list(panda_data.keys()[3:]))
+	cols = {a:b for a,b in zip(panda_data.keys(), cols)}
+	panda_data.rename(columns=cols, inplace=True)
     else:
         warnings.warn('No csv or excel, so we should not call this function. This line should never be printed.')
     if(args.which == 'expression' or args.which == 'full'):
