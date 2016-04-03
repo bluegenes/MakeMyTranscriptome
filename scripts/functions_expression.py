@@ -36,7 +36,7 @@ def bowtie2_unpaired_task(bowtie2_index,out_dir,fastq,out_name,opt,cpu_cap,tasks
     cmd = ('{0!s} {1!s} -L {2!s} -N 1 --threads {3!s} -x {4!s} -U '
             '{5!s} | samtools view -Sb - > {6!s} ').format(fg.tool_path_check(TOOLS_DICT['bowtie2'].full_exe[1]),
             opts[opt],22,cpu_cap,bowtie2_index,fastq,trgs[0])
-    name = 'bowtie2_'+ out_name
+    name = 'bowtie2_'+ os.path.basename(bowtie2_index) + '_' + out_name
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
@@ -49,7 +49,7 @@ def bowtie2_task(bowtie2_index,out_dir,fastq1,fastq2,out_name,opt,cpu_cap,tasks)
     cmd = ('{0!s} {1!s} -L {2!s} -N 1 --maxins 800 --threads {3!s} -x {4!s} -1 '
             '{5!s} -2 {6!s} | samtools view -Sb - > {7!s} ').format(fg.tool_path_check(TOOLS_DICT['bowtie2'].full_exe[1]),
             opts[opt],22,cpu_cap,bowtie2_index,fastq1,fastq2,trgs[0])
-    name = 'bowtie2_'+out_name
+    name = 'bowtie2_'+ os.path.basename(bowtie2_index) + '_' + out_name
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
@@ -61,20 +61,20 @@ def express_task(assembly_path,out_dir,out_name,bam_input,tasks):
     cmd = ('mkdir {1!s}/{2!s}; {0!s} --output-dir {1!s}/{2!s} {3!s} {4!s}; mv '
             '{1!s}/{2!s}/results.xprs {5!s}; rm -rf {1!s}/{2!s};').format(
             fg.tool_path_check(TOOLS_DICT['express'].full_exe[0]),out_dir,out_name,assembly_path,bam_input,trgs[0])
-    name = 'express_'+out_name
+    name = 'express_'+ os.path.basename(bowtie2_index) + '_' + out_name
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
 
-def counts_to_table_task(gene_trans_map,out_dir,count_files,out_name,flag,tasks):
+def counts_to_table_task(assembly_name,gene_trans_map,out_dir,count_files,out_name,flag,tasks):
     '''
     '''
-    trgs = ['{0!s}/{1!s}.countsTable'.format(out_dir,out_name)]
+    trgs = ['{0!s}/{1!s}.countsTable'.format(out_dir,out_name),'{0!s}/{1!s}_byGene.countsTable'.format(out_dir,out_name)]
     count_str = ' '.join(['--counts {0!s}'.format(f) for f in count_files])
     cmd = ('python {0!s}/counts_to_table2.py --out {1!s} --inDir {2!s} '
             '--outDir {2!s} {3!s} {4!s} --geneTransMap {5!s}').format( 
             fg.PATH_SCRIPTS,out_name,out_dir,flag,count_str,gene_trans_map)
-    name = 'counts_to_table_'+flag
+    name = 'counts_to_table_'+ assembly_name + '_' + flag.split('--')[1]
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
@@ -84,7 +84,7 @@ def sam_sort_task(out_dir,bam_file,out_name,tasks):
     '''
     trgs = ['{0!s}/{1!s}.bam'.format(out_dir,out_name)]
     cmd = 'samtools sort {0!s} {1!s}/{2!s}'.format(bam_file,out_dir,out_name)
-    name = 'sam_sort_'+out_name
+    name = 'sam_sort_'+ os.path.basename(bam_file) + '_' + out_name
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
@@ -94,18 +94,18 @@ def intersect_bed_task(out_dir,bam_file,bed_reference,output_name,tasks):
     trgs = ['{0!s}/{1!s}.bed'.format(out_dir,output_name)]
     cmd = '{0!s} intersect -abam {1!s} -b {2!s} -wb -bed > {3!s}'.format(
         fg.tool_path_check(TOOLS_DICT['bedtools'].full_exe[0]),bam_file,bed_reference,trgs[0])
-    name = 'intersect_bed_'+output_name
+    name = 'intersect_bed_'+ bed_reference + '_' + output_name
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
-def deseq2_task(out_dir,counts_to_table_results,sample_info,basename,model,tasks):
+def deseq2_task(assembly_name,out_dir,counts_to_table_results,sample_info,basename,model,tasks):
     '''We don't check for R packages! need to figure this out..
     '''
     pseudo_model_temp = ''.join([c if c!=' ' else '_' for c in model])
     trgs = ['{0!s}/deseq2_{1!s}_{2!s}/'.format(out_dir,basename,pseudo_model_temp)]
-    cmd = 'Rscript {5!s}/deseq2.r --args {0!s} {1!s} {2!s} {3!s} {4!s}'.format(
+    cmd = 'Rscript {5!s}/deseq2.r --args {5!s} {0!s} {1!s} {2!s} {3!s} {4!s}'.format(
             counts_to_table_results,sample_info,out_dir,basename,model,fg.PATH_SCRIPTS)
-    name = 'de_'+basename
+    name = 'de_' + assembly_name + '_' + basename 
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
@@ -130,7 +130,7 @@ def salmon_task(index,left,right,out_name,gene_map,out_dir,cpu_cap,tasks):
     cmd = '{0!s} quant -i {1!s} -l IU -1 {2!s} -2 {3!s} -o {4!s}/{5!s} --geneMap {6!s} -p {7!s} --extraSensitive; cp ' \
         '{4!s}/{5!s}/quant.sf {4!s}/{5!s}_quant.sf; cp {4!s}/{5!s}/quant.genes.sf {4!s}/{5!s}_quant.genes.sf'.format(
 	fg.tool_path_check(TOOLS_DICT['salmon'].full_exe[0]),index,left,right,out_dir,out_name,gene_map,cpu_cap)
-    name = 'salmon_' + os.path.basename(index) + '_' + os.path.basename(left)
+    name = os.path.basename(index) + '_' + os.path.basename(left)
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 

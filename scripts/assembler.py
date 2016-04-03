@@ -57,13 +57,13 @@ def gen_paired_trimmomatic_supervisor(out_dir,fq1, fq2, unpaired, dependency_set
 def gen_assembly_supervisor(out_dir, fastq1, fastq2, unpaired, dependency_set, no_trim=False, rnaSPAdes=False, rmdup=False, subset_size=50000000, cpu=12, subset_seed='I am a seed value', normalize_flag=False, truncate_opt=-1, trimmomatic_flag=True, path_assembly=fg.GEN_PATH_ASSEMBLY()):
     trinity_memory = 160 # make this a user option
     tasks = []
-    tasks.append(fa.fastqc_task(out_dir,fastq1+fastq2+unpaired,'pre_trimming',min(cpu,len(fastq1+fastq2+unpaired)), []))
     assembler_dependencies = []
     transrate_fastq1 = fastq1
     transrate_fastq2 = fastq2
     transrate_unpaired = unpaired
     if(fastq1 != []):
         if(not no_trim):
+            tasks.append(fa.fastqc_task(out_dir,fastq1+fastq2+unpaired,'pre_trimming',min(cpu,len(fastq1+fastq2+unpaired)), []))
             if(trimmomatic_flag):
                 paired_sup = gen_paired_trimmomatic_supervisor(out_dir,fastq1, fastq2, unpaired, [], cpu)
             else:

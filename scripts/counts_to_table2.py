@@ -42,7 +42,6 @@ def countsFromBed(countFile, index, countDt):
                 hitDt.get(hitName).update(set([readName]))  # since using a set, pairs will only be represented once.
             else:
                 hitDt[hitName] = set([readName])
-        f.close()
     for key, val in hitDt.items():
 	prevCounts = countDt.get(key)
 	prevCounts[index] = str(len(val))
@@ -59,7 +58,6 @@ def countsFromExpress(countFile,index, countDt):
 	    entry[index] = line[7] # EFFECTIVE counts are index 7 in express file
             #entry[index] = line[6] # ESTIMATED counts are index 6 in express file            
             countDt[contig] = entry
-	f.close()
     return countDt
 
 def countsFromSalmon(countFile, index, countDt):
@@ -69,13 +67,15 @@ def countsFromSalmon(countFile, index, countDt):
 #  	    import pdb;pdb.set_trace()
 #	    if not line.startswith('#'):
 	    line = line.strip().split('\t')	
-	    contig = line[0]
-	    entry = countDt.get(contig)
-            entry[index] = line[4] # numreads is now fifth col? Salmonv0.6.1
+	    try:
+	        contig = line[0]
+	        entry = countDt.get(contig)
+	        entry[index] = line[4] # numreads is now fifth col? Salmonv0.6.1
 #                entry[index] = line[3] # want to use NumReads column for input to DESeq2
 #		entry[index] = line[2] # if want TPM output
-            countDt[contig] = entry
-	f.close()
+                countDt[contig] = entry
+	    except:
+	        pass
     return countDt
 
 def countsFromKallisto(countFile, index, countDt):
@@ -88,7 +88,6 @@ def countsFromKallisto(countFile, index, countDt):
             entry[index] = line[3] # want to use est reads column for input to DESeq2
 #	    entry[index] = line[4] # if want TPM output
             countDt[contig] = entry
-	f.close()
     return countDt
 
 def countsFromRSEM(countFile, index, countDt):
@@ -102,7 +101,6 @@ def countsFromRSEM(countFile, index, countDt):
 #	    entry[index] = line[5] # if want TPM output
 #	    entry[index] = line[6] # if want FPKM output
             countDt[contig] = entry
-	f.close()
     return countDt
 
 def getGeneDictionary(transcriptD):

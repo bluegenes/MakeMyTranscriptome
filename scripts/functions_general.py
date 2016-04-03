@@ -65,6 +65,9 @@ def GEN_PATH_ANNOT_TABLE(): return os.path.join(GEN_PATH_DIR(), NAME_ASSEMBLY+'a
 def GEN_LOGS(x): return (os.path.join(GEN_PATH_LOGS(), x+'.out_log'),
                          os.path.join(GEN_PATH_LOGS(), x+'.err_log'))
 
+
+def cpumod(cpu, k): return int(round(float(cpu)/k))
+
 def tool_path_check(full_exe):
     name = os.path.basename(full_exe)
     if(os.path.exists(full_exe)):

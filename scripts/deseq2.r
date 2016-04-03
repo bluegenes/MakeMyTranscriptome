@@ -33,6 +33,7 @@ setwd(baseDir)# set output directory
 countTableRaw = read.table(countTableFile, header=TRUE, row.names = 1)
 countTable <-as.data.frame(lapply(countTableRaw,as.integer)) # eXpress results are floats ...coerce these to integer -> need ints for DESeq2
 row.names(countTable) <- row.names(countTableRaw) #add gene names back to integer dataframe
+colnames(countTable) <- gsub(pattern = args[6], replacement = "", x = colnames(countTable))
 colnames(countTable) <- gsub(pattern = ".bed", replacement = "", x = colnames(countTable))
 colnames(countTable) <- gsub(pattern = ".xprs", replacement = "", x = colnames(countTable))
 colnames(countTable) <-  gsub(pattern = "_salmon.quant.sf", replacement = "", x = colnames(countTable))
