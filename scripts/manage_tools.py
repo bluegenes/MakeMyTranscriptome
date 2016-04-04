@@ -143,7 +143,7 @@ def main(install=False, toolList = [], tool_check=True, cpu=4):
     else:
         for name, tool in toolsD.items():
             print('\n Installation instructions for: ' + tool.name)
-            print('\n\t Download linux binary at this link: ' + tool.url)
+            print('\n\t Download tool at this link: ' + tool.url)
             print(tool.instructions)
     run_tasks(tasks, cpu)
     write_log(log_table)

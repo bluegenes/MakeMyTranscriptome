@@ -78,6 +78,12 @@ def tool_path_check(full_exe):
     else:
         warnings.warn('INSTALLATION ERROR : MMT has not installed '+name+' and did not find this program in your path variable. Steps requiring '+name+' will not be performed.') 
 
+def make_dir_task(path):
+    trgs = [path]
+    cmd = 'mkdir -p  {0!s}'.format(path)
+    name = 'mdkir_' + os.path.basename(path)
+    return(Task(command=cmd,targets=trgs,stdout=os.devnull,stderr=os.devnull, name=name))
+
 
 def build_dir_task(tasks):
     '''

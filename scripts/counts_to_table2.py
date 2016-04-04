@@ -16,7 +16,7 @@ parser.add_option("--out", "--OutCountsTable", help = "name of the Output Counts
 parser.add_option("--inDir", "--INDirectory", help = "path to all input files" , action="store", type="string", dest="inDir", default='./')
 parser.add_option("--outDir", "--OUTDirectory", help = "path to all output files" , action="store", type="string", dest="outDir", default='./')
 #Threshold #
-parser.add_option("-t", "--threshold", type="int", action="store", help = "threshold count number", dest="threshold", default = 2)
+parser.add_option("-t", "--threshold", type="int", action="store", help = "threshold count number", dest="threshold", default = .5)
 #counts and fasta input
 parser.add_option("-c", "--counts", "--inCounts", help = "name of the Input counts files" , action="append", type="string", dest="counts", default = [])
 #parser.add_option("-f", "--fasta", "--fastaReference", help = "reference fasta file" , action="store", type="string", dest="fasta")
@@ -155,13 +155,13 @@ else:
     outName = opts.out
 
 outCountTable = open(outName + '.countsTable', 'w')
-outThreshTable = open(outName + '_threshold.countsTable', 'w')
-outGeneTable = open(outName + '_byGene.countsTable', 'w')
+outGeneThreshTable = open(outName + '_gene_threshold_' +str(opts.threshold) + '.countsTable', 'w')
+outGeneTable = open(outName + '_gene.countsTable', 'w')
 
 #print header list
 outCountTable.write('Contig' + '\t' 'Gene' + '\t' + '\t'.join(countFileNames) + '\n')
-outThreshTable.write('Contig'+ '\t' 'Gene' + '\t' + '\t'.join(countFileNames) + '\n')
-outGeneTable.write('Contig'  + '\t' + '\t'.join(countFileNames) + '\n')
+outGeneTable.write('Gene'  + '\t' + '\t'.join(countFileNames) + '\n')
+outGeneThreshTable.write('Gene'+ '\t' + '\t'.join(countFileNames) + '\n')
 
 #write files
 # also output a GENE version? Collapse transcripts --> genes!  
@@ -169,15 +169,15 @@ outGeneTable.write('Contig'  + '\t' + '\t'.join(countFileNames) + '\n')
 for key in sorted(cD): 
     val = contigD.get(key) 
     outCountTable.write(key + '\t' + '\t'.join(map(str,val)) + '\n')
-    if all(item >= int(opts.threshold) for item in map(float,val[1:])): # [1:] to take off the gene name
-        outThreshTable.write(key + '\t' + '\t'.join(map(str,val[1:])) + '\n') #take off gene name
 
 for key in sorted(geneD):
     val = geneD.get(key)
     outGeneTable.write(key + '\t' + '\t'.join(map(str,val)) + '\n')
+    if all(item >= int(opts.threshold) for item in map(float,val)): #[1:])): # [1:] to take off the gene name
+        outGeneThreshTable.write(key + '\t' + '\t'.join(map(str,val))) #[1:])) + '\n') #take off gene name
 
 outCountTable.close()
-outThreshTable.close()
+outGeneThreshTable.close()
 outGeneTable.close()
 
 

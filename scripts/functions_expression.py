@@ -45,16 +45,17 @@ def bowtie2_task(bowtie2_index,out_dir,fastq1,fastq2,out_name,opt,cpu_cap,tasks)
     '''    
     '''
     opts = ['-a -t --end-to-end', '-t --local']
+    opts_name = ['express','intersectBed']
     trgs = ['{0!s}/{1!s}.bam'.format(out_dir,out_name)]
     cmd = ('{0!s} {1!s} -L {2!s} -N 1 --maxins 800 --threads {3!s} -x {4!s} -1 '
             '{5!s} -2 {6!s} | samtools view -Sb - > {7!s} ').format(fg.tool_path_check(TOOLS_DICT['bowtie2'].full_exe[1]),
             opts[opt],22,cpu_cap,bowtie2_index,fastq1,fastq2,trgs[0])
-    name = 'bowtie2_'+ os.path.basename(bowtie2_index) + '_' + out_name
+    name = 'bowtie2_'+ os.path.basename(bowtie2_index) + '_' + out_name + '_' + opts_name[opt]
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err,cpu=cpu_cap)
 
 
-def express_task(assembly_path,out_dir,out_name,bam_input,tasks):
+def express_task(bowtie2_index,assembly_path,out_dir,out_name,bam_input,tasks):
     '''
     '''
     trgs = ['{0!s}/{1!s}.xprs'.format(out_dir,out_name)]
@@ -69,12 +70,16 @@ def express_task(assembly_path,out_dir,out_name,bam_input,tasks):
 def counts_to_table_task(assembly_name,gene_trans_map,out_dir,count_files,out_name,flag,tasks):
     '''
     '''
-    trgs = ['{0!s}/{1!s}.countsTable'.format(out_dir,out_name),'{0!s}/{1!s}_byGene.countsTable'.format(out_dir,out_name)]
+    trgs = ['{0!s}/{1!s}.countsTable'.format(out_dir,out_name),'{0!s}/{1!s}_gene.countsTable'.format(out_dir,out_name)]
     count_str = ' '.join(['--counts {0!s}'.format(f) for f in count_files])
     cmd = ('python {0!s}/counts_to_table2.py --out {1!s} --inDir {2!s} '
             '--outDir {2!s} {3!s} {4!s} --geneTransMap {5!s}').format( 
             fg.PATH_SCRIPTS,out_name,out_dir,flag,count_str,gene_trans_map)
-    name = 'counts_to_table_'+ assembly_name + '_' + flag.split('--')[1]
+    if len(flag) >1:
+        name = '_' + flag.split('--')[1]
+    else:
+        name = '_intersectBed'
+    name = 'counts_to_table_'+ assembly_name + name
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
@@ -92,9 +97,10 @@ def intersect_bed_task(out_dir,bam_file,bed_reference,output_name,tasks):
     '''
     '''
     trgs = ['{0!s}/{1!s}.bed'.format(out_dir,output_name)]
-    cmd = '{0!s} intersect -abam {1!s} -b {2!s} -wb -bed > {3!s}'.format(
+    #cmd = '{0!s} intersect -abam {1!s} -b {2!s} -wb -bed > {3!s}'.format(
+    cmd = '{0!s} -abam {1!s} -b {2!s} -wb -bed > {3!s}'.format(
         fg.tool_path_check(TOOLS_DICT['bedtools'].full_exe[0]),bam_file,bed_reference,trgs[0])
-    name = 'intersect_bed_'+ bed_reference + '_' + output_name
+    name = 'intersect_bed_'+ os.path.basename(bed_reference) + '_' + output_name
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
@@ -105,7 +111,8 @@ def deseq2_task(assembly_name,out_dir,counts_to_table_results,sample_info,basena
     trgs = ['{0!s}/deseq2_{1!s}_{2!s}/'.format(out_dir,basename,pseudo_model_temp)]
     cmd = 'Rscript {5!s}/deseq2.r --args {5!s} {0!s} {1!s} {2!s} {3!s} {4!s}'.format(
             counts_to_table_results,sample_info,out_dir,basename,model,fg.PATH_SCRIPTS)
-    name = 'de_' + assembly_name + '_' + basename 
+    #name = 'de_' + assembly_name + '_' + basename 
+    name = 'de_' + basename + '_' + os.path.basename(out_dir) 
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,targets=trgs,name=name,stdout=out,stderr=err)
 
