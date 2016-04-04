@@ -16,7 +16,7 @@ parser.add_option("--out", "--OutCountsTable", help = "name of the Output Counts
 parser.add_option("--inDir", "--INDirectory", help = "path to all input files" , action="store", type="string", dest="inDir", default='./')
 parser.add_option("--outDir", "--OUTDirectory", help = "path to all output files" , action="store", type="string", dest="outDir", default='./')
 #Threshold #
-parser.add_option("-t", "--threshold", type="int", action="store", help = "threshold count number", dest="threshold", default = 2)
+parser.add_option("-t", "--threshold", type="int", action="store", help = "threshold count number", dest="threshold", default = .5)
 #counts and fasta input
 parser.add_option("-c", "--counts", "--inCounts", help = "name of the Input counts files" , action="append", type="string", dest="counts", default = [])
 #parser.add_option("-f", "--fasta", "--fastaReference", help = "reference fasta file" , action="store", type="string", dest="fasta")
@@ -42,7 +42,6 @@ def countsFromBed(countFile, index, countDt):
                 hitDt.get(hitName).update(set([readName]))  # since using a set, pairs will only be represented once.
             else:
                 hitDt[hitName] = set([readName])
-        f.close()
     for key, val in hitDt.items():
 	prevCounts = countDt.get(key)
 	prevCounts[index] = str(len(val))
@@ -59,7 +58,6 @@ def countsFromExpress(countFile,index, countDt):
 	    entry[index] = line[7] # EFFECTIVE counts are index 7 in express file
             #entry[index] = line[6] # ESTIMATED counts are index 6 in express file            
             countDt[contig] = entry
-	f.close()
     return countDt
 
 def countsFromSalmon(countFile, index, countDt):
@@ -69,13 +67,15 @@ def countsFromSalmon(countFile, index, countDt):
 #  	    import pdb;pdb.set_trace()
 #	    if not line.startswith('#'):
 	    line = line.strip().split('\t')	
-	    contig = line[0]
-	    entry = countDt.get(contig)
-            entry[index] = line[4] # numreads is now fifth col? Salmonv0.6.1
+	    try:
+	        contig = line[0]
+	        entry = countDt.get(contig)
+	        entry[index] = line[4] # numreads is now fifth col? Salmonv0.6.1
 #                entry[index] = line[3] # want to use NumReads column for input to DESeq2
 #		entry[index] = line[2] # if want TPM output
-            countDt[contig] = entry
-	f.close()
+                countDt[contig] = entry
+	    except:
+	        pass
     return countDt
 
 def countsFromKallisto(countFile, index, countDt):
@@ -88,7 +88,6 @@ def countsFromKallisto(countFile, index, countDt):
             entry[index] = line[3] # want to use est reads column for input to DESeq2
 #	    entry[index] = line[4] # if want TPM output
             countDt[contig] = entry
-	f.close()
     return countDt
 
 def countsFromRSEM(countFile, index, countDt):
@@ -102,7 +101,6 @@ def countsFromRSEM(countFile, index, countDt):
 #	    entry[index] = line[5] # if want TPM output
 #	    entry[index] = line[6] # if want FPKM output
             countDt[contig] = entry
-	f.close()
     return countDt
 
 def getGeneDictionary(transcriptD):
@@ -157,13 +155,13 @@ else:
     outName = opts.out
 
 outCountTable = open(outName + '.countsTable', 'w')
-outThreshTable = open(outName + '_threshold.countsTable', 'w')
-outGeneTable = open(outName + '_byGene.countsTable', 'w')
+outGeneThreshTable = open(outName + '_gene_threshold_' +str(opts.threshold) + '.countsTable', 'w')
+outGeneTable = open(outName + '_gene.countsTable', 'w')
 
 #print header list
 outCountTable.write('Contig' + '\t' 'Gene' + '\t' + '\t'.join(countFileNames) + '\n')
-outThreshTable.write('Contig'+ '\t' 'Gene' + '\t' + '\t'.join(countFileNames) + '\n')
-outGeneTable.write('Contig'  + '\t' + '\t'.join(countFileNames) + '\n')
+outGeneTable.write('Gene'  + '\t' + '\t'.join(countFileNames) + '\n')
+outGeneThreshTable.write('Gene'+ '\t' + '\t'.join(countFileNames) + '\n')
 
 #write files
 # also output a GENE version? Collapse transcripts --> genes!  
@@ -171,15 +169,15 @@ outGeneTable.write('Contig'  + '\t' + '\t'.join(countFileNames) + '\n')
 for key in sorted(cD): 
     val = contigD.get(key) 
     outCountTable.write(key + '\t' + '\t'.join(map(str,val)) + '\n')
-    if all(item >= int(opts.threshold) for item in map(float,val[1:])): # [1:] to take off the gene name
-        outThreshTable.write(key + '\t' + '\t'.join(map(str,val[1:])) + '\n') #take off gene name
 
 for key in sorted(geneD):
     val = geneD.get(key)
     outGeneTable.write(key + '\t' + '\t'.join(map(str,val)) + '\n')
+    if all(item >= int(opts.threshold) for item in map(float,val)): #[1:])): # [1:] to take off the gene name
+        outGeneThreshTable.write(key + '\t' + '\t'.join(map(str,val))) #[1:])) + '\n') #take off gene name
 
 outCountTable.close()
-outThreshTable.close()
+outGeneThreshTable.close()
 outGeneTable.close()
 
 

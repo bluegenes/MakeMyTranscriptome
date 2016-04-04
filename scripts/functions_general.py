@@ -65,6 +65,9 @@ def GEN_PATH_ANNOT_TABLE(): return os.path.join(GEN_PATH_DIR(), NAME_ASSEMBLY+'a
 def GEN_LOGS(x): return (os.path.join(GEN_PATH_LOGS(), x+'.out_log'),
                          os.path.join(GEN_PATH_LOGS(), x+'.err_log'))
 
+
+def cpumod(cpu, k): return int(round(float(cpu)/k))
+
 def tool_path_check(full_exe):
     name = os.path.basename(full_exe)
     if(os.path.exists(full_exe)):
@@ -74,6 +77,12 @@ def tool_path_check(full_exe):
         return name
     else:
         warnings.warn('INSTALLATION ERROR : MMT has not installed '+name+' and did not find this program in your path variable. Steps requiring '+name+' will not be performed.') 
+
+def make_dir_task(path):
+    trgs = [path]
+    cmd = 'mkdir -p  {0!s}'.format(path)
+    name = 'mdkir_' + os.path.basename(path)
+    return(Task(command=cmd,targets=trgs,stdout=os.devnull,stderr=os.devnull, name=name))
 
 
 def build_dir_task(tasks):

@@ -42,22 +42,22 @@ rcorrector_tool.change_exe_fullpath(join(PATH_TOOLS,rcorrector_folder_name))
 rcorrector_tool.set_install(rcorrector_cmd)
 TOOL_LIST.append(rcorrector_tool)
 ### seqtk ###
-seqtk_url = 'https://github.com/lh3/seqtk/archive/master.zip'
-seqtk_urltype = 'zip'
-seqtk_target = join(PATH_TOOLS, 'master')
-seqtk_folder_name = 'seqtk-master'
-seqtk_exe = ['seqtk'] 
-seqtk_instructions = '\n\t After downloading: \n\n\t\t unzip master.zip \n\t\t ' \
-                        'cd seqtk-master \n\t\t make \n ' \
-                        '\n\tThen: soft link /path/to/seqtk-master into the MMT "external_tools" folder\n' \
-                        '\t  Or:  add /path/to/seqtk-master to your $path variable\n'
-seqtk_cmd = 'make'
-seqtk_website = 'https://github.com/lh3/seqtk'
+#seqtk_url = 'https://github.com/lh3/seqtk/archive/master.zip'
+#seqtk_urltype = 'zip'
+#seqtk_target = join(PATH_TOOLS, 'master')
+#seqtk_folder_name = 'seqtk-master'
+#seqtk_exe = ['seqtk'] 
+#seqtk_instructions = '\n\t After downloading: \n\n\t\t unzip master.zip \n\t\t ' \
+#                        'cd seqtk-master \n\t\t make \n ' \
+#                        '\n\tThen: soft link /path/to/seqtk-master into the MMT "external_tools" folder\n' \
+#                        '\t  Or:  add /path/to/seqtk-master to your $path variable\n'
+#seqtk_cmd = 'make'
+#seqtk_website = 'https://github.com/lh3/seqtk'
 
-seqtk_tool = tc('seqtk', seqtk_url, seqtk_target, seqtk_exe,seqtk_instructions, web=seqtk_website, urltype=seqtk_urltype, folder_name=seqtk_folder_name)
-seqtk_tool.change_exe_fullpath(join(PATH_TOOLS,seqtk_folder_name))
-seqtk_tool.set_install(seqtk_cmd)
-TOOL_LIST.append(seqtk_tool)
+#seqtk_tool = tc('seqtk', seqtk_url, seqtk_target, seqtk_exe,seqtk_instructions, web=seqtk_website, urltype=seqtk_urltype, folder_name=seqtk_folder_name)
+#seqtk_tool.change_exe_fullpath(join(PATH_TOOLS,seqtk_folder_name))
+#seqtk_tool.set_install(seqtk_cmd)
+#TOOL_LIST.append(seqtk_tool)
 
 
 ### Trimmomatic ###
@@ -251,10 +251,12 @@ bowtie2_instructions = '\n\t After downloading the binary: \n\n\t\t unzip bowtie
                         '\n\tThen: soft link /path/to/bowtie2-2.2.6 into the MMT "external_tools" folder\n' \
                         '\t  Or: add /path/to/bowtie2-2.2.6 to your $path variable \n\n'
 bowtie2_folder_name = 'bowtie2-2.2.6'
+bowtie2_cmd = 'chmod +x bowtie2*'
 bowtie2_exe = ['bowtie2-build','bowtie2']
 bowtie2_website = 'http://bowtie-bio.sourceforge.net/bowtie2/index.shtml'
 
 bowtie2_tool = tc('bowtie2', bowtie2_url, bowtie2_target, bowtie2_exe, bowtie2_instructions, urltype=bowtie2_urltype, folder_name=bowtie2_folder_name, web=bowtie2_website)
+bowtie2_tool.set_install(trinity_cmd)
 TOOL_LIST.append(bowtie2_tool)
 
 express_url = 'http://bio.math.berkeley.edu/eXpress/downloads/express-1.5.1/express-1.5.1-linux_x86_64.tgz'

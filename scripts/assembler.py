@@ -57,6 +57,7 @@ def gen_trimming_supervisor(out_dir,fq1,fq2,unpaired,no_trim,trimmomatic_flag,rm
     tasks = []
     deps = []
     if (not no_trim):
+        tasks.append(fa.fastqc_task(out_dir,fq1+fq2+unpaired,'pre_trimming',min(cpu_cap,len(fq1+fq2+unpaired)), []))
         if(fq1 != []):
             if(trimmomatic_flag):
                 paired_sup = gen_paired_trimmomatic_supervisor(out_dir,fq1, fq2, unpaired, dependency_set, cpu_cap)
@@ -76,6 +77,7 @@ def gen_trimming_supervisor(out_dir,fq1,fq2,unpaired,no_trim,trimmomatic_flag,rm
             tasks.append(unpaired_sup)
             tasks.append(fa.fastqc_task(out_dir,unpaired, 'post_trimming_unpaired',int(round(float(cpu_cap)/2)),[unpaired_sup]))
             deps.append(unpaired_sup)
+    # need to add support for unp here
     subset = fa.subset_task(out_dir, fq1, fq2, 'final_reads', subset_size, subset_seed, deps)
     fq1 = [subset.targets[0]]
     fq2 = [subset.targets[1]]
@@ -87,18 +89,17 @@ def gen_trimming_supervisor(out_dir,fq1,fq2,unpaired,no_trim,trimmomatic_flag,rm
         deps.append(truncate)
         tasks.append(truncate)
     if any([truncate_opt>=0, subset_size < 10**15]): # some subsetting may have occurred
-        late_fastqc = fa.fastqc_task(out_dir, subset.targets, 'final_reads_paired',cpu_cap,deps)
+        late_fastqc = fa.fastqc_task(out_dir,fq1+fq2+unpaired, 'final_reads_paired',cpu_cap,deps)
         tasks.append(late_fastqc)
-    return Supervisor(tasks=tasks)
+    return (Supervisor(tasks=tasks, dependencies=dependency_set),fq1,fq2,unpaired)
 
 def gen_assembly_supervisor(out_dir, fastq1, fastq2, unpaired, dependency_set, no_trim=False, rnaSPAdes=False, rmdup=False, subset_size=50000000, cpu=12, subset_seed='I am a seed value', normalize_flag=False, truncate_opt=-1, trimmomatic_flag=True, path_assembly=fg.GEN_PATH_ASSEMBLY()):
     trinity_memory = 160 # make this a user option
     tasks = []
-    tasks.append(fa.fastqc_task(out_dir,fastq1+fastq2+unpaired,'pre_trimming',min(cpu,len(fastq1+fastq2+unpaired)), []))
-    trim_reads = gen_trimming_supervisor(out_dir,fastq1,fastq2,unpaired,no_trim,trimmomatic_flag,rmdup,subset_size,subset_seed, truncate_opt,[],cpu)
+    trim_reads,fastq1,fastq2,unpaired=gen_trimming_supervisor(out_dir,fastq1,fastq2,unpaired,no_trim,trimmomatic_flag,rmdup,subset_size,subset_seed, truncate_opt,[],cpu)
     tasks.append(trim_reads)
     if(rnaSPAdes):
-        rnaspades = fa.rnaspades_task(path_assembly, out_dir,fastq1, fastq2, unpaired, cpu, [trim_reads])
+        rnaspades = fa.rnaspades_task(path_assembly, out_dir, fastq1, fastq2, unpaired, cpu, [trim_reads])
         tasks.append(rnaspades)
     else:
         trinity = fa.trinity_task(path_assembly, out_dir, fastq1, fastq2, unpaired, cpu, int(cpu/2), trinity_memory, trinity_memory, normalize_flag, [trim_reads])

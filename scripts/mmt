@@ -70,7 +70,7 @@ def do_args():
     assembler_input.add_argument('-no_trim',help='Use this flag to disable all trimming portions of pre-assembly read cleaning. Duplicate and low quality reads will not be removed. Subsampling will still be executed.',action='store_true')
     assembler_input.add_argument('-trimmomatic',help='Use trimmomatic to trim reads', dest='trimmomatic',action='store_true', default=True)
     assembler_input.add_argument('-prinseq',help='Use prinseq instead of trimmomatic instead of prinseq to trim reads', dest='trimmomatic',action='store_false')
-    assembler_input.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The default value is 50.', default=50,type=float)
+    assembler_input.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The default value is 0.', default=0,type=float)
     assembler_input.add_argument('--subsample_seed',help='A seed used to initialize the random number generator used during random sampling.')
     assembler_input.add_argument('--truncate',help='snip reads down to this size if longer than this size. Default is no truncations.',type=int,default=-1)
     #ANNOTATION ARGS
@@ -165,6 +165,9 @@ def inherit_name_from_paired(paired_1):
 
 def set_test_args(args):
     args.out_name = args.out_name if(args.out_name!=None) else 'test_v2'
+    args.out_dir = args.out_dir if(args.out_dir!=None) else 'test_v2'
+    #fg.NAME_ASSEMBLY = args.out_name
+    #fg.NAME_OUT_DIR = args.out_dir
     if(args.which=='full' or args.which=='assembly' or args.which=='expression' or args.which=='quality'):
         args.csv = os.path.join(PATH_TEST,'sample_info.csv')
         #args.excel = os.path.join(PATH_TEST,'sample_info.xlsx')
@@ -172,7 +175,10 @@ def set_test_args(args):
         args.assembly = os.path.join(PATH_TEST,'test.fasta')
 
 def set_subsample_size(args):
-    args.subsample_size = 10**15 if(args.subsample_size<=0) else args.subsample_size*10**6
+    if(args.subsample_size <= 0):
+        args.subsample_size = 10**15
+    else:
+        args.subsample_size *= 10**6
 
 # need to modify this to allow excel input for DE
 def gen_sample_info(args):
@@ -191,30 +197,30 @@ def global_setup(args):
             os.makedirs(args.out_dir)
         except:
             raise Exception('\n\nERROR : invalid out_dir argument. Path does not exist.')
-    if(args.cpu<=0):
+    if(args.cpu <= 0):
         args.cpu = float('inf')
     fg.PATH_ASSEMBLIES = args.out_dir
-    if(args.which=='full'):
-        if(args.assembly!=None):
+    if(args.which == 'full'):
+        if(args.assembly is not None):
             base = inherit_name(args.assembly)
-        elif(args.csv!=None):
+        elif(args.csv is not None):
             base = inherit_name(args.csv)
-        elif(args.fastq1!=[]):
+        elif(args.fastq1 != []):
             base = inherit_name_from_paired(args.fastq1[0])
         else:
             base = inherit_name(args.unpaired[0])
-    if(args.which=='assembly'):
-        if(args.csv!=None):
+    if(args.which == 'assembly'):
+        if(args.csv is not None):
             base = inherit_name(args.csv)
-        elif(args.excel!=None):
+        elif(args.excel is not None):
             base = inherit_name(args.excel)
-        elif(args.fastq1!=[]):
+        elif(args.fastq1 != []):
             base = inherit_name_from_paired(args.fastq1[0])
         else:
             base = inherit_name(args.unpaired[0])
-    if(args.which=='annotation' or args.which=='quality' or args.which=='expression'):
+    if(args.which == 'annotation' or args.which == 'quality' or args.which == 'expression'):
         base = inherit_name(args.assembly)
-    fg.NAME_OUT_DIR = args.out_name if(args.out_name!=None) else base
+    fg.NAME_OUT_DIR = args.out_name if(args.out_name is not None) else base
     fg.NAME_ASSEMBLY = fg.NAME_OUT_DIR
     fg.build_dir_task([]).run()
 
@@ -222,16 +228,23 @@ def global_setup(args):
 #####################____Argument_Testers____#####################
 
 def check_csv_input(args, required=True):
-    if(args.csv is not None):
-        if(not os.path.isfile(args.csv)):
-            raise Exception('\n\nERROR : Invalid csv argument. '+args.csv+' does not exist.')
+    if(args.csv is not None and args.excel is not None):
+        raise Exception('\n\nERROR : both csv and excel input have been provided. Unable to determine which should be used. Please provide only one csv/excel file as input.')
     if(args.excel is not None):
         if(not os.path.isfile(args.excel)):
             raise Exception('\n\nERROR : Invalid excel argument. '+args.excel+' does not exist.')
-    if(args.csv is not None and args.excel is not None):
-        raise Exception('\n\nERROR : both csv and excel input have been provided. Unable to determine which should be used. Please provide only one csv/excel file as input.')
-    if(args.csv is not None or args.excel is not None):
+        else:
+            data = panda_data = pandas.read_excel(args.excel)
+            temp_file_path = PATH_TEST+'/csv_temp_file_'+os.path.basename(args.excel)
+            data.to_csv(temp_file_path, index=False)
+            args.csv = temp_file_path
+    if(args.csv is not None):
+        if(not os.path.isfile(args.csv)):
+            raise Exception('\n\nERROR : Invalid csv argument. '+args.csv+' does not exist.')
+    if(args.csv is not None):
         handle_csv(args)
+        if(args.excel is not None):
+            os.remove(args.csv)
     elif required:
         raise Exception('\n\nERROR : csv input is required for execution of expression module.')
 
@@ -280,9 +293,11 @@ def handle_read_input(args):
 
 def handle_csv(args):
     if(args.csv != None):
-        panda_data = pandas.read_csv(args.csv)
-    elif(args.excel != None):
-        panda_data = pandas.read_excel(args.excel)
+        cols = ['Sample_Basename', 'Read1', 'Read2']
+	panda_data = pandas.read_csv(args.csv, header=0)
+	cols.extend(list(panda_data.keys()[3:]))
+	cols = {a:b for a,b in zip(panda_data.keys(), cols)}
+	panda_data.rename(columns=cols, inplace=True)
     else:
         warnings.warn('No csv or excel, so we should not call this function. This line should never be printed.')
     if(args.which == 'expression' or args.which == 'full'):
@@ -290,8 +305,8 @@ def handle_csv(args):
             args.model = ' '.join(panda_data.keys()[3:])
     unpaired_view = panda_data.loc[panda_data['Read2'].isnull(), :]
     paired_view = panda_data.loc[panda_data['Read2'].notnull(), :]
-    args.paired_names = list(paired_view['Sample Basename'])
-    args.unpaired_names = list(unpaired_view['Sample Basename'])
+    args.paired_names = list(paired_view['Sample_Basename'])
+    args.unpaired_names = list(unpaired_view['Sample_Basename'])
     args.fastq1 = paired_view['Read1']
     args.fastq2 = paired_view['Read2']
     args.unpaired = unpaired_view['Read1']
@@ -309,17 +324,18 @@ def go_assembly(args, dep):
         args.subsample_size, args.cpu, args.subsample_seed, 
         args.trinity_normalization, args.truncate, args.trimmomatic,fg.GEN_PATH_ASSEMBLY())
 
-def go_quality(args, dep):
+def go_quality(args, dep, assembly_path, out_dir, transrate_cp=True):
+    assembly_name = os.path.basename(assembly_path).split('.fasta')[0]
     busco_args = {'arthropoda': args.arthropoda, 'metazoa': args.metazoa,
                   'vertebrata': args.vertebrata, 'eukaryota': args.eukaryota,
                   'fungi': args.fungi, 'bacteria': args.bacteria,
                   'plantae': args.plantae}
     busco_args = [k for k in busco_args if(busco_args[k])]
     return gen_quality_supervisor(
-        args.fastq1, args.fastq2, args.unpaired, dep, busco_args,
-        args.cpu, args.cegma, args.transrate_ref, assembly_name=fg.NAME_ASSEMBLY, 
-        assembly_path= fg.GEN_PATH_ASSEMBLY(), out_dir=fg.GEN_PATH_QUALITY_FILES(),
-        transrate_dir=fg.GEN_PATH_TRANSRATE_DIR(), reads_dir=fg.GEN_PATH_ASSEMBLY_FILES())
+        args.fastq1, args.fastq2, dep, busco_args, 
+        assembly_name, assembly_path, out_dir,fg.GEN_PATH_TRANSRATE_DIR(),
+        fg.GEN_PATH_ASSEMBLY_FILES(),fg.GEN_PATH_FILTER_FILES(),transrate_cp,
+        args.cpu, args.cegma, args.transrate_ref)
 
 def go_filter(args, transrate_task, dep):
     return gen_filter_supervisor(fg.GEN_PATH_ASSEMBLY(),fg.NAME_ASSEMBLY,fg.GEN_PATH_FILTER_FILES(), transrate_task, dep, tpm_threshold=args.tpm_threshold)
@@ -336,8 +352,8 @@ def go_expression(path_assembly, out_dir, args, dep):
     return gen_expression_supervisor(
         args.fastq1, args.fastq2, args.paired_names, args.unpaired,
         args.unpaired_names, args.cpu, args.sample_info, args.model, args.gene_trans_map, dep, 
-        args.intersectbed, args.express, assembly_name=fg.NAME_ASSEMBLY, 
-        assembly_path= fg.GEN_PATH_ASSEMBLY(), out_dir=fg.GEN_PATH_EXPRESSION_FILES())
+        assembly_name, path_assembly, out_dir,
+        args.express, args.intersectbed)
 
 def go_manage_db(args, dep, log_files=True):
     if(args.which=='annotation'): 
@@ -417,27 +433,27 @@ def run_full(args):
     supers.append(manage_db)
     annotation_super = go_annotation(args, deps+[manage_db])
     supers.append(annotation_super)
-    quality_super = go_quality(args, deps+[manage_db])
-    transrate_task = quality_super.task_map['transrate_' + fg.NAME_ASSEMBLY]
+    quality_super = go_quality(args,deps+[manage_db],fg.GEN_PATH_ASSEMBLY(),fg.GEN_PATH_QUALITY_FILES(),transrate_cp=True)
     supers.append(quality_super)
-    filtering_tasks = []
+    transrate_task = quality_super.task_map['transrate_' + fg.NAME_ASSEMBLY]
+    tr_good_name = 'good.'+ fg.NAME_ASSEMBLY
+    tr_good_cp_task = quality_super.task_map['setting_fasta_' + tr_good_name]
+    filtering_tasks = [tr_good_cp_task]
     if args.filter_by_TPM:
-        filter_super = go_filter(args, transrate_task, deps)
+        filter_super = go_filter(args, transrate_task, deps+[quality_super])
         supers.append(filter_super)
-        filtered_full_task = filter_super.task_map['filt_' + fg.NAME_ASSEMBLY + '_' + str(args.tpm_threshold) + 'tpm']
-        tr_good_name = 'good.'+ fg.NAME_ASSEMBLY
-        tr_good_cp_task = filter_super.task_map['setting_fasta_' + tr_good_name]
-        tr_good_filter = filter_super.task_map['filt_' + tr_good_name + '_' + str(args.tpm_threshold) + 'tpm']
-#        gene_trans_map_good = fan.gene_trans_map_task(assembly_path, out_dir,[])
-
-        filtering_tasks = [tr_good_cp_task, filtered_full_task, tr_good_filter] 
+        filt_full_task = filter_super.task_map['filt_' + fg.NAME_ASSEMBLY + '_' + str(args.tpm_threshold) + 'tpm']
+        tr_good_filter_task = filter_super.task_map['filt_' + tr_good_name + '_' + str(args.tpm_threshold) + 'tpm']
+        filtering_tasks = [tr_good_cp_task, filt_full_task, tr_good_filter_task] 
+    for task in filtering_tasks:
+        supers.append(go_quality(args, deps+[task], task.targets[0], fg.GEN_PATH_FILTER_FILES(),transrate_cp=False))
     if(args.csv !=None or args.excel !=None): #csv is required so we have metadata
         check_csv_input(args)# since it wasn't required earlier, we need to check that it exists, is proper file. 
         gen_sample_info(args)
         expression_super = go_expression(fg.GEN_PATH_ASSEMBLY(),fg.GEN_PATH_EXPRESSION_FILES(), args, deps)
         supers.append(expression_super)
         for task in filtering_tasks:
-            supers.append(go_expression(task.targets[0],fg.GEN_PATH_FILTER_FILES(),args,deps+[filter_super]))
+            supers.append(go_expression(task.targets[0],fg.GEN_PATH_FILTER_FILES(),args,deps+filtering_tasks))
     run_supers(args, supers)
 
 
@@ -475,7 +491,7 @@ def run_quality(args):
     manage_db = go_manage_db(args, [])
     supers.append(manage_db)
     deps.append(manage_db)
-    quality_super = go_quality(args, deps)
+    quality_super = go_quality(args, deps, fg.GEN_PATH_ASSEMBLY(),fg.GEN_PATH_QUALITY_FILES())
     supers.append(quality_super)
     run_supers(args, supers)
 
@@ -539,6 +555,26 @@ def run_expression(args):
             warnings.warn('No gene_trans_map provided. Attempting to generate a Trinity Gene Trans Map.') 
     expression_super = go_expression(fg.GEN_PATH_ASSEMBLY(),fg.GEN_PATH_EXPRESSION_FILES(), args, deps)
     supers.append(expression_super)
+    run_supers(args, supers)
+
+
+def run_filter(args):
+    if(args.test):
+        set_test_args(args)
+    check_fasta_input(args)
+    check_csv_input(args, False)
+    global_setup(args)
+    supers = []
+    deps = []
+    if not os.path.exists(fg.GEN_PATH_ASSEMBLY()): 
+        cp = fg.cp_assembly_task(fg.GEN_PATH_ASSEMBLY(),args.assembly, [])
+        supers.append(cp)
+        deps = [cp]
+    manage_tools = go_manage_tools(args, [])
+    supers.append(manage_tools)
+    deps.append(manage_tools)
+    filter_super = go_filter(fg.GEN_PATH_ASSEMBLY(),fg.NAME_ASSEMBLY,fg.GEN_PATH_FILTER_FILES(),None, deps, tpm_threshold=args.tpm_threshold) 
+    supers.append(filter_super)
     run_supers(args, supers)
 
 
