@@ -7,6 +7,7 @@ import pickle
 from itertools import chain
 import warnings
 import platform
+import re
 
 
 def time_to_hms(delta):
@@ -34,7 +35,7 @@ class Task:
     class TaskException(Exception):
         pass
 
-    def __init__(self, command, dependencies=[], targets=[], cpu=1, name='Anonymous_Task', stderr=None, stdout=None, error_check=None, max_wall_time=float('inf')):
+    def __init__(self, command, dependencies=[], targets=[], cpu=1, name='Anonymous_Task', stderr=None, stdout=None, error_check=None, max_wall_time=float('inf'), hist_ignore_opts=[]):
         try:
             if(stderr is not None):
                 f = open(stderr, 'a')
@@ -57,6 +58,7 @@ class Task:
         self.exit_code = None
         self.soft_finished_status = False
         self.start_time = None
+        self.hist_ignore_opts = hist_ignore_opts
 
     def checkDependencies(self):
         for d in self.dependencies:
@@ -144,7 +146,12 @@ class Task:
     def skipable(self, history):
         if(self.soft_finished_status):
             return True
-        if(self.command not in history):
+        local_command = self.command
+        if(self.hist_ignore_opts is not []):
+            re_string = '|'.join(self.hist_ignore_opts)
+            history = [''.join(re.split(re_string, com)) for com in history]
+            local_command = ''.join(re.split(re_string, local_command))
+        if(local_command not in history):
             return False
         for t in self.dependencies:
             if(isinstance(t, Task) or isinstance(t, Supervisor)):
@@ -174,7 +181,7 @@ class Supervisor:
     history_log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.task_log')
 
 
-    def __init__(self, tasks=[], dependencies=[], cpu=float('inf'), name='Supervisor', delay=1, force_run=False, email=None, email_interval=30, log=None):
+    def __init__(self, tasks=[], dependencies=[], cpu=float('inf'), name='Supervisor', delay=1, force_run=False, email=None, email_interval=30, log=None, history_ignore_flags = []):
         self.cpu = cpu
         self.name = name
         self.delay = delay
