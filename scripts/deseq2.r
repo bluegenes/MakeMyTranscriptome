@@ -36,7 +36,7 @@ row.names(countTable) <- row.names(countTableRaw) #add gene names back to intege
 colnames(countTable) <- gsub(pattern = args[6], replacement = "", x = colnames(countTable))
 colnames(countTable) <- gsub(pattern = ".bed", replacement = "", x = colnames(countTable))
 colnames(countTable) <- gsub(pattern = ".xprs", replacement = "", x = colnames(countTable))
-colnames(countTable) <-  gsub(pattern = "_salmon.quant.sf", replacement = "", x = colnames(countTable))
+colnames(countTable) <-  gsub(pattern = ".quant.sf", replacement = "", x = colnames(countTable))
 # subset counts based on filenames, factors provided in the treatmentInfo file
 subsetCounts <- countTable[,colnames(countTable)%in%rownames(treatmentInfo)]
 

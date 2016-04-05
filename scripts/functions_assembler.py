@@ -83,14 +83,23 @@ def trimmomatic_task(out_dir,left, right, cpu_cap, basename, tasks):
            '{6!s} ILLUMINACLIP:{8!s}:2:30:10 LEADING:3 TRAILING:3 '
            'SLIDINGWINDOW:4:15 MINLEN:35').format(
            fg.tool_path_check(TOOLS_DICT['trimmomatic'].full_exe[0]), left, right, cpu_cap, orphans[0], trgs[0],
-           orphans[1], trgs[1], TOOLS_DICT['trimmomatic'].full_exe[1]) #PATH_TRIMMOMATIC_ADAPTERS_PAIRED)
+           orphans[1], trgs[1], TOOLS_DICT['trimmomatic'].full_exe[1])
     name = basename
     out, err = fg.GEN_LOGS(name)
     return Task(command=cmd, dependencies=tasks, name=name, stdout=out, stderr=err, targets=trgs, cpu=cpu_cap) 
 
+def rcorrector_task(out_dir,left,right,cpu_cap,basename,tasks):
+    form = lambda s, i : s.format(out_dir, os.path.basename(i))
+    trgs = [form('{0!s}/{1!s}.cor.fq', left),
+            form('{0!s}/{1!s}.cor.fq', right)]
+    cmd = ('perl {0!s} -1 {1!s} -2 {2!s} -t {3!s}').format(fg.tool_path_check(TOOLS_DICT['rcorrector'].full_exe[0]),
+           left,right,cpu_cap)
+    name = 'Rcorrector_' + basename 
+    out, err = fg.GEN_LOGS(name)
+    return Task(command=cmd, dependencies=tasks, name=name, stdout=out, stderr=err, targets=trgs, cpu=cpu_cap)
 
 def remove_dups_task(out_dir,left, right, out_base, tasks):
-    '''    Definies rmdup_fastq_paired tasks. Uses PATH_SCRIPTS, GEN_PATH_DIR()
+    '''    Defines rmdup_fastq_paired tasks. Uses PATH_SCRIPTS, GEN_PATH_DIR()
         Params : 
             left : a set of left/1 files to have duplicates removed from
             right : a set of right/2 files to have duplicates removed from
@@ -118,13 +127,6 @@ def cat_task(out_dir,left, right, basename, tasks):
 
 
 def subset_task(out_dir, fastq1, fastq2, out_base, num, seed, tasks):
-    '''    Defines subset task. Uses GEN_PATH_DIR(), PATH_SCRIPTS.
-        Params :
-            infiles - a pair of fastq files to read from
-            out_base - basename of output files.
-            num - the number of reads to keep.
-            tasks - a list of tasks that this is dependent on.
-    '''
     trgs = ['{0!s}/{1!s}_{2!s}.fastq'.format(out_dir,out_base,x) for x in (1,2)]
     cmd = 'python {0!s}/random_subset.py -1 {1!s} -2 {2!s} -n 100 -s {3!s} -t1 {4!s} -t2 {5!s}'.format(
             fg.PATH_SCRIPTS,','.join(fastq1),','.join(fastq2),num,trgs[0],trgs[1])
@@ -134,6 +136,19 @@ def subset_task(out_dir, fastq1, fastq2, out_base, num, seed, tasks):
     out,err = fg.GEN_LOGS(name)
     return Task(command=cmd,dependencies=tasks,name=name,stdout=out,stderr=err,targets=trgs)
 
+#def seqtk_subset_task(out_dir,left, right, num_seqs, seed,tasks):#out_dir, fastq1, fastq2, out_base, num, seed, tasks):
+#     form = lambda s, i : s.format(out_dir, os.path.basename(i), num_seqs)
+#     trgs = [form('{0!s}/{1!s}_sub{2!s}.fq', left),
+#             form('{0!s}/{1!s}_sub{2!s}.fq', right)]
+#    cmd = '{0!s} sample -s {1!s} {2!s} > {3!s}; {0!s} sample -s {1!s} {4!s} > {5!s};'.format(
+#           fg.tool_path_check(TOOLS_DICT['seqtk'].full_exe[0],seed,left,num_seqs,trgs[0],right,trgs[1])
+#    name = 'seqtk_' + basename
+#    out, err = fg.GEN_LOGS(name)
+#    return Task(command=cmd, dependencies=tasks, name=name, stdout=out, stderr=err, targets=trgs, cpu=cpu_cap)
+
+#def seqtk_truncate_task(out_dir,left,right,cpu_cap,basename,tasks):
+#    out, err = fg.GEN_LOGS(name)
+#    return Task(command=cmd, dependencies=tasks, name=name, stdout=out, stderr=err, targets=trgs, cpu=cpu_cap)
 
 def truncate_task(out_dir,left, right, length, tasks):
     trgs = ['{0!s}/truncated_1.fastq'.format(out_dir, left),

@@ -27,7 +27,7 @@ class ext_tool:
 	
     def set_install(self, cmd, task_deps=[], log_flag=True):
         install_trgs = self.full_exe
-        cd_cmd = 'cd {0!s}; '.format(self.target)
+        cd_cmd = 'cd {0!s}; '.format(self.folder_name)
         install_cmd = cd_cmd + cmd
         install_name ='install_' + self.name
 	out,err = (None,None)
