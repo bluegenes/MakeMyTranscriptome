@@ -39,9 +39,7 @@ class Datafile:
         self.data_file_path = data_path if(data_path is not None) else download_path
 
     def install(self, force=False):
-        if(os.path.exists(self.download_path) and not force):
-            return
-        else:
+        if(force or not os.path.exists(self.download_path)):
             if(self.file_type == ''):
                 urlretrieve(self.url, self.download_path)
             elif(self.file_type == 'gz'):
@@ -50,6 +48,8 @@ class Datafile:
                 tar_retrieve(self.url, self.download_path)
             else:
                 raise Exception('This should never be raised')
+        if(not all(os.path.exists(t) for t in self.setup_task.targets)):
+            self.setup_task.run()
 
     def is_installed(self):
         if(self.setup_task is not None):

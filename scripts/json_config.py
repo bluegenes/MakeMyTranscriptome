@@ -54,14 +54,16 @@ class json_config:
 
 
 if(__name__ == '__main__'):
-    test_file_name = 'test_config.json'
-    test_dict = {'Opt1': 1}
-    f = open(test_file_name, 'w')
-    json.dump(test_dict, f)
-    f.close()
-    conf = json_config()
-    conf.add_config('opt1')
-    conf.add_config('opt2')
-    data = conf.load_config(test_file_name)
-    print(data)
-    os.remove(test_file_name)
+
+    def test_json_config():
+        test_file_name = 'test_config.json'
+        test_dict = {'Opt1': 1}
+        f = open(test_file_name, 'w')
+        json.dump(test_dict, f)
+        f.close()
+        conf = json_config()
+        conf.add_config('opt1')
+        conf.add_config('opt2')
+        data = conf.load_config(test_file_name)
+        print(data)
+        os.remove(test_file_name)
