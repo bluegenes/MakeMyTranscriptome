@@ -141,6 +141,9 @@ def get_db_config():
     db_config.add_config('idmapping_selected',
                          type=file_exists,
                          default=mmt_defaults.PATH_IDMAPPING_SELECTED)
+    db_config.add_config('pfam_enzyme',
+                         type=file_exists,
+                         default=mmt_defaults.PATH_PFAM_ENZYME)
     return db_config
 
 
@@ -232,7 +235,7 @@ def get_dbs(json_config=mmt_defaults.PATH_DB_CONFIG_FILE, defaults=False):
 
     ret['kog_functional'] = database(
         mmt_defaults.URL_KOG_FUNCTIONAL,
-        config['kogs'])
+        config['kog_functional'])
 
     ret['goslim_generic'] = database(
         mmt_defaults.URL_SLIM_GENERIC,
@@ -246,6 +249,8 @@ def get_dbs(json_config=mmt_defaults.PATH_DB_CONFIG_FILE, defaults=False):
     ret['idmapping_selected'] = database(
         mmt_defaults.URL_IDMAPPING_SELECTED,
         config['idmapping_selected'])
+
+    return ret
 
 
 if(__name__ == '__main__'):

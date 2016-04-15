@@ -10,7 +10,7 @@ busco_defaults = {'arthropoda': False, 'metazoa': False,
                   'plantae': False}
 
 def download_task_wrapper(db,tasks):
-    return fdb.download_task(db.url, db.download_location, db.file_type, tasks)
+    return fdb.download_task(db.url, db.download_location, db.type, tasks)
 
 def gen_dmnd_blast_tasks(db, force, blast_plus):
     tasks = []
@@ -38,12 +38,12 @@ def gen_db_supervisor(force=False, sprot=False, uniref90=False, nr=False, busco_
         tasks.append(gen_dmnd_blast_tasks(dbs['nr'], force, blast_plus))
     for busco_db in busco_args:
         if(busco_args[busco_db]):
-            tasks.append(download_task_wrapper(dbs['busco_'+busco_db]))
+            tasks.append(download_task_wrapper(dbs['busco_'+busco_db], []))
     for db_string in dbs:
         if(db_string in ['uniprot_sprot', 'uniref90', 'nr'] or db_string.startswith('busco_')):
             pass
         else:
-            tasks.append(download_task_wrapper(dbs[db_string]))
+            tasks.append(download_task_wrapper(dbs[db_string], []))
     return Supervisor(tasks, cpu=cpu)
 
 
@@ -57,10 +57,11 @@ if(__name__ == '__main__'):
     parser.add_argument('--cpu', type=int, default=4)
     parser.add_argument('--buildBlastPlus', action='store_true', default=False)
     args = parser.parse_args()
+    busco_flags = {}
     if(args.buscos != None):
         args.buscos = args.buscos.split(',')
         for b in args.buscos:
             busco_flags[b] = True
-    sup = gen_db_supervisor(args.hard, args.sprot, args.uniref90, args.nr, busco_flags, args.buildBlastPlus, cpu)
+    sup = gen_db_supervisor(args.hard, args.swiss_prot, args.uniref90, args.nr, busco_flags, args.buildBlastPlus, args.cpu)
     sup.run()
 
