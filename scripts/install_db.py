@@ -1,10 +1,8 @@
-import mmt_defaults as statics
-import json_config
 import os
 from data_classes import get_dbs
-from tasks_v2 import Task, Supervisor
+from tasks_v2 import Supervisor
 import functions_databases as fdb
-
+import argparse
 
 busco_defaults = {'arthropoda': False, 'metazoa': False,
                   'vertebrata': False, 'eukaryota': False,
@@ -29,7 +27,7 @@ def gen_dmnd_blast_tasks(db, force, blast_plus):
     return Supervisor(tasks)
 
 
-def gen_db_supervisor(force=False, sprot=False, uniref90=False, nr=False, busco_args=busco_defaults, blast_plus=False, cpu=float('inf'), dep):
+def gen_db_supervisor(force=False, sprot=False, uniref90=False, nr=False, busco_args=busco_defaults, blast_plus=False, cpu=float('inf'), dep=[]):
     dbs = get_dbs(defaults=force)
     tasks = []
     if(sprot):
@@ -63,6 +61,6 @@ if(__name__ == '__main__'):
         args.buscos = args.buscos.split(',')
         for b in args.buscos:
             busco_flags[b] = True
-    sup = gen_db_supervisor(hard, args.sprot, args.uniref90, args.nr, busco_flags, args.buildBlastPlus, cpu)
+    sup = gen_db_supervisor(args.hard, args.sprot, args.uniref90, args.nr, busco_flags, args.buildBlastPlus, cpu)
     sup.run()
 
