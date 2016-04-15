@@ -34,7 +34,9 @@ class json_config:
             syn = syn.lower if(ignore_case) else syn
             self.configs[syn] = temp
 
-    def load_config(self, json_file):
+    def load_config(self, json_file, no_fail=True):
+        if(not os.path.isfile(json_file)):
+            return self.defaults
         f = open(json_file)
         data = json.load(f)
         f.close()
