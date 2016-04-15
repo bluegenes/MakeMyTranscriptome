@@ -1,9 +1,9 @@
-import mmt_defaults
+import mmt_defaults as statics
 import json_config
 import os
-from data_classes import Datafile
-from tasks_v2 import Task
-from external_tools import TOOLS_DICT
+from data_classes import get_dbs
+from tasks_v2 import Task, Supervisor
+import functions_databases as fdb
 
 
 busco_defaults = {'arthropoda': False, 'metazoa': False,
@@ -11,20 +11,58 @@ busco_defaults = {'arthropoda': False, 'metazoa': False,
                   'fungi': False, 'bacteria': False,
                   'plantae': False}
 
+def download_task_wrapper(db,tasks):
+    return fdb.download_task(db.url, db.download_location, db.file_type, tasks)
+
+def gen_dmnd_blast_tasks(db, force, blast_plus):
+    tasks = []
+    depends = []
+    if(force or not os.path.exists(db.download_location)):
+        sprot_download = download_task_wrapper(db, [])
+        tasks.append(sprot_download)
+        depends.append(sprot_download)
+    install_dmnd = fdb.build_diamond_task(db.download_location, db.call_path, depends)
+    tasks.append(install_dmnd)
+    if(blast_plus):
+        install_blast = fdb.build_blast_task(db.download_location, db.call_path, 'prot', depends)
+        tasks.append(install_blast)
+    return Supervisor(tasks)
 
 
-def gen_db_supervisor(force=False, sprot=False, uniref90=False nr=False, busco_args=busco_defaults, blast_plus=False, cpu=float('inf'), dep):
-    db_configs = get_db_config()
+def gen_db_supervisor(force=False, sprot=False, uniref90=False, nr=False, busco_args=busco_defaults, blast_plus=False, cpu=float('inf'), dep):
+    dbs = get_dbs(defaults=force)
     tasks = []
     if(sprot):
-        sprot_dep = []
-        if(force or not os.path.exists(db_configs['uniprot_sprot_fasta'])):
-            sprot_download = download_task(mmt_defaults.URL_UNIPROT_SPROT, db_configs['uniprot_sprot_fasta'], '', [])
-            tasks.append(sprot_download)
-            sprot_dep.append(sprot_download)
-        sprot_install = 
-
+        tasks.append(gen_dmnd_blast_tasks(dbs['uniprot_sprot'], force, blast_plus))
+    if(uniref90):
+        tasks.append(gen_dmnd_blast_tasks(dbs['uniref90'], force, blast_plus))
+    if(nr):
+        tasks.append(gen_dmnd_blast_tasks(dbs['nr'], force, blast_plus))
+    for busco_db in busco_args:
+        if(busco_args[busco_db]):
+            tasks.append(download_task_wrapper(dbs['busco_'+busco_db]))
+    for db_string in dbs:
+        if(db_string in ['uniprot_sprot', 'uniref90', 'nr'] or db_string.startswith('busco_')):
+            pass
+        else:
+            tasks.append(download_task_wrapper(dbs[db_string]))
+    return Supervisor(tasks, cpu=cpu)
 
 
 if(__name__ == '__main__'):
-    pass
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--hard', action='store_true', default=False)
+    parser.add_argument('--swiss_prot', action='store_true', default=False)
+    parser.add_argument('--uniref90', action='store_true', default=False)
+    parser.add_argument('--nr', action='store_true', default=False)
+    parser.add_argument('--buscos', help='a comma seperated list of busco files that need to be downloaded')
+    parser.add_argument('--cpu', type=int, default=4)
+    parser.add_argument('--buildBlastPlus', action='store_true', default=False)
+    args = parser.parse_args()
+    if(args.buscos != None):
+        args.buscos = args.buscos.split(',')
+        for b in args.buscos:
+            busco_flags[b] = True
+    sup = gen_db_supervisor(hard, args.sprot, args.uniref90, args.nr, busco_flags, args.buildBlastPlus, cpu)
+    sup.run()
+
