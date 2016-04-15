@@ -149,7 +149,7 @@ def get_db_config():
 
 class database:
 
-    def __init__(self, url, download_location, call_path=None, ftype=''):
+    def __init__(self, url, download_location, call_path=None, ftype='.'):
         self.url = url
         self.download_location = download_location
         self.call_path = call_path if(call_path is not None) else download_location

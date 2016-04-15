@@ -36,7 +36,7 @@ if(__name__ == '__main__'):
     parser.add_argument('-t', '--target', default=None, help=(
         'the location to install the file to. Defaults to basename(url) with '
         'compression type trimmed.'))
-    parser.add_argument('--type', default='', help=(
+    parser.add_argument('--type', default='.', help=(
         'the type of decompression that should be performed, if any. '
         'Currently supported types are ".gz" and ".tar.gz".'))
     args = parser.parse_args()
@@ -44,7 +44,7 @@ if(__name__ == '__main__'):
         args.target = os.path.basename(args.url)
         if(args.target.endswith(args.type)):
             args.target = args.target[:-1*len(args.type)]
-    if(args.type == ''):
+    if(args.type == '.'):
         urlretrieve(args.url, args.target)
     elif(args.type == '.gz'):
         url_unzip(args.url, args.target)
