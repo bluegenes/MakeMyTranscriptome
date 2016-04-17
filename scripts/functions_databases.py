@@ -72,6 +72,6 @@ def download_task(url, install_location, ftype, tasks):
     trgs = []
     cmd = 'python {0!s}/url_retrieve.py {1!s} --target {2!s} --type {3!s}'.format(
            statics.PATH_SCRIPTS, url, install_location, ftype)
-    name = 'install_{0!s}'.format(os.path.basename(install_location))
+    name = 'download_{0!s}'.format(os.path.basename(install_location))
     out, err = gen_db_logs(name)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
