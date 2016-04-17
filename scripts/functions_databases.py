@@ -69,7 +69,7 @@ def pfam_build_task(source, out_root_path, tasks):
 
 
 def download_task(url, install_location, ftype, tasks):
-    trgs = []
+    trgs = [install_location]
     cmd = 'python {0!s}/url_retrieve.py {1!s} --target {2!s} --type {3!s}'.format(
            statics.PATH_SCRIPTS, url, install_location, ftype)
     name = 'download_{0!s}'.format(os.path.basename(install_location))
