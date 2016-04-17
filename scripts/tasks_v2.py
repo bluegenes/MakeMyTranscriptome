@@ -35,7 +35,7 @@ class Task:
     class TaskException(Exception):
         pass
 
-    def __init__(self, command, dependencies=[], targets=[], cpu=1, name='Anonymous_Task', stderr=None, stdout=None, error_check=None, max_wall_time=float('inf'), hist_ignore_opts=[]):
+    def __init__(self, command, dependencies=[], targets=[], cpu=1, name='Anonymous_Task', stderr=None, stdout=None, error_check=None, max_wall_time=float('inf')):
         try:
             if(stderr is not None):
                 f = open(stderr, 'a')
@@ -58,7 +58,6 @@ class Task:
         self.exit_code = None
         self.soft_finished_status = False
         self.start_time = None
-        self.hist_ignore_opts = hist_ignore_opts
 
     def checkDependencies(self):
         for d in self.dependencies:
@@ -97,35 +96,38 @@ class Task:
     def finished(self):
         if(self.soft_finished_status):
             return True
-        if(self.start_time is not None and float(time.time()-self.start_time)/60 > self.max_wall_time):
-            err_mess = ('Task {0!s} has been running for greater than its maximum wall time, '
-                        '{1!s}m, and has been aborted. This is likely an external error and '
-                        'trying again is recommended.').format(self.name, self.max_wall_time)
-            self.killRun()
-            raise self.TaskException(err_mess)
-        if(self.process==None):
+        if(self.start_time is not None):
+            cur_run_time = float(time.time()-self.start_time)/60
+            if(cur_run_time > self.max_wall_time):
+                err_mess = ('Task {0!s} has been running for greater than its maximum wall time, '
+                            '{1!s}m, and has been aborted. This is likely an external error and '
+                            'trying again is recommended.').format(self.name, self.max_wall_time)
+                self.killRun()
+                raise self.TaskException(err_mess)
+        if(self.process is None):
             return False
         self.process.poll()
         exit_code = self.process.returncode
-        if(exit_code == None):
+        if(exit_code is None):
             return False
         else:
-            self.exit_code=exit_code
-            self.opened_files = [f.close() for f in self.opened_files]
-            self.opened_files = []
+            self.exit_code = exit_code
+            self.close_files()
             if(self.error_check(exit_code)):
-                error_message = 'Task '+ self.name+' seems to have failed with exit_code '+str(exit_code)+'.'
-                if(self.stderr!=None):
-                    error_message+=' Consult '+self.stderr+' for more info.' 
+                error_message = ('The task {0!s} seems to have failed with exit_code {1!s}.'
+                                 ).format(self.name, exit_code)
+                if(self.stderr is not None):
+                    error_message += ' Consult {0!s} for more info.'.format(self.stderr)
                 inst = self.ExitCodeException(error_message)
                 inst.exit_code = exit_code
+                self.rename_targets()
                 raise inst
             for t in self.targets:
                 if(not os.path.exists(t)):
-                    error_message = 'Task '+self.name+' encountered an unexpected error resulting in it failing'
-                    error_message+= ' to produce its target files.'
-                    if(self.stderr!=None):
-                        error_message+=' Consult '+self.stderr+' for more info.'
+                    error_message = ('Task {0!s} encountered an unexpected error resulting in it'
+                                     ' failing to produce its target files.').format(self.name)
+                    if(self.stderr is not None):
+                        error_message += ' Consult {0!s} for more info.'.format(self.stderr)
                     raise self.TaskException(error_message)
             return True
 
@@ -139,24 +141,28 @@ class Task:
             self.process.kill()
         except:
             pass
+        self.close_files()
+        self.rename_targets()
+
+    def close_files(self):
         for f in self.opened_files:
             f.close()
         self.opened_files = []
 
-    def skipable(self, history):
+    def rename_targets(self):
+        for f in self.targets:
+            if(os.path.exists(f)):
+                os.rename(f, f+'.partial')
+
+    def skipable(self):
         if(self.soft_finished_status):
             return True
-        local_command = self.command
-        if(self.hist_ignore_opts is not []):
-            re_string = '|'.join(self.hist_ignore_opts)
-            history = [''.join(re.split(re_string, com)) for com in history]
-            local_command = ''.join(re.split(re_string, local_command))
-        if(local_command not in history):
-            return False
         for t in self.dependencies:
             if(isinstance(t, Task) or isinstance(t, Supervisor)):
-                if(not t.skipable(history)):
+                if(not t.skipable()):
                     return False
+        if(self.targets == []):
+            return False
         for t in self.targets:
             if(not os.path.exists(t)):
                 return False
@@ -178,10 +184,9 @@ class Supervisor:
     STATE_FINISHED = 'executed'
     STATE_RUNNING = 'started'
     STATE_REMOVED = 'removed'
-    history_log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.task_log')
 
 
-    def __init__(self, tasks=[], dependencies=[], cpu=float('inf'), name='Supervisor', delay=1, force_run=False, email=None, email_interval=30, log=None, history_ignore_flags = []):
+    def __init__(self, tasks=[], dependencies=[], cpu=float('inf'), name='Supervisor', delay=1, force_run=False, email=None, email_interval=30, log=None):
         self.cpu = cpu
         self.name = name
         self.delay = delay
@@ -201,13 +206,11 @@ class Supervisor:
             self.add_task(t)
 
     def run(self):
-        self.log_file = open(self.log_path,'w',1)
+        self.log_file = open(self.log_path, 'w', 1)
         self.last_email = time.time()
         self.tasks_to_run = set([t for t in self.tasks])
         self.tasks_running = set()
         cur_cpu = 0
-        history = self.get_history()
-        history_update = set()
         signal.signal(signal.SIGTERM, lambda *x: self.killRun())
         try:
             # execute run
@@ -225,7 +228,6 @@ class Supervisor:
                             temp['exit_code'] = t.exit_code
                             h, m, s = time_to_hms(temp['stop'] - temp['start'])
                             temp['message'] = 'Completed in {0!s}h {1!s}m {2!s}s'.format(h, m, s)
-                            history_update.add(t.command)
                             self.log(t.name+':'+self.task_status[t]['state']+':'+time.asctime()+'\n\n')
                     except (Task.ExitCodeException, Task.TaskException) as inst:
                         cur_cpu -= t.cpu
@@ -245,7 +247,7 @@ class Supervisor:
                         continue
                     elif(not t.checkDependencies()):
                         continue
-                    elif(not self.force_run and t.skipable(history)):
+                    elif(not self.force_run and t.skipable()):
                         temp['state'] = Supervisor.STATE_SKIPPED
                         self.log(t.name+':'+temp['state']+'\n')
                         self.tasks_to_run.remove(t)
@@ -293,7 +295,6 @@ class Supervisor:
             self.log_file.write(str(inst))
             raise
         finally:
-            self.write_history(history_update)
             self.send_email('', subject='MMT Finished')
 
     def __removeTaskPath__(self, task):
@@ -311,23 +312,7 @@ class Supervisor:
                     removed.add(t)
                     temp['message'] = 'Never Started'
                     temp['state'] = Supervisor.STATE_REMOVED
-                    flag=True
-
-    def get_history(self):
-        if(os.path.isfile(self.history_log_path)):
-            history_file = open(self.history_log_path, 'rb')
-            ret = pickle.load(history_file)
-            history_file.close()
-        else:
-            ret = set()
-        return ret
-
-    def write_history(self, update):
-        history = self.get_history()
-        history = history.union(update)
-        history_file = open(self.history_log_path, 'wb')
-        pickle.dump(history, history_file)
-        history_file.close()
+                    flag = True
 
     def log(self, message):
         self.log_str += message
@@ -345,9 +330,9 @@ class Supervisor:
                 return False
         return True
 
-    def skipable(self, history):
+    def skipable(self):
         for t in self.tasks:
-            if(not t.skipable(history)):
+            if(not t.skipable()):
                 return False
         return True
 
@@ -392,16 +377,16 @@ class Supervisor:
 
 
 if(__name__=='__main__'):
-    t1 = Task('py3 ..\\..\\test.py 4.4',dependencies=[],name='t1')
-    t2 = Task('py3 ..\\..\\test.py 6',dependencies=[t1],name='t2')
+    t1 = Task('python ..\\..\\test.py 4.4',dependencies=[],name='t1')
+    t2 = Task('python ..\\..\\test.py 6',dependencies=[t1],name='t2')
     def t2_dep():
-        t2.command = 'py3 ..\\..\\test.py 8'
+        t2.command = 'python ..\\..\\test.py 8'
         return True
     t2.dependencies.append(t2_dep)
-    t3 = Task('py3 ..\\..\\test.py 3',dependencies=[],name='t3')
-    t4 = Task('py3 ..\\..\\test.py 2',dependencies=[t3],name='t4')
-    t5 = Task('py3 ..\\..\\test.py 1',dependencies=[],name='t5')
-    t6 = Task('py3 ..\\..\\test.py 7',dependencies=[],name='t6')
+    t3 = Task('python ..\\..\\test.py 3',dependencies=[],name='t3')
+    t4 = Task('python ..\\..\\test.py 2',dependencies=[t3],name='t4')
+    t5 = Task('python ..\\..\\test.py 1',dependencies=[],name='t5')
+    t6 = Task('python ..\\..\\test.py 7',dependencies=[],name='t6')
     s1 = Supervisor([t1,t2],name='s1')
     s2 = Supervisor([t3,t4],name='s2',dependencies=[s1])
     s3 = Supervisor([s1,s2],name='s3')
