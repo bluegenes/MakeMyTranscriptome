@@ -12,18 +12,15 @@ busco_defaults = {'arthropoda': False, 'metazoa': False,
 
 
 def download_task_wrapper(db, tasks):
-    if(os.path.exists(db.download_location)):
-        return None
     return fdb.download_task(db.url, db.download_location, db.type, tasks)
 
 
 def gen_dmnd_blast_tasks(db, force, blast_plus):
     tasks = []
     depends = []
-    if(force or not os.path.exists(db.download_location)):
-        sprot_download = download_task_wrapper(db, [])
-        tasks.append(sprot_download)
-        depends.append(sprot_download)
+    sprot_download = download_task_wrapper(db, [])
+    tasks.append(sprot_download)
+    depends.append(sprot_download)
     install_dmnd = fdb.build_diamond_task(db.download_location, db.call_path, depends)
     tasks.append(install_dmnd)
     if(blast_plus):
@@ -61,7 +58,6 @@ def gen_db_supervisor(force=False, sprot=False, uniref90=False, nr=False, busco_
         if(busco_args[busco_db]):
             tasks.append(download_task_wrapper(dbs['busco_'+busco_db], []))
     if(idmapping):
-        print('test_thing')
         tasks.append(download_task_wrapper(dbs['id_mapping'], []))
         tasks.append(download_task_wrapper(dbs['idmapping_selected'], []))
     for db_string in dbs:
@@ -85,7 +81,7 @@ if(__name__ == '__main__'):
     parser.add_argument('--idmapping', action='store_true', default=False)
     args = parser.parse_args()
     busco_flags = {}
-    if(args.buscos != None):
+    if(args.buscos is not None):
         args.buscos = args.buscos.split(',')
         for b in args.buscos:
             busco_flags[b] = True
