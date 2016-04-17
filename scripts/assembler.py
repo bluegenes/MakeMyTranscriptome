@@ -83,7 +83,7 @@ def gen_trimming_supervisor(out_dir,fq1,fq2,unpaired,no_trim,trimmomatic_flag,rm
 	#unpaired = [subset.targets[0]]
     #else:
     if fq1 != []:
-        subset = fa.subset_task(out_dir, fq1, fq2, unpaired,'final_reads', subset_size, subset_seed, deps)
+        subset = fa.subset_task(out_dir, fq1, fq2,'final_reads', subset_size, subset_seed, deps)
         fq1 = [subset.targets[0]]
         fq2 = [subset.targets[1]]
         tasks.append(subset)
