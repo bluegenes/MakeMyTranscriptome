@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import sys
+import assembly_report as ar
 
 assembly_dir_identifiers = ['log_files', 'assembly_files', 'annotation_files', 'expression_files']
 relative_path_report = 'log_files/report.json'
@@ -14,15 +15,13 @@ def _scrape_assembly(root, depth=1, link_flag=False):
     # ask is assembly directory
     if(all(d in dirs for d in assembly_dir_identifiers)):
         f = os.path.join(root, relative_path_report)
-        # ask if report already exists.
-        if(os.path.isfile(f)):
-            f = open(f)
+        # if report doesn't exist, create it.
+        if(not os.path.isfile(f)):
+	    ar.create_report(root, json_target=f)
+        with open(f) as rf:
             ret = {}
-            ret[os.path.basename(root)] = json.load(f)
-            f.close()
+            ret[os.path.basename(root)] = json.load(rf)
             return ret
-        else:
-            return {}
     else:
         dirs = [os.path.join(root, d) for d in dirs]
         dirs = [d for d in dirs if(not os.path.islink(d) or link_flag)]

@@ -78,19 +78,24 @@ def gen_trimming_supervisor(out_dir,fq1,fq2,unpaired,no_trim,trimmomatic_flag,rm
             tasks.append(fa.fastqc_task(out_dir,unpaired, 'post_trimming_unpaired',int(round(float(cpu_cap)/2)),[unpaired_sup]))
             deps.append(unpaired_sup)
     # need to add support for unp here
-    subset = fa.subset_task(out_dir, fq1, fq2, 'final_reads', subset_size, subset_seed, deps)
-    fq1 = [subset.targets[0]]
-    fq2 = [subset.targets[1]]
-    tasks.append(subset)
-    if(truncate_opt >= 0):
-        truncate = fa.truncate_task(out_dir, fastq1[0], fastq2[0], truncate_opt, [subset])
-        fq1 = [truncate.targets[0]]
-        fq2 = [truncate.targets[1]]
-        deps.append(truncate)
-        tasks.append(truncate)
-    if any([truncate_opt>=0, subset_size < 10**15]): # some subsetting may have occurred
-        late_fastqc = fa.fastqc_task(out_dir,fq1+fq2+unpaired, 'final_reads_paired',cpu_cap,deps)
-        tasks.append(late_fastqc)
+    #if len(fq2) <1:
+        #subset = fa.subset_task(out_dir, fq1,fq2,unpaired, 'final_reads', subset_size, subset_seed, deps)
+	#unpaired = [subset.targets[0]]
+    #else:
+    if fq1 != []:
+        subset = fa.subset_task(out_dir, fq1, fq2, unpaired,'final_reads', subset_size, subset_seed, deps)
+        fq1 = [subset.targets[0]]
+        fq2 = [subset.targets[1]]
+        tasks.append(subset)
+        if(truncate_opt >= 0):
+            truncate = fa.truncate_task(out_dir, fastq1[0], fastq2[0], truncate_opt, [subset])
+            fq1 = [truncate.targets[0]]
+            fq2 = [truncate.targets[1]]
+            deps.append(truncate)
+            tasks.append(truncate)
+        if any([truncate_opt>=0, subset_size < 10**15]): # some subsetting may have occurred
+            late_fastqc = fa.fastqc_task(out_dir,fq1+fq2+unpaired, 'final_reads_paired',cpu_cap,deps)
+            tasks.append(late_fastqc)
     return (Supervisor(tasks=tasks, dependencies=dependency_set),fq1,fq2,unpaired)
 
 def gen_assembly_supervisor(out_dir, fastq1, fastq2, unpaired, dependency_set, no_trim=False, rnaSPAdes=False, rmdup=False, subset_size=50000000, cpu=12, subset_seed='I am a seed value', normalize_flag=False, truncate_opt=-1, trimmomatic_flag=True, path_assembly=fg.GEN_PATH_ASSEMBLY()):

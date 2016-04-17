@@ -6,26 +6,28 @@ from tasks_v2 import Supervisor, Task
 import functions_general as fg
 import functions_annotater as fan
 import functions_expression as fex
+import assembler as assemb
 
 salmon_naming = 'salmon'
 express_naming = 'express'
 intersect_naming = 'intersect'
 
-def gen_salmon_supervisor(fastq1,fastq2,paired_names,unpaired,unpaired_names,assembly_path,assembly_name,gene_trans_map,sample_info,model,out_dir,cpu_cap):
+def gen_salmon_supervisor(fastq1,fastq2,paired_names,unpaired,unpaired_names,assembly_path,assembly_name,gene_trans_map,sample_info,model,out_dir,cpu_cap, deps):
     salmon_tasks = []
     salmon_dir = fg.make_dir_task(os.path.join(out_dir,'salmon'))
     out_dir = salmon_dir.targets[0]
     build_salmon = fex.build_salmon_task(assembly_path, assembly_name, out_dir,fg.cpumod(cpu_cap, 2),[salmon_dir])
     salmon_gene_map = fex.salmon_gene_map_task(out_dir,assembly_name,gene_trans_map,[salmon_dir])
+    deps = deps + [build_salmon, salmon_gene_map]
     for i in range(len(fastq1)):
         #filename = '_'.join([paired_names[i],salmon_naming,assembly_name]) 
         filename = paired_names[i] #,salmon_naming,assembly_name]) 
-        salmon = fex.salmon_task(build_salmon.targets[0],fastq1[i],fastq2[i],filename, salmon_gene_map.targets[0],out_dir,fg.cpumod(cpu_cap,2),[build_salmon,salmon_gene_map])
+        salmon = fex.salmon_task(build_salmon.targets[0],fastq1[i],fastq2[i],filename, salmon_gene_map.targets[0],out_dir,fg.cpumod(cpu_cap,2),deps)
         salmon_tasks.append(salmon)
     for i in range(len(unpaired)):
         #filename = '_'.join([unpaired_names[i],salmon_naming,assembly_name]) 
         filename = unpaired_names[i] #,salmon_naming,assembly_name]) 
-        salmon = fex.salmon_unpaired_task(build_salmon.targets[0],unpaired[i],filename,salmon_gene_map.targets[0],out_dir,fg.cpumod(cpu_cap,2),[build_salmon,salmon_gene_map])
+        salmon = fex.salmon_unpaired_task(build_salmon.targets[0],unpaired[i],filename,salmon_gene_map.targets[0],out_dir,fg.cpumod(cpu_cap,2),deps)
         salmon_tasks.append(salmon)
     transcriptName = assembly_name  #'_'.join([assembly_name,salmon_naming])
     geneName = assembly_name + '_gene' #'_'.join([assembly_name,salmon_naming,'gene'])
@@ -95,7 +97,16 @@ def gen_intersect_supervisor(fq1,fq2,paired_names,unpaired,unpaired_names,assemb
 
 def gen_expression_supervisor(fastq1,fastq2,paired_names,unpaired,unpaired_names,cpu,sample_info,model,gene_trans_map,dependency_set,assembly_name, assembly_path, out_dir,run_express=False,run_intersectbed=False):
     all_tasks = []
-    salmon_tasks = gen_salmon_supervisor(fastq1,fastq2,paired_names,unpaired,unpaired_names,assembly_path,assembly_name,gene_trans_map,sample_info,model,out_dir,cpu)
+    deps = []
+    trim_reads = False
+    if trim_reads:
+        trimmomatic_flag = True
+	rmdup = False
+	truncate_opt = False
+	trim_tasks,fastq1,fastq2,unpaired=assemb.gen_trimming_supervisor(out_dir,fastq1,fastq2,unpaired,False,trimmomatic_flag,rmdup,10**15,0,truncate_opt,[],cpu) 
+	all_tasks.append(trim_tasks)
+	deps.append(trim_tasks)
+    salmon_tasks = gen_salmon_supervisor(fastq1,fastq2,paired_names,unpaired,unpaired_names,assembly_path,assembly_name,gene_trans_map,sample_info,model,out_dir,cpu, deps)
     all_tasks.append(salmon_tasks)
     if run_express or run_intersectbed:
         build_bowtie = fex.build_bowtie_task(assembly_path,assembly_name, out_dir,[])

@@ -77,6 +77,7 @@ def get_total_score(df_row):
     return total_score
 
 def get_colnames(blastType,db):
+    query_id,db_id = '',''
     if blastType == 'blastx':
         query_id = 'Transcript_id'
     else:
@@ -113,7 +114,7 @@ def get_signalp(signalp_file):
      infoToAdd.set_index('ORF_id', inplace=True)
      return(infoToAdd)
 
-def get_tmhmm(tmhmm_file, AA_threshold):
+def get_tmhmm(tmhmm_file, AA_threshold = 1):
     tmInfo = pd.read_table(tmhmm_file, header=None, comment='#') 
     tmInfo = tmInfo.rename(columns={0:'ORF_id'})
     tmInfo['tmhmm'] =  tmInfo.iloc[:,[2,4,5]].apply(lambda x: '__'.join(x.astype(str)), axis=1)

@@ -63,10 +63,10 @@ def prinseq_task(out_dir,input_1, input_2, basename, opts, tasks):
 def trimmomatic_unpaired_task(out_dir,input1, cpu_cap, basename, tasks):
     form = lambda s, i : s.format(out_dir, basename, os.path.basename(i))
     trgs = [form('{0!s}/{1!s}_{2!s}', input1)]
-    orphans = [form('{0!s}/{1!s}_orphans_{2!s}', input1)]
-    cmd = ('java -jar {0!s} SE -threads {4!s} {1!s} {2!s} {3!s} ILLUMINACLIP:'
-           '{5!s}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:35'
-           ).format(fg.tool_path_check(TOOLS_DICT['trimmomatic'].full_exe[0]), input1, trgs[0], orphans[0],cpu_cap,
+#    orphans = [form('{0!s}/{1!s}_orphans_{2!s}', input1)]
+    cmd = ('java -jar {0!s} SE -threads {3!s} {1!s} {2!s} ILLUMINACLIP:'
+           '{4!s}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:35'
+           ).format(fg.tool_path_check(TOOLS_DICT['trimmomatic'].full_exe[0]), input1, trgs[0],cpu_cap,
            TOOLS_DICT['trimmomatic'].full_exe[2]) #PATH_TRIMMOMATIC_ADAPTERS_SINGLE)
     name = basename
     out, err = fg.GEN_LOGS(name)

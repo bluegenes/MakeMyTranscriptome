@@ -174,7 +174,7 @@ for key in sorted(geneD):
     val = geneD.get(key)
     outGeneTable.write(key + '\t' + '\t'.join(map(str,val)) + '\n')
     if all(item >= int(opts.threshold) for item in map(float,val)): #[1:])): # [1:] to take off the gene name
-        outGeneThreshTable.write(key + '\t' + '\t'.join(map(str,val))) #[1:])) + '\n') #take off gene name
+        outGeneThreshTable.write(key + '\t' + '\t'.join(map(str,val)) + '\n') #[1:])) + '\n') #take off gene name
 
 outCountTable.close()
 outGeneThreshTable.close()
