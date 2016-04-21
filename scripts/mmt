@@ -15,6 +15,7 @@ from quality import gen_quality_supervisor
 from filter_super import gen_filter_supervisor
 from itertools import chain
 from manage_database import read_log as read_db_log
+from install_db import gen_db_supervisor
 import time
 import pandas
 import warnings
@@ -356,6 +357,8 @@ def go_expression(path_assembly, out_dir, args, dep):
         args.express, args.intersectbed)
 
 def go_manage_db(args, dep, log_files=True):
+    return gen_db_supervisor(sprot=True, idmapping=True,dep=dep)
+    '''
     if(args.which=='annotation'): 
         args.fresh=False
         busco_args = {'metazoa':True}
@@ -370,6 +373,7 @@ def go_manage_db(args, dep, log_files=True):
         args.uniref90 = False
         args.blastplus= False
     return fg.manage_db_task(args.fresh, args.nr, args.uniref90, busco_args, args.blastplus, int(round(args.cpu/4)), dep, log_files)
+    '''
 
 def go_manage_tools(args, dep, log_files=True):
     toolsD = {'trinity':False,'trimmomatic':False,'prinseq':False,'transdecoder':False,'diamond':False,'hmmer': False,'transrate':False,'busco':False,'salmon':False, 'fastqc':False}
