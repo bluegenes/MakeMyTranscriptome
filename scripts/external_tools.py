@@ -1,7 +1,7 @@
 # author: bluegenes
 
 from tools_class import ext_tool as tc 
-from functions_general import PATH_TOOLS
+from mmt_defaults import PATH_TOOLS
 from os.path import join,dirname,abspath
 import platform
 

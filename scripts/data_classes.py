@@ -138,12 +138,24 @@ def get_db_config():
     db_config.add_config('goslim_generic',
                          type=file_exists,
                          default=mmt_defaults.PATH_SLIM_GENERIC)
-    db_config.add_config('idmapping_selected',
+    db_config.add_config('id_mapping_selected',
                          type=file_exists,
-                         default=mmt_defaults.PATH_IDMAPPING_SELECTED)
+                         default=mmt_defaults.PATH_ID_MAPPING_SELECTED)
     db_config.add_config('pfam_enzyme',
                          type=file_exists,
                          default=mmt_defaults.PATH_PFAM_ENZYME)
+    db_config.add_config('swiss_enzyme',
+                         type=file_exists,
+                         default=mmt_defaults.PATH_SWISS_ENZYME)
+    db_config.add_config('nog_categories',
+                         type=file_exists,
+                         default=mmt_defaults.PATH_NOG_CATEGORIES)
+    db_config.add_config('orthology_pathway',
+                         type=file_exists,
+                         default=mmt_defaults.PATH_ORTHOLOGY_PATHWAY)
+    db_config.add_config('enzyme_pathway',
+                         type=file_exists,
+                         default=mmt_defaults.PATH_ENZYME_PATHWAY)
     return db_config
 
 
@@ -229,6 +241,22 @@ def get_dbs(json_config=mmt_defaults.PATH_DB_CONFIG_FILE, defaults=False):
         mmt_defaults.URL_ID_MAPPING,
         config['id_mapping'])
 
+    ret['id_mapping_biocyc'] = database(
+        None,
+        mmt_defaults.PATH_ID_MAPPING_BIOCYC)
+
+    ret['id_mapping_eggnog'] = database(
+        None,
+        mmt_defaults.PATH_ID_MAPPING_EGGNOG)
+
+    ret['id_mapping_ko'] = database(
+        None,
+        mmt_defaults.PATH_ID_MAPPING_KO)
+
+    ret['id_mapping_orthodb'] = database(
+        None,
+        mmt_defaults.PATH_ID_MAPPING_ORTHODB)
+
     ret['uniprot_sprot_map'] = database(
         mmt_defaults.URL_UNIPROT_SPROT_MAP,
         config['uniprot_sprot_map'])
@@ -246,12 +274,29 @@ def get_dbs(json_config=mmt_defaults.PATH_DB_CONFIG_FILE, defaults=False):
         config['pfam'],
         os.path.join(mmt_defaults.PATH_PFAM_DIR, os.path.basename(config['pfam'])))
 
-    ret['idmapping_selected'] = database(
-        mmt_defaults.URL_IDMAPPING_SELECTED,
-        config['idmapping_selected'])
+    ret['id_mapping_selected'] = database(
+        mmt_defaults.URL_ID_MAPPING_SELECTED,
+        config['id_mapping_selected'])
+
+    ret['nog_categories'] = database(
+        mmt_defaults.URL_NOG_CATEGORIES,
+        config['nog_categories'])
+
+    ret['enzyme_pathway'] = database(
+        mmt_defaults.URL_ENZYME_PATHWAY,
+        config['enzyme_pathway'])
+
+    ret['orthology_pathway'] = database(
+        mmt_defaults.URL_ORTHOLOGY_PATHWAY,
+        config['orthology_pathway'])
+
+    ret['swiss_enzyme'] = database(
+        mmt_defaults.URL_ORTHOLOGY_PATHWAY,
+        config['swiss_enzyme'])
 
     return ret
 
 
 if(__name__ == '__main__'):
-    pass
+    dbs = get_dbs()
+    print(sorted(dbs.keys()))

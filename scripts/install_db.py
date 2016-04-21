@@ -39,7 +39,8 @@ def check_db_dir():
             statics.PATH_UNIREF90_DIR,
             statics.PATH_NR_DIR,
             statics.PATH_PFAM_DIR,
-            statics.PATH_BUSCO_REFERENCE_DIR]
+            statics.PATH_BUSCO_REFERENCE_DIR,
+            statics.PATH_ID_MAPPING_DIR]
     for d in dirs:
         make_dir(d)
 
@@ -59,9 +60,15 @@ def gen_db_supervisor(force=False, sprot=False, uniref90=False, nr=False, busco_
             tasks.append(download_task_wrapper(dbs['busco_'+busco_db], []))
     if(idmapping):
         tasks.append(download_task_wrapper(dbs['id_mapping'], []))
-        tasks.append(download_task_wrapper(dbs['idmapping_selected'], []))
+        tasks.append(download_task_wrapper(dbs['id_mapping_selected'], []))
+        tasks.append(fdb.subset_idmapping_task(
+            dbs['id_mapping'].download_location, dbs['id_mapping_biocyc'].call_path,
+            dbs['id_mapping_eggnog'].call_path, dbs['id_mapping'].call_path,
+            dbs['id_mapping_orthodb'].call_path))
     for db_string in dbs:
-        if(db_string in ['id_mapping', 'idmapping_selected','uniprot_sprot', 'uniref90', 'nr'] or db_string.startswith('busco_')):
+        if(db_string in ['uniprot_sprot', 'uniref90', 'nr'] or
+           db_string.startswith('busco_') or
+           db_string.startswith('id_mapping')):
             pass
         else:
             tasks.append(download_task_wrapper(dbs[db_string], []))
@@ -78,13 +85,13 @@ if(__name__ == '__main__'):
     parser.add_argument('--buscos', help='a comma seperated list of busco files that need to be downloaded')
     parser.add_argument('--cpu', type=int, default=4)
     parser.add_argument('--buildBlastPlus', action='store_true', default=False)
-    parser.add_argument('--idmapping', action='store_true', default=False)
+    parser.add_argument('--id_mapping', action='store_true', default=False)
     args = parser.parse_args()
     busco_flags = {}
     if(args.buscos is not None):
         args.buscos = args.buscos.split(',')
         for b in args.buscos:
             busco_flags[b] = True
-    sup = gen_db_supervisor(args.hard, args.swiss_prot, args.uniref90, args.nr, busco_flags, args.buildBlastPlus, args.idmapping, args.cpu)
+    sup = gen_db_supervisor(args.hard, args.swiss_prot, args.uniref90, args.nr, busco_flags, args.buildBlastPlus, args.id_mapping, args.cpu)
     sup.run()
 

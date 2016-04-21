@@ -75,3 +75,13 @@ def download_task(url, install_location, ftype, tasks):
     name = 'download_{0!s}'.format(os.path.basename(install_location))
     out, err = gen_db_logs(name)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+
+def subset_idmapping_task(path_idmap, biocyc, eggnog, ko, orthodb, tasks):
+    trgs = [biocyc, eggnog, ko, orthodb]
+    cmd = ('python {0!s}/subset_idmapping {1!s} --biocyc {2!s} --eggnog {3!s} '
+           '--ko {4!s} --orthodb {5!s}').format(
+           statics.PATH_UTIL, path_idmap, biocyc, eggnog, ko, orthodb)
+    name = 'subset_idmapping_{0!s}'.format(os.path.basename(path_idmap))
+    out, err = gen_db_logs(name)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
