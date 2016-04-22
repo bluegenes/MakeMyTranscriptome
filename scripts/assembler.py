@@ -53,7 +53,7 @@ def gen_paired_trimmomatic_supervisor(out_dir,fq1, fq2, unpaired, dependency_set
         tasks.append(trim_task)
     return Supervisor(tasks=tasks)
 
-def gen_trimming_supervisor(fq1,fq2,unpaired,no_trim,trimmomatic_flag,rmdup,subset_size,subset_seed,truncate_opt,dependency_set,cpu_cap):
+def gen_trimming_supervisor(opc, fq1,fq2,unpaired,no_trim,trimmomatic_flag,rmdup,subset_size,subset_seed,truncate_opt,dependency_set,cpu_cap):
     tasks = []
     deps = []
     if (not no_trim):

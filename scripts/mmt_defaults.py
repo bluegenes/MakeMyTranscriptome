@@ -125,4 +125,4 @@ class Output_Path_Vars:
             try:
                 makedirs(d)
             except:
-                raise Exception('Unable to build output directory.')
+                pass

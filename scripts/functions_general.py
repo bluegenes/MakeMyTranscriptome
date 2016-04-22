@@ -178,5 +178,5 @@ def filter_task(assembly_path, assembly_name, out_dir, quant_file_list, tpm_thre
            statics.PATH_UTIL, assembly_path, tpm_threshold, quants, trgs[0],
            tpm_column_index)
     name = 'filt_{0!s}_{1!s}tpm'.format(assembly_name, tpm_threshold)
-    out, err = gen_logs(opc.path_logs, name) if(log_flag) else (None, None)
+    out, err = os.devnull, os.devnull
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
