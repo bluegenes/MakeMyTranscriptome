@@ -59,12 +59,13 @@ def gen_db_supervisor(force=False, sprot=False, uniref90=False, nr=False, busco_
         if(busco_args[busco_db]):
             tasks.append(download_task_wrapper(dbs['busco_'+busco_db], []))
     if(idmapping):
-        tasks.append(download_task_wrapper(dbs['id_mapping'], []))
+        idmap_task = download_task_wrapper(dbs['id_mapping'], [])
+        tasks.append(idmap_task)
         tasks.append(download_task_wrapper(dbs['id_mapping_selected'], []))
         tasks.append(fdb.subset_idmapping_task(
             dbs['id_mapping'].download_location, dbs['id_mapping_biocyc'].call_path,
             dbs['id_mapping_eggnog'].call_path, dbs['id_mapping'].call_path,
-            dbs['id_mapping_orthodb'].call_path))
+            dbs['id_mapping_orthodb'].call_path, [idmap_task]))
     for db_string in dbs:
         if(db_string in ['uniprot_sprot', 'uniref90', 'nr'] or
            db_string.startswith('busco_') or

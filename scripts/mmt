@@ -469,7 +469,7 @@ def run_full(args):
                                args.opc.path_quality_files, transrate_cp=True)
     supers.append(quality_super)
     transrate_task = quality_super.task_map['transrate_' + args.opc.assembly_name]
-    tr_good_name = 'good.' + args.opc.name_assembly
+    tr_good_name = 'good.' + args.opc.assembly_name
     tr_good_cp_task = quality_super.task_map['setting_fasta_' + tr_good_name]
     filtering_tasks = [tr_good_cp_task]
     if args.filter_by_TPM:
@@ -488,7 +488,7 @@ def run_full(args):
         check_csv_input(args)  # since it wasn't required earlier, we need to check that it exists, is proper file.
         gen_sample_info(args)
         expression_super = go_expression(
-            args.path_assembly, args.opc.path_expression_files, args, deps)
+            args.opc.path_assembly, args.opc.path_expression_files, args, deps)
         supers.append(expression_super)
         for task in filtering_tasks:
             supers.append(go_expression(
@@ -649,7 +649,8 @@ def run_supers(args, supers):
     except:
         raise
     finally:
-        build_log(args, total.task_status)
+        # build_log(args, total.task_status)
+        pass
     '''
         build_log(args, total.task_status)
         raise
@@ -682,7 +683,7 @@ def write_assembly_history(args, task_status):
 
 
 def build_log(args, task_status):
-    write_assembly_history(args, task_status)
+    # write_assembly_history(args, task_status)
     create_report(args)
     master_log = os.path.join(args.opc.path_dir, 'master.log')
     f = open(master_log, 'a')
@@ -724,7 +725,8 @@ def build_log(args, task_status):
 
 
 def create_report(args):
-    assembly_report.create_report(args.opc.path_dir)
+    pass
+    # assembly_report.create_report(args.opc.path_dir)
 
 
 if(__name__ == '__main__'):

@@ -166,7 +166,7 @@ def annot_table_task(opc, dbs, path_assembly, out_dir, opts, tasks):
     out_name = os.path.basename(path_assembly).split('.fa')[0]
     suffixes = ['annotation.txt']  # ,'annotation_by_gene.txt']
     base_out_name = '{0!s}/{1!s}'.format(os.path.dirname(path_assembly), out_name)
-    trgs = ['{1!s}_{2!s}'.format(base_out_name, sufx) for sufx in suffixes]
+    trgs = ['{0!s}_{1!s}'.format(base_out_name, sufx) for sufx in suffixes]
     grab_db = lambda s: dbs[s].call_path
     cmd = (
         'python {0!s}/annot_table_pandas.py --fasta {1!s} --outfile {2!s} '

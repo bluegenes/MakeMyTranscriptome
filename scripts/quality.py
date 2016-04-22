@@ -10,13 +10,13 @@ import time
 def gen_quality_supervisor(opc, dbs, transrate_fq1, transrate_fq2, dependency_set, busco_refs, assembly_name, assembly_path, out_dir, transrate_dir, reads_dir, filter_dir, cp_transrate=True, cpu=12, cegma_flag=False, transrate_ref=''):
     tasks = []
     for busco_ref in busco_refs:
-        tasks.append(fq.busco_task(assembly_path, assembly_name, out_dir, busco_ref, int(cpu/2), []))
-    assembly_stats = fq.assembly_stats_task(out_dir,assembly_path, [])
+        tasks.append(fq.busco_task(opc, dbs, assembly_path, assembly_name, out_dir, busco_ref, int(cpu/2), []))
+    assembly_stats = fq.assembly_stats_task(opc, out_dir,assembly_path, [])
     if transrate_fq1 == None:
         transrate_fq1 = []
     if transrate_fq2 == None:
         transrate_fq2 = []
-    transrate = fq.transrate_task(reads_dir,assembly_path,assembly_name,transrate_fq1,transrate_fq2,out_dir,transrate_dir,int(round(float(cpu),4)),[],transrate_ref)
+    transrate = fq.transrate_task(opc,reads_dir,assembly_path,assembly_name,transrate_fq1,transrate_fq2,out_dir,transrate_dir,int(round(float(cpu),4)),[],transrate_ref)
     tasks.append(transrate)
     tasks.append(assembly_stats)
     if cp_transrate:

@@ -27,7 +27,7 @@ def db2stitle_task(db, tasks):
     base_db = os.path.basename(db)
     trgs = ['{0!s}/{1!s}.stitle'.format(statics.PATH_DATABASES, base_db)]
     cmd = 'python {0!s}/fastaID2names.py --fasta {1!s} > {2!s}'.format(
-           statics.PATH_SCRIPTS, db, trgs[0])
+           statics.PATH_UTIL, db, trgs[0])
     name = 'db2stitle_' + base_db
     out, err = gen_db_logs(name)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
@@ -71,7 +71,7 @@ def pfam_build_task(source, out_root_path, tasks):
 def download_task(url, install_location, ftype, tasks):
     trgs = [install_location]
     cmd = 'python {0!s}/url_retrieve.py {1!s} --target {2!s} --type {3!s}'.format(
-           statics.PATH_SCRIPTS, url, install_location, ftype)
+           statics.PATH_UTIL, url, install_location, ftype)
     name = 'download_{0!s}'.format(os.path.basename(install_location))
     out, err = gen_db_logs(name)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
