@@ -33,7 +33,7 @@ def do_args():
     common_parser.add_argument('--email',help='Pipeline will send emails informing you of runstate.')
 
     out_parser = argparse.ArgumentParser(add_help=False)
-    out_parser.add_argument('--out_dir', help='Path to the ouput location. Defaults to assemblies directory inside pipeline',default=fg.PATH_ASSEMBLIES)
+    out_parser.add_argument('--out_dir', help='Path to the ouput location. Defaults to assemblies directory inside pipeline',default=mmt_defaults.PATH_ASSEMBLIES)
     out_parser.add_argument('-o','--out_name', help='The name of the output directory to be made in out_dir. If unused, name will be inherited from input file names')
     out_parser.add_argument('-test',help='Use this flag to test the pipeline.',action='store_true')
 
