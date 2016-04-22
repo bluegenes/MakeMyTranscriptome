@@ -7,7 +7,7 @@ import functions_general as fg
 import time
 
 
-def gen_filter_supervisor(main_path_assembly,main_assembly_name,out_dir, transrate_task, dependency_set, tpm_threshold=1):
+def gen_filter_supervisor(opc, dbs, main_path_assembly,main_assembly_name,out_dir, transrate_task, dependency_set, tpm_threshold=1):
     tasks = [] 
     filter_full = fg.filter_task(main_path_assembly,main_assembly_name,out_dir,[transrate_task.targets[2]],tpm_threshold,2,[transrate_task])
     tasks.append(filter_full)

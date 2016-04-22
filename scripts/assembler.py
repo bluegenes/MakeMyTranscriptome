@@ -53,7 +53,7 @@ def gen_paired_trimmomatic_supervisor(out_dir,fq1, fq2, unpaired, dependency_set
         tasks.append(trim_task)
     return Supervisor(tasks=tasks)
 
-def gen_trimming_supervisor(out_dir,fq1,fq2,unpaired,no_trim,trimmomatic_flag,rmdup,subset_size,subset_seed,truncate_opt,dependency_set,cpu_cap):
+def gen_trimming_supervisor(fq1,fq2,unpaired,no_trim,trimmomatic_flag,rmdup,subset_size,subset_seed,truncate_opt,dependency_set,cpu_cap):
     tasks = []
     deps = []
     if (not no_trim):
@@ -98,7 +98,9 @@ def gen_trimming_supervisor(out_dir,fq1,fq2,unpaired,no_trim,trimmomatic_flag,rm
             tasks.append(late_fastqc)
     return (Supervisor(tasks=tasks, dependencies=dependency_set),fq1,fq2,unpaired)
 
-def gen_assembly_supervisor(out_dir, fastq1, fastq2, unpaired, dependency_set, no_trim=False, rnaSPAdes=False, rmdup=False, subset_size=50000000, cpu=12, subset_seed='I am a seed value', normalize_flag=False, truncate_opt=-1, trimmomatic_flag=True, path_assembly=fg.GEN_PATH_ASSEMBLY()):
+def gen_assembly_supervisor(opc, dbs, fastq1, fastq2, unpaired, dependency_set, no_trim=False, rnaSPAdes=False, rmdup=False, subset_size=50000000, cpu=12, subset_seed='I am a seed value', normalize_flag=False, truncate_opt=-1, trimmomatic_flag=True):
+    out_dir = opc.path_dir
+    path_assembly = opc.path_assembly
     trinity_memory = 160 # make this a user option
     tasks = []
     trim_reads,fastq1,fastq2,unpaired=gen_trimming_supervisor(out_dir,fastq1,fastq2,unpaired,no_trim,trimmomatic_flag,rmdup,subset_size,subset_seed, truncate_opt,[],cpu)

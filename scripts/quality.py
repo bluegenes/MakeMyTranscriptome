@@ -7,7 +7,7 @@ import functions_general as fg
 import functions_quality as fq
 import time
 
-def gen_quality_supervisor(transrate_fq1, transrate_fq2, dependency_set, busco_refs, assembly_name, assembly_path, out_dir, transrate_dir, reads_dir, filter_dir, cp_transrate=True, cpu=12, cegma_flag=False, transrate_ref=''):
+def gen_quality_supervisor(opc, dbs, transrate_fq1, transrate_fq2, dependency_set, busco_refs, assembly_name, assembly_path, out_dir, transrate_dir, reads_dir, filter_dir, cp_transrate=True, cpu=12, cegma_flag=False, transrate_ref=''):
     tasks = []
     for busco_ref in busco_refs:
         tasks.append(fq.busco_task(assembly_path, assembly_name, out_dir, busco_ref, int(cpu/2), []))

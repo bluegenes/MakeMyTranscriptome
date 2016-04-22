@@ -12,7 +12,7 @@ salmon_naming = 'salmon'
 express_naming = 'express'
 intersect_naming = 'intersect'
 
-def gen_salmon_supervisor(fastq1,fastq2,paired_names,unpaired,unpaired_names,assembly_path,assembly_name,gene_trans_map,sample_info,model,out_dir,cpu_cap, deps):
+def gen_salmon_supervisor(opc, dbs, fastq1,fastq2,paired_names,unpaired,unpaired_names,assembly_path,assembly_name,gene_trans_map,sample_info,model,out_dir,cpu_cap, deps):
     salmon_tasks = []
     salmon_dir = fg.make_dir_task(os.path.join(out_dir,'salmon'))
     out_dir = salmon_dir.targets[0]

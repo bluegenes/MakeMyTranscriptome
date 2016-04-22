@@ -1,4 +1,5 @@
 from os.path import join, dirname, abspath
+from os import makedirs
 
 
 ''' dir variables'''
@@ -73,6 +74,7 @@ URL_ORTHOLOGY_PATHWAY = None
 URL_ENZYME_PATHWAY = None
 URL_NOG_CATEGORIES = None
 
+
 class Output_Path_Vars:
 
     def __init__(self, basename, out_dir=PATH_ASSEMBLIES):
@@ -97,6 +99,7 @@ class Output_Path_Vars:
             self.path_transrate_dir     : path to transrate dir
             self.path_pep               : path to transdecoder pep file
             self.path_annot_table       : path to annotation table
+            self.path_history           : path to history.json
         '''
         self.assembly_name = basename
         self.path_dir = join(out_dir, basename)
@@ -106,9 +109,20 @@ class Output_Path_Vars:
         self.path_expression_files = join(self.path_dir, 'expression_files')
         self.path_filter_files = join(self.path_dir, 'filtered_assemblies')
         self.path_logs = join(self.path_dir, 'log_files')
-        self.path_assembly = join(self.path_dir, basename+'.fasta')
-        self.path_gene_trans_map = join(self.path_assembly_files, basename+'.gene_trans_map')
+        self.path_assembly = join(self.path_dir, basename + '.fasta')
+        self.path_gene_trans_map = join(self.path_assembly_files, basename + '.gene_trans_map')
         self.path_transdecoder_dir = join(self.path_annotation_files, 'transdecoder')
         self.path_transrate_dir = join(self.path_quality_files, 'transrate')
-        self.path_pep = join(self.path_transdecoder_dir, basename+'.fasta.transdecoder.pep')
-        self.path_annot_table = join(self.path_dir, basename+'_annotation.txt')
+        self.path_pep = join(self.path_transdecoder_dir, basename + '.fasta.transdecoder.pep')
+        self.path_annot_table = join(self.path_dir, basename + '_annotation.txt')
+        self.path_history = join(self.path_logs, 'history.json')
+
+    def build(self):
+        dirs = [self.path_dir, self.path_assembly_files, self.path_quality_files,
+                self.path_annotation_files, self.path_expression_files, self.path_filter_files,
+                self.path_logs, self.path_transdecoder_dir, self.path_transrate_dir]
+        for d in dirs:
+            try:
+                makedirs(d)
+            except:
+                raise Exception('Unable to build output directory.')
