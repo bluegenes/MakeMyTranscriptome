@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import re
 import argparse
-from functions_databases import PATH_NOG_CATEGORIES
 
 #######################################################################
 """ Read in Data; Set Plotting Style """
@@ -17,7 +16,10 @@ from functions_databases import PATH_NOG_CATEGORIES
 
 parser = argparse.ArgumentParser(description="handles de_output files")
 parser.add_argument('-i','--input',help='the countstable file.')
+parser.add_argument('--nog_categories', help='the path to the nog_categories files')
 args = parser.parse_args()
+
+PATH_NOG_CATEGORIES = args.nog_categories
 
 reportDF=pd.io.parsers.read_table(args.input, header=0, index_col = False,sep='\t')
 descriptions=open(PATH_NOG_CATEGORIES,'r')

@@ -166,7 +166,7 @@ def manage_tools_task(install, fresh, cpu_cap, tool_list, tasks, log_flag=True, 
         cmd += ' --hard'
     cmd += ' --tool ' + ' --tool '.join(tool_list)
     name = 'tools_manage'
-    out, err = os.devnull, os.devnull
+    out, err = os.path.abspath(name+'.out'), os.path.abspath(name+'.err')
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
 
 def filter_task(assembly_path, assembly_name, out_dir, quant_file_list, tpm_threshold, tpm_column_index, tasks, log_flag=True, opc=None):

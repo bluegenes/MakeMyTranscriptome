@@ -16,7 +16,8 @@ outF = open(args.fasta.split('.gz')[0] + '.stitle', 'w')
 
 bp = 0
 name =''
-with gzip.open(args.fasta) as f:
+# with gzip.open(args.fasta) as f:
+with open(args.fasta) as f:
     for line in f:
         if line.startswith(">"):
 	    if len(name) > 0: # need to write *after* get bp len

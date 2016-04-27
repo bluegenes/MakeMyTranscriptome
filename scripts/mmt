@@ -456,7 +456,7 @@ def run_full(args):
                 args.gene_trans_map = args.opc.path_gene_trans_map
             else:
                 gtm = fan.gene_trans_map_task(
-                    args.assembly, args.opc.path_assembly_files, [])
+                    args.opc, args.assembly, args.opc.path_assembly_files, [])
                 supers.append(gtm)
                 deps.append(gtm)
                 args.gene_trans_map = gtm.targets[0]
@@ -553,7 +553,8 @@ def run_annotation(args):
         if os.path.exists(args.opc.path_gene_trans_map):
             args.gene_trans_map = args.opc.path_gene_trans_map
         else:
-            gtm = fan.gene_trans_map_task(args.assembly, args.opc.path_assembly_files, [])
+            gtm = fan.gene_trans_map_task(
+                args.opc, args.assembly, args.opc.path_assembly_files, [])
             supers.append(gtm)
             deps.append(gtm)
             args.gene_trans_map = gtm.targets[0]
@@ -587,7 +588,8 @@ def run_expression(args):
         if os.path.exists(args.opc.path_gene_trans_map):
             args.gene_trans_map = args.opc.path_gene_trans_map
         else:
-            gtm = fan.gene_trans_map_task(args.assembly, args.opc.path_assembly_files, [])
+            gtm = fan.gene_trans_map_task(
+                args.opc, args.assembly, args.opc.path_assembly_files, [])
             supers.append(gtm)
             deps.append(gtm)
             args.gene_trans_map = gtm.targets[0]

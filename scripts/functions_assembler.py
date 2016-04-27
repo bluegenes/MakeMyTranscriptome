@@ -74,8 +74,10 @@ def trimmomatic_unpaired_task(opc, out_dir,input1, cpu_cap, basename, tasks):
 
 def trimmomatic_task(opc, out_dir, left, right, cpu_cap, basename, tasks):
     base_str = '{0!s}/{1!s}'.format(out_dir, basename)
-    trgs = [base_str+'_1_'+left, base_str+'_2_'+right]
-    orphans = [base_str+'_1s_'+left, base_str+'_2s_'+right]
+    trgs = [base_str+'_1_' + os.path.basename(left),
+            base_str+'_2_' + os.path.basename(right)]
+    orphans = [base_str+'_1s_' + os.path.basename(left),
+               base_str+'_2s_' + os.path.basename(right)]
     cmd = ('java -jar {0!s} PE -threads {3!s} {1!s} {2!s} {5!s} {4!s} {7!s} '
            '{6!s} ILLUMINACLIP:{8!s}:2:30:10 LEADING:3 TRAILING:3 '
            'SLIDINGWINDOW:4:15 MINLEN:35').format(

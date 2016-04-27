@@ -8,47 +8,52 @@ import functions_annotater as fan
 import time
 
 
-def gen_unpaired_prinseq_supervisor(opc, out_dir,fastq1, fastq2, unpaired, dependency_set, rmdup):
+def gen_unpaired_prinseq_supervisor(opc, out_dir, fastq1, fastq2, unpaired, dependency_set, rmdup):
     tasks = []
     prinseq_count = len(fastq1)
     prinseq_opts = '--derep 14' if(rmdup) else ''
     for input1 in unpaired:
-        p_task = fa.prinseq_unpaired_task(out_dir,input1,'prinseq_output_'+str(prinseq_count),prinseq_opts,[])
+        p_task = fa.prinseq_unpaired_task(
+            out_dir, input1, 'prinseq_output_' + str(prinseq_count), prinseq_opts, [])
         prinseq_count += 1
         tasks.append(p_task)
     return Supervisor(tasks=tasks)
 
 
-def gen_paired_prinseq_supervisor(opc, out_dir,fastq1,fastq2,unpaired,dependency_set,rmdup):
+def gen_paired_prinseq_supervisor(opc, out_dir, fastq1, fastq2, unpaired, dependency_set, rmdup):
     tasks = []
     prinseq_count = 0
     prinseq_opts = '--derep 14' if(rmdup) else ''
-    for input1,input2 in zip(fastq1,fastq2):
-        p_task = fa.prinseq_task(out_dir,input1, input2, 'prinseq_output_'+str(prinseq_count), prinseq_opts, [])
+    for input1, input2 in zip(fastq1, fastq2):
+        p_task = fa.prinseq_task(
+            out_dir, input1, input2, 'prinseq_output_' + str(prinseq_count), prinseq_opts, [])
         prinseq_count += 1
         tasks.append(p_task)
     return Supervisor(tasks=tasks)
 
 
-def gen_unpaired_trimmomatic_supervisor(opc, out_dir,fq1, fq2, unpaired, dependency_set, cpu_cap):
+def gen_unpaired_trimmomatic_supervisor(opc, out_dir, fq1, fq2, unpaired, dependency_set, cpu_cap):
+    # fq2 needed for unpaired trimmomatic
     tasks = []
     count = len(fq1)
 #    cpu_mod = min(len(fq1),cpu_cap)
-    cpu_mod = int(round(float(cpu_cap)/len(unpaired)))
+    cpu_mod = int(round(float(cpu_cap) / len(unpaired)))
     for i in unpaired:
-        trim_task = fa.trimmomatic_unpaired_task(opc, out_dir,i, cpu_mod, 'trimmomatic_output_'+str(count), dependency_set)
-        count+=1
+        trim_task = fa.trimmomatic_unpaired_task(
+            opc, out_dir, i, cpu_mod, 'trimmomatic_output_' + str(count), dependency_set)
+        count += 1
         tasks.append(trim_task)
-    return Supervisor(tasks=tasks)        
+    return Supervisor(tasks=tasks)
 
 
-def gen_paired_trimmomatic_supervisor(opc, out_dir,fq1, fq2, unpaired, dependency_set, cpu_cap):
+def gen_paired_trimmomatic_supervisor(opc, out_dir, fq1, fq2, unpaired, dependency_set, cpu_cap):
     tasks = []
     count = 0
-#    cpu_mod = min(len(fq1),cpu_cap) 
+    # cpu_mod = min(len(fq1),cpu_cap) 
     cpu_mod = int(round(float(cpu_cap)/len(fq1)))
     for i1, i2 in zip(fq1, fq2):
-        trim_task = fa.trimmomatic_task(opc, out_dir,i1, i2, cpu_mod, 'trimmomatic_output_'+str(count), dependency_set)
+        trim_task = fa.trimmomatic_task(
+            opc, out_dir, i1, i2, cpu_mod, 'trimmomatic_output_' + str(count), dependency_set)
         count += 1
         tasks.append(trim_task)
     return Supervisor(tasks=tasks)
@@ -57,7 +62,7 @@ def gen_trimming_supervisor(opc, out_dir, fq1,fq2,unpaired,no_trim,trimmomatic_f
     tasks = []
     deps = []
     if (not no_trim):
-        tasks.append(fa.fastqc_task(opc, out_dir,fq1+fq2+unpaired,'pre_trimming',min(cpu_cap,len(fq1+fq2+unpaired)), []))
+        tasks.append(fa.fastqc_task(opc, opc.path_assembly_files,fq1+fq2+unpaired,'pre_trimming',min(cpu_cap,len(fq1+fq2+unpaired)), []))
         if(fq1 != []):
             if(trimmomatic_flag):
                 paired_sup = gen_paired_trimmomatic_supervisor(opc, out_dir,fq1, fq2, unpaired, dependency_set, cpu_cap)
@@ -66,8 +71,8 @@ def gen_trimming_supervisor(opc, out_dir, fq1,fq2,unpaired,no_trim,trimmomatic_f
             fq1 = [paired_sup.targets[x] for x in range(0, len(paired_sup.targets), 2)]
             fq2 = [paired_sup.targets[x] for x in range(1, len(paired_sup.targets), 2)]
             tasks.append(paired_sup)
-            tasks.append(fa.fastqc_task(opc, out_dir, fq1+fq2, 'post_trimming_paired',int(round(float(cpu_cap)/2)),[paired_sup]))
-	    deps.append(paired_sup)
+            tasks.append(fa.fastqc_task(opc, opc.path_assembly_files, fq1+fq2, 'post_trimming_paired',int(round(float(cpu_cap)/2)),[paired_sup]))
+            deps.append(paired_sup)
         if(unpaired != []):
             if(trimmomatic_flag):
                 unpaired_sup = gen_unpaired_trimmomatic_supervisor(out_dir,fq1,fq2, unpaired, dependency_set, cpu_cap)
@@ -75,12 +80,12 @@ def gen_trimming_supervisor(opc, out_dir, fq1,fq2,unpaired,no_trim,trimmomatic_f
                 unpaired_sup = gen_unpaired_prinseq_supervisor(opc, out_dir,fq1,fq2,unpaired,dependency_set,rmdup)
             unpaired = unpaired_sup.targets
             tasks.append(unpaired_sup)
-            tasks.append(fa.fastqc_task(opc, out_dir,unpaired, 'post_trimming_unpaired',int(round(float(cpu_cap)/2)),[unpaired_sup]))
+            tasks.append(fa.fastqc_task(opc, opc.path_assembly_files, unpaired, 'post_trimming_unpaired',int(round(float(cpu_cap)/2)),[unpaired_sup]))
             deps.append(unpaired_sup)
     # need to add support for unp here
     #if len(fq2) <1:
         #subset = fa.subset_task(out_dir, fq1,fq2,unpaired, 'final_reads', subset_size, subset_seed, deps)
-	#unpaired = [subset.targets[0]]
+    #unpaired = [subset.targets[0]]
     #else:
     if fq1 != []:
         subset = fa.subset_task(opc, out_dir, fq1, fq2,'final_reads', subset_size, subset_seed, deps)
@@ -99,11 +104,11 @@ def gen_trimming_supervisor(opc, out_dir, fq1,fq2,unpaired,no_trim,trimmomatic_f
     return (Supervisor(tasks=tasks, dependencies=dependency_set),fq1,fq2,unpaired)
 
 def gen_assembly_supervisor(opc, dbs, fastq1, fastq2, unpaired, dependency_set, no_trim=False, rnaSPAdes=False, rmdup=False, subset_size=50000000, cpu=12, subset_seed='I am a seed value', normalize_flag=False, truncate_opt=-1, trimmomatic_flag=True):
-    out_dir = opc.path_dir
+    out_dir = opc.path_assembly_files
     path_assembly = opc.path_assembly
     trinity_memory = 160 # make this a user option
     tasks = []
-    trim_reads,fastq1,fastq2,unpaired=gen_trimming_supervisor(opc, out_dir,fastq1,fastq2,unpaired,no_trim,trimmomatic_flag,rmdup,subset_size,subset_seed, truncate_opt,[],cpu)
+    trim_reads,fastq1,fastq2,unpaired=gen_trimming_supervisor(opc, out_dir, fastq1,fastq2,unpaired,no_trim,trimmomatic_flag,rmdup,subset_size,subset_seed, truncate_opt,[],cpu)
     tasks.append(trim_reads)
     if(rnaSPAdes):
         rnaspades = fa.rnaspades_task(path_assembly, out_dir, fastq1, fastq2, unpaired, cpu, [trim_reads])

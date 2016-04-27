@@ -23,7 +23,7 @@ if(__name__ == '__main__'):
     parser.add_argument('--biocyc',
                         help='the path where biocyc entries should be written to.',
                         default=os.devnull)
-    parser.add_argument('--eggNOG',
+    parser.add_argument('--eggnog',
                         help='the path where eggnog entries should be written to.',
                         default=os.devnull)
     parser.add_argument('--ko',

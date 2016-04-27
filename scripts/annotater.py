@@ -99,7 +99,7 @@ def gen_annotation_supervisor(opc, dbs, cpu, uniref90_flag, nr_flag, blast_flag,
     gff3_output = os.path.join(opc.path_dir, opc.assembly_name+'.gff3')
     gff3 = fan.gff3_task(opc, path_assembly, gff3_output, gff3_opts, gff3_dependencies)
     tasks.append(gff3)
-    pipeplot = fan.pipeplot_task(opc, annot.targets[0],out_dir,[annot])
+    pipeplot = fan.pipeplot_task(opc, dbs, annot.targets[0],out_dir,[annot])
     tasks.append(pipeplot)
     kegg = fan.kegg_task(opc, annot.targets[0],out_dir, [annot])
     tasks.append(kegg)

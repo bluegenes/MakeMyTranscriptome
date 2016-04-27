@@ -197,37 +197,37 @@ def get_dbs(json_config=mmt_defaults.PATH_DB_CONFIG_FILE, defaults=False):
     ret['busco_metazoa'] = database(
         mmt_defaults.URL_BUSCO_METAZOA,
         config['busco_metazoa'],
-        '.tar.gz')
+        ftype='.tar.gz')
 
     ret['busco_anthropoda'] = database(
         mmt_defaults.URL_BUSCO_ANTHROPODA,
         config['busco_anthropoda'],
-        '.tar.gz')
+        ftype='.tar.gz')
 
     ret['busco_vertebrata'] = database(
         mmt_defaults.URL_BUSCO_VERTEBRATA,
         config['busco_vertebrata'],
-        '.tar.gz')
+        ftype='.tar.gz')
 
     ret['busco_eukaryota'] = database(
         mmt_defaults.URL_BUSCO_EUKARYOTA,
         config['busco_eukaryota'],
-        '.tar.gz')
+        ftype='.tar.gz')
 
     ret['busco_fungi'] = database(
         mmt_defaults.URL_BUSCO_FUNGI,
         config['busco_fungi'],
-        '.tar.gz')
+        ftype='.tar.gz')
 
     ret['busco_bacteria'] = database(
         mmt_defaults.URL_BUSCO_BACTERIA,
         config['busco_bacteria'],
-        '.tar.gz')
+        ftype='.tar.gz')
 
     ret['busco_plant'] = database(
         mmt_defaults.URL_BUSCO_PLANT,
         config['busco_plant'],
-        '.tar.gz')
+        ftype='.tar.gz')
 
     ret['go_pathway'] = database(
         mmt_defaults.URL_GO_PATHWAY,
@@ -239,7 +239,8 @@ def get_dbs(json_config=mmt_defaults.PATH_DB_CONFIG_FILE, defaults=False):
 
     ret['id_mapping'] = database(
         mmt_defaults.URL_ID_MAPPING,
-        config['id_mapping'])
+        config['id_mapping'],
+        ftype='.gz')
 
     ret['id_mapping_biocyc'] = database(
         None,
@@ -272,7 +273,8 @@ def get_dbs(json_config=mmt_defaults.PATH_DB_CONFIG_FILE, defaults=False):
     ret['pfam'] = database(
         mmt_defaults.URL_PFAM_DATABASE,
         config['pfam'],
-        os.path.join(mmt_defaults.PATH_PFAM_DIR, os.path.basename(config['pfam'])))
+        os.path.join(mmt_defaults.PATH_PFAM_DIR, os.path.basename(config['pfam'])),
+        ftype='.gz')
 
     ret['id_mapping_selected'] = database(
         mmt_defaults.URL_ID_MAPPING_SELECTED,

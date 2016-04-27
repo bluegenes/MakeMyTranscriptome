@@ -170,15 +170,15 @@ def annot_table_task(opc, dbs, path_assembly, out_dir, opts, tasks):
     grab_db = lambda s: dbs[s].call_path
     cmd = (
         'python {0!s}/annot_table_pandas.py --fasta {1!s} --outfile {2!s} '
-        '--ko2path {4!s}/orthology_pathway.list --sp2enzyme {3!s} '
+        '--ko2path {14!s} --sp2enzyme {3!s} '
         '--enzyme2path {4!s} --pfam2enzyme {5!s} --go2path {6!s} '
         '--nog2function {7!s} --go2slim {8!s} --sp2ko {9!s} --sp2nog {10!s}'
-        ' --sp2ortho {11!s} --sp2bioc {12!s} --sp2goentrez {13!s}').format(
+        ' --sp2ortho {11!s} --sp2bioc {12!s} --sp2goentrez {13!s} ').format(
         statics.PATH_UTIL, path_assembly, base_out_name, grab_db('swiss_enzyme'),
         grab_db('enzyme_pathway'), grab_db('pfam_enzyme'), grab_db('go_pathway'),
-        grab_db('kog_functional'), grab_db('goslim_generic'), grab_db('id_mapping_ko'),
+        grab_db('nog_categories'), grab_db('goslim_generic'), grab_db('id_mapping_ko'),
         grab_db('id_mapping_eggnog'), grab_db('id_mapping_orthodb'),
-        grab_db('id_mapping_biocyc'), grab_db('id_mapping_selected'))
+        grab_db('id_mapping_biocyc'), grab_db('id_mapping_selected'), grab_db('orthology_pathway'))
     cmd += ' '.join(['--'+k+' '+opts[k] for k in opts])
     name = 'build_annotation_table_' + out_name
     out, err = gen_logs(opc.path_logs, name)
@@ -207,11 +207,11 @@ def kegg_task(opc, annotation_table, out_dir, tasks, kegg_map_id='ko01100'):
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
 
 
-def pipeplot_task(opc, annotation_table, out_dir, tasks):
+def pipeplot_task(opc, dbs, annotation_table, out_dir, tasks):
     trgs = ['{0!s}/plots/cogMultiple.png'.format(out_dir)]
     # pipeplot no targets
-    cmd = 'mkdir -p {0!s}/plots ; cd {0!s}/plots ; python {1!s}/pipePlot.py -i {2!s} ;'.format(
-            out_dir, statics.PATH_UTIL, annotation_table)
+    cmd = 'mkdir -p {0!s}/plots ; cd {0!s}/plots ; python {1!s}/pipePlot.py -i {2!s} --nog_categories {3!s};'.format(
+            out_dir, statics.PATH_UTIL, annotation_table, dbs['nog_categories'].call_path)
     name = 'pipeplot'
     out, err = gen_logs(opc.path_logs, name)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
