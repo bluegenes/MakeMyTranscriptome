@@ -25,6 +25,14 @@ from data_classes import get_dbs
 import assembly_report
 
 
+def setup_subsample_size_param(arg):
+    num = float(arg)
+    if(arg <= 0):
+        return 10.0**15
+    else:
+        return num * 10**6
+
+
 def do_args():
     #####################____Argument_Parsers____#####################
     common_parser = argparse.ArgumentParser(add_help=False)
@@ -74,7 +82,7 @@ def do_args():
     assembler_input.add_argument('-no_trim',help='Use this flag to disable all trimming portions of pre-assembly read cleaning. Duplicate and low quality reads will not be removed. Subsampling will still be executed.',action='store_true')
     assembler_input.add_argument('-trimmomatic',help='Use trimmomatic to trim reads', dest='trimmomatic',action='store_true', default=True)
     assembler_input.add_argument('-prinseq',help='Use prinseq instead of trimmomatic instead of prinseq to trim reads', dest='trimmomatic',action='store_false')
-    assembler_input.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The default value is 0.', default=0,type=float)
+    assembler_input.add_argument('--subsample_size',help='If greater than this number of reads (in millions) is provided, sub sample down to this number. Use 0 to signal that no subsampling should be performed. The default value is 0.', default=10**15,type=setup_subsample_size_param)
     assembler_input.add_argument('--subsample_seed',help='A seed used to initialize the random number generator used during random sampling.')
     assembler_input.add_argument('--truncate',help='snip reads down to this size if longer than this size. Default is no truncations.',type=int,default=-1)
     #ANNOTATION ARGS
@@ -180,13 +188,6 @@ def set_test_args(args):
         args.assembly = os.path.join(mmt_defaults.PATH_TEST, 'test.fasta')
 
 
-def set_subsample_size(args):
-    if(args.subsample_size <= 0):
-        args.subsample_size = 10**15
-    else:
-        args.subsample_size *= 10**6
-
-
 # need to modify this to allow excel input for DE
 def gen_sample_info(args):
     args.sample_info = os.path.join(args.opc.path_expression_files, 'sample_info.tsv')
@@ -275,6 +276,7 @@ def check_read_inputs(args, required=True):
     for f1, f2 in zip(args.fastq1, args.fastq2):
         if(not fastq_pair_check(f1, f2)):
             raise Exception('\n\nERROR : ' + f1 + ' cant be paired with ' + f2 + '.')
+
 
 def check_fasta_input(args):
     if(args.assembly is None):
@@ -432,7 +434,6 @@ def run_full(args):
     if(args.assembly is None):  # we run the assembly portion of pipeline
         check_read_inputs(args, True)  # reads are required
         global_setup(args)
-        set_subsample_size(args)
         manage_tools = go_manage_tools(args, [])
         supers.append(manage_tools)
         deps.append(manage_tools)
@@ -501,7 +502,6 @@ def run_assembly(args):
         set_test_args(args)
     check_read_inputs(args, True)
     global_setup(args)
-    set_subsample_size(args)
     supers = []
     deps = []
     manage_tools = go_manage_tools(args, [])
