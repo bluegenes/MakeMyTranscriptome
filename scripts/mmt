@@ -380,23 +380,21 @@ def go_expression(path_assembly, out_dir, args, dep):
 
 
 def go_manage_db(args, dep, log_files=True):
-    return gen_db_supervisor(sprot=True, idmapping=True, dep=dep)
-    '''
-    if(args.which=='annotation'): 
-        args.fresh=False
-        busco_args = {'metazoa':True}
-    else: 
+    if(args.which == 'annotation'):
+        args.fresh = False
+        busco_args = {'metazoa': True}
+    else:
         busco_args = {'arthropoda': args.arthropoda, 'metazoa': args.metazoa,
-                  'vertebrata': args.vertebrata, 'eukaryota': args.eukaryota, 
-                  'fungi': args.fungi, 'bacteria': args.bacteria,
-                  'plantae': args.plantae}
-    busco_args = [k for k in busco_args if(busco_args[k])]
-    if(args.which=='quality'): # need to put these in the namespace
+                      'vertebrata': args.vertebrata, 'eukaryota': args.eukaryota,
+                      'fungi': args.fungi, 'bacteria': args.bacteria,
+                      'plantae': args.plantae}
+    if(args.which == 'quality'):  # need to put these in the namespace
         args.nr = False
         args.uniref90 = False
-        args.blastplus= False
-    return fg.manage_db_task(args.fresh, args.nr, args.uniref90, busco_args, args.blastplus, int(round(args.cpu/4)), dep, log_files)
-    '''
+        args.blastplus = False
+    return gen_db_supervisor(
+        sprot=True, uniref90=args.uniref90, nr=args.nr, busco_args=busco_args,
+        blast_plus=args.blastplus, idmapping=True, dep=dep, pfam=True)
 
 
 def go_manage_tools(args, dep, log_files=True):
@@ -642,6 +640,7 @@ def run_setup(args):
     setup.run()  # logging is taken care of independently. NEED TO PRINT RESULTS TO SCREEN THO...
 
 
+# add log funcitonality
 def run_supers(args, supers):
     run_log = os.path.join(args.opc.path_dir, 'run.log')
     total = Supervisor(
@@ -649,15 +648,9 @@ def run_supers(args, supers):
     try:
         total.run()
     except:
-        raise
-    finally:
-        # build_log(args, total.task_status)
-        pass
-    '''
         build_log(args, total.task_status)
         raise
     build_log(args, total.task_status)
-    '''
 
 
 def get_command():
@@ -670,34 +663,36 @@ def get_command():
 def write_assembly_history(args, task_status):
     json_log = args.opc.path_history
     task_dict = {t.name: task_status[t] for t in task_status}
-    write_dict = {'args_actual': vars(args), 'tasks': task_dict,
+    dict_args = vars(args)
+    dict_args = {d: dict_args[d] for d in dict_args if(d not in ["dbs", "opc"])}
+    write_dict = {'args_actual': dict_args, 'tasks': task_dict,
                   'date': time.asctime(), 'opts': get_command()}
     if(os.path.isfile(json_log)):
-        f = open(json_log, 'rb')
-        temp = json.load(f)
-        temp.append(write_dict)
-        f.close()
+        with open(json_log, 'rb') as f:
+            temp = json.load(f)
+            temp.append(write_dict)
     else:
         temp = [write_dict]
-    f = open(json_log, 'wb')
-    json.dump(temp, f, sort_keys=True, indent=2)
-    f.close()
+    with open(json_log, 'wb') as f:
+        json.dump(temp, f, sort_keys=True, indent=2)
 
 
 def build_log(args, task_status):
-    # write_assembly_history(args, task_status)
+    write_assembly_history(args, task_status)
     create_report(args)
     master_log = os.path.join(args.opc.path_dir, 'master.log')
     f = open(master_log, 'a')
-    f.write('##################__'+args.which+'__'+time.asctime()+'__##################\n')
+    header = '##################__{0!s}__{1!s}__##################\n'.format(
+        args.which, time.asctime())
+    f.write(header)
     f.write('Run command:\n')
-    f.write(get_command()+'\n\n')
-    '''
+    f.write(get_command() + '\n\n')
     f.write('Databases:\n')
-    db_log = read_db_log()
-    for db in db_log:
-        f.write(db+' : '+db_log[db]+'\n')
-    '''
+    for db in args.dbs:
+        if(os.path.exists(args.dbs[db].download_location)):
+                db_date_time = os.path.getmtime(args.dbs[db].download_location)
+                db_date_time = time.ctime(db_date_time)
+                f.write(db + ' : ' + str(db_date_time) + '\n')
     f.write('\nTools Skipped:\n')
     f.write('Tool - Status\n')
     for t in task_status:
@@ -727,8 +722,7 @@ def build_log(args, task_status):
 
 
 def create_report(args):
-    pass
-    # assembly_report.create_report(args.opc.path_dir)
+    assembly_report.create_report(args.opc.path_dir)
 
 
 if(__name__ == '__main__'):

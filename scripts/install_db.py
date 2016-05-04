@@ -44,7 +44,10 @@ def check_db_dir():
         make_dir(d)
 
 
-def gen_db_supervisor(force=False, sprot=False, uniref90=False, nr=False, busco_args=busco_defaults, blast_plus=False, idmapping=False, cpu=float('inf'), pfam=True, dep=[]):
+def gen_db_supervisor(
+  force=False, sprot=False, uniref90=False, nr=False,
+  busco_args=busco_defaults, blast_plus=False,
+  idmapping=False, cpu=float('inf'), pfam=True, dep=[]):
     check_db_dir()
     dbs = get_dbs(defaults=force)
     tasks = []

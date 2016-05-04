@@ -102,7 +102,7 @@ def get_db_config():
     db_config.add_config('busco_metazoa',
                          type=file_exists,
                          default=mmt_defaults.PATH_BUSCO_METAZOA)
-    db_config.add_config('busco_anthropoda',
+    db_config.add_config('busco_arthropoda',
                          type=file_exists,
                          default=mmt_defaults.PATH_BUSCO_ANTHROPODA)
     db_config.add_config('busco_vertebrata',
@@ -199,9 +199,9 @@ def get_dbs(json_config=mmt_defaults.PATH_DB_CONFIG_FILE, defaults=False):
         config['busco_metazoa'],
         ftype='.tar.gz')
 
-    ret['busco_anthropoda'] = database(
+    ret['busco_arthropoda'] = database(
         mmt_defaults.URL_BUSCO_ANTHROPODA,
-        config['busco_anthropoda'],
+        config['busco_arthropoda'],
         ftype='.tar.gz')
 
     ret['busco_vertebrata'] = database(

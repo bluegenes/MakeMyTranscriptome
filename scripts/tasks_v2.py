@@ -3,11 +3,8 @@ import sys
 import time
 import signal
 import subprocess
-import pickle
-from itertools import chain
 import warnings
 import platform
-import re
 
 
 def time_to_hms(delta):
@@ -35,7 +32,9 @@ class Task:
     class TaskException(Exception):
         pass
 
-    def __init__(self, command, dependencies=[], targets=[], cpu=1, name='Anonymous_Task', stderr=None, stdout=None, error_check=None, max_wall_time=float('inf')):
+    def __init__(
+      self, command, dependencies=[], targets=[], cpu=1, name='Anonymous_Task',
+      stderr=None, stdout=None, error_check=None, max_wall_time=float('inf')):
         try:
             if(stderr is not None):
                 f = open(stderr, 'a')
@@ -97,7 +96,7 @@ class Task:
         if(self.soft_finished_status):
             return True
         if(self.start_time is not None):
-            cur_run_time = float(time.time()-self.start_time)/60
+            cur_run_time = float(time.time() - self.start_time) / 60
             if(cur_run_time > self.max_wall_time):
                 err_mess = ('Task {0!s} has been running for greater than its maximum wall time, '
                             '{1!s}m, and has been aborted. This is likely an external error and '
@@ -155,6 +154,8 @@ class Task:
                 os.rename(f, f+'.partial')
 
     def skipable(self):
+    	if(self.exit_code is not None):
+    		return False
         if(self.soft_finished_status):
             return True
         for t in self.dependencies:
@@ -185,8 +186,9 @@ class Supervisor:
     STATE_RUNNING = 'started'
     STATE_REMOVED = 'removed'
 
-
-    def __init__(self, tasks=[], dependencies=[], cpu=float('inf'), name='Supervisor', delay=1, force_run=False, email=None, email_interval=30, log=None):
+    def __init__(
+      self, tasks=[], dependencies=[], cpu=float('inf'), name='Supervisor',
+      delay=1, force_run=False, email=None, email_interval=30, log=None):
         self.cpu = cpu
         self.name = name
         self.delay = delay
@@ -375,24 +377,21 @@ class Supervisor:
         return self.__str__()
 
 
+if(__name__ == '__main__'):
+    t1 = Task('python ..\\..\\test.py 4.4', dependencies=[], name='t1')
+    t2 = Task('python ..\\..\\test.py 6', dependencies=[t1], name='t2')
 
-if(__name__=='__main__'):
-    t1 = Task('python ..\\..\\test.py 4.4',dependencies=[],name='t1')
-    t2 = Task('python ..\\..\\test.py 6',dependencies=[t1],name='t2')
     def t2_dep():
         t2.command = 'python ..\\..\\test.py 8'
         return True
     t2.dependencies.append(t2_dep)
-    t3 = Task('python ..\\..\\test.py 3',dependencies=[],name='t3')
-    t4 = Task('python ..\\..\\test.py 2',dependencies=[t3],name='t4')
-    t5 = Task('python ..\\..\\test.py 1',dependencies=[],name='t5')
-    t6 = Task('python ..\\..\\test.py 7',dependencies=[],name='t6')
-    s1 = Supervisor([t1,t2],name='s1')
-    s2 = Supervisor([t3,t4],name='s2',dependencies=[s1])
-    s3 = Supervisor([s1,s2],name='s3')
-    s4 = Supervisor([t5,t6],name='s4',dependencies=[t1])
-    s = Supervisor([s3,s4],force_run=False)
+    t3 = Task('python ..\\..\\test.py 3', dependencies=[], name='t3')
+    t4 = Task('python ..\\..\\test.py 2', dependencies=[t3], name='t4')
+    t5 = Task('python ..\\..\\test.py 1', dependencies=[], name='t5')
+    t6 = Task('python ..\\..\\test.py 7', dependencies=[], name='t6')
+    s1 = Supervisor([t1, t2], name='s1')
+    s2 = Supervisor([t3, t4], name='s2', dependencies=[s1])
+    s3 = Supervisor([s1, s2], name='s3')
+    s4 = Supervisor([t5, t6], name='s4', dependencies=[t1])
+    s = Supervisor([s3, s4], force_run=False)
     s.run()
-    
-
-
