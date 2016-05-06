@@ -84,9 +84,9 @@ def stufF:
 
 
 def gen_logs(log_dir, name):
-    stderr = os.path.join(log_dir, name+'.err_log')
-    stdout = os.path.join(log_dir, name+'.out_log')
-    return (stderr, stdout)
+    stderr = os.path.join(log_dir, name + '.err_log')
+    stdout = os.path.join(log_dir, name + '.out_log')
+    return (stdout, stderr)
 
 
 def round_div(cpu, k): return int(round(float(cpu)/k))
