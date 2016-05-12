@@ -98,15 +98,14 @@ def gen_trimming_supervisor(opc, out_dir, fq1,fq2,unpaired,no_trim,trimmomatic_f
             fq2 = [truncate.targets[1]]
             deps.append(truncate)
             tasks.append(truncate)
-        if any([truncate_opt>=0, subset_size < 10**15]): # some subsetting may have occurred
-            late_fastqc = fa.fastqc_task(opc, out_dir,fq1+fq2+unpaired, 'final_reads_paired',cpu_cap,deps)
-            tasks.append(late_fastqc)
+    late_fastqc = fa.fastqc_task(opc,out_dir,fq1+fq2+unpaired, 'final_reads_paired',cpu_cap,deps)
+    tasks.append(late_fastqc)
     return (Supervisor(tasks=tasks, dependencies=dependency_set),fq1,fq2,unpaired)
 
 def gen_assembly_supervisor(opc, dbs, fastq1, fastq2, unpaired, dependency_set, no_trim=False, rnaSPAdes=False, rmdup=False, subset_size=50000000, cpu=12, subset_seed='I am a seed value', normalize_flag=False, truncate_opt=-1, trimmomatic_flag=True):
     out_dir = opc.path_assembly_files
     path_assembly = opc.path_assembly
-    trinity_memory = 160 # make this a user option
+    trinity_memory = 200 # make this a user option
     tasks = []
     trim_reads,fastq1,fastq2,unpaired=gen_trimming_supervisor(opc, out_dir, fastq1,fastq2,unpaired,no_trim,trimmomatic_flag,rmdup,subset_size,subset_seed, truncate_opt,[],cpu)
     tasks.append(trim_reads)
