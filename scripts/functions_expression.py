@@ -118,7 +118,7 @@ def deseq2_task(assembly_name,out_dir,counts_to_table_results,sample_info,basena
 
 def build_salmon_task(path_assembly,assembly_name,out_dir,cpu_cap,tasks):
     trgs = ['{0!s}/{1!s}_salmon'.format(out_dir, assembly_name)] 
-    cmd = '{0!s} index --transcripts {1!s} --index {2!s}/{3!s}_salmon --threads {4!s} --type quasi'.format(
+    cmd = '{0!s} index --transcripts {1!s} --index {2!s}/{3!s}_salmon --threads {4!s} --type quasi '.format(
         fg.tool_path_check(TOOLS_DICT['salmon'].full_exe[0]),path_assembly, out_dir, assembly_name, cpu_cap)
     name = 'build_salmon_' + assembly_name
     out,err = fg.GEN_LOGS(name)
@@ -134,7 +134,8 @@ def salmon_gene_map_task(out_dir,assembly_name,gene_trans_map,tasks):
 
 def salmon_task(index,left,right,out_name,gene_map,out_dir,cpu_cap,tasks):
     trgs = ['{0!s}/{1!s}_quant.sf'.format(out_dir,out_name),'{0!s}/{1!s}_quant.genes.sf'.format(out_dir,out_name)]
-    cmd = '{0!s} quant -i {1!s} -l IU -1 {2!s} -2 {3!s} -o {4!s}/{5!s} --geneMap {6!s} -p {7!s} --extraSensitive; cp ' \
+    #cmd = '{0!s} quant -i {1!s} -l IU -1 {2!s} -2 {3!s} -o {4!s}/{5!s} --geneMap {6!s} -p {7!s} --extraSensitive --numBootstraps 30 --biasCorrect ; cp ' \
+    cmd = '{0!s} quant -i {1!s} -l IU -1 {2!s} -2 {3!s} -o {4!s}/{5!s} --geneMap {6!s} -p {7!s} --extraSensitive ; cp ' \
         '{4!s}/{5!s}/quant.sf {4!s}/{5!s}_quant.sf; cp {4!s}/{5!s}/quant.genes.sf {4!s}/{5!s}_quant.genes.sf'.format(
 	fg.tool_path_check(TOOLS_DICT['salmon'].full_exe[0]),index,left,right,out_dir,out_name,gene_map,cpu_cap)
     name = os.path.basename(index) + '_' + os.path.basename(left)
