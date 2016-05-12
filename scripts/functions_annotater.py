@@ -144,7 +144,7 @@ def pfam_task(opc, dbs, path_orfs, out_dir, cpu_cap, tasks):
     out_name = os.path.basename(path_orfs).split('.')[0]
     trgs = ['{0!s}/{1!s}.pfam'.format(out_dir, out_name)]
     cmd = '{0!s} --cpu {1!s} --domtblout {2!s} {3!s} {4!s}'.format(
-          tool_path_check(TOOLS_DICT['hmmer'].full_exe[0]), cpu_cap,
+          tool_path_check(TOOLS_DICT['hmmer'].full_exe[2]), cpu_cap,
           trgs[0], dbs['pfam'].call_path, path_orfs)
     name = 'pfam_' + out_name
     out, err = gen_logs(opc.path_logs, name)

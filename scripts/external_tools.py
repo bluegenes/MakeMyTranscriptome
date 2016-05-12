@@ -11,13 +11,13 @@ TOOL_LIST = []
 ### Trinity ###
 trinity_source_url = 'https://github.com/trinityrnaseq/trinityrnaseq/archive/v2.1.1.tar.gz'
 trinity_source_target = join(PATH_TOOLS, 'trinityrnaseq-2.1.1')
-trinity_exe = ['Trinity', 'util/support_scripts/get_Trinity_gene_to_trans_map.pl']
+trinity_exe = ['Trinity', 'util/support_scripts/get_Trinity_gene_to_trans_map.pl', 'trinity-plugins/fastool']
 trinity_instructions = '\n\t After downloading the binary: \n\n\t\t tar zxf trinityrnaseq-2.1.1.tar.gz \n\t\t ' \
                         'cd trinityrnaseq-1.1.1 \n\t\t make \n ' \
                         '\n\tThen: soft link /path/to/trinityrnaseq-2.1.1 into the MMT "external_tools" folder\n' \
                         '\t  Or: 1. add /path/to/trinityrnaseq-2.1.1 to your $path variable\n' \
                         '\t      2. add /path/to/trinityrnaseq-2.1.1/util/support_scripts/ to your $path variable\n'
-trinity_cmd = 'make'
+trinity_cmd = 'make; make plugins'
 trinity_website = 'https://github.com/trinityrnaseq/trinityrnaseq/wiki'
 #trinity_dependencies= ['bowtie-1'] ### not doing anything with this yet... need to add to tools class?
 
@@ -199,7 +199,7 @@ fastqc_website = 'http://www.bioinformatics.babraham.ac.uk/projects/fastqc'
 
 fastqc_tool = tc('fastqc', fastqc_linux_url, fastqc_linux_target, fastqc_exe, fastqc_instructions, urltype='zip', folder_name=fastqc_folder_name, web=fastqc_website)
 fastqc_tool.change_exe_fullpath(join(PATH_TOOLS,'FastQC')) #unzips into FastQC dir
-fastqc_cmd = 'chmod 755 '+ fastqc_tool.full_exe[0]
+fastqc_cmd = 'chmod +x '+ fastqc_tool.full_exe[0]
 fastqc_tool.set_install(fastqc_cmd)
 TOOL_LIST.append(fastqc_tool)
 
@@ -256,7 +256,7 @@ bowtie2_exe = ['bowtie2-build','bowtie2']
 bowtie2_website = 'http://bowtie-bio.sourceforge.net/bowtie2/index.shtml'
 
 bowtie2_tool = tc('bowtie2', bowtie2_url, bowtie2_target, bowtie2_exe, bowtie2_instructions, urltype=bowtie2_urltype, folder_name=bowtie2_folder_name, web=bowtie2_website)
-bowtie2_tool.set_install(trinity_cmd)
+bowtie2_tool.set_install(bowtie2_cmd)
 TOOL_LIST.append(bowtie2_tool)
 
 express_url = 'http://bio.math.berkeley.edu/eXpress/downloads/express-1.5.1/express-1.5.1-linux_x86_64.tgz'

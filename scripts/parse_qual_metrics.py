@@ -139,7 +139,17 @@ def fastqc_parser(fastqcDir, filename):
     '''
     fastqcD = {}
     fastqcF = sorted(glob.glob(os.path.join(fastqcDir, "*_fastqc", filename)))
+    for f in fastqcF:
+        f_1 = Fadapa(f)
+        basicStats = f_1.clean_data('Basic Statistics')
+        fName = basicStats[1][1].rsplit('.f')[0]
+        numSeqs = basicStats[4][1]
+        longestRead = f_1.clean_data('Basic Statistics')[6][1]#.rsplit('-')[1]
+        fastqcD[fName] = [numSeqs, longestRead] 
+    return fastqcD
 
+
+"""
     #use fnmatch to handle paired vs unpaired:
     fastqc1 = fnmatch.filter(fastqcF, '*_\d_1_*') 
     fastqc2 = fnmatch.filter(fastqcF, '*_\d_2_*')
@@ -170,7 +180,7 @@ def fastqc_parser(fastqcDir, filename):
         for unp in fastqcU: #unpaired files 
             f = Fadapa(unp)
             basicStats = f.clean_data('Basic Statistics')
-            fName = basicStats[1][1].rsplit('.fa')[0] 
+            fName = basicStats[1][1].rsplit('.f')[0] 
             numSeqs= basicStats[4][1]
             #seqLenRange= basicStats[6]#[1]
             #percGC= basicStats[7]#[1]
@@ -179,7 +189,7 @@ def fastqc_parser(fastqcDir, filename):
             #fastqcD[fName] = [numSeqs, seqLenD] 
             fastqcD[fName] = [numSeqs, longestRead] 
     return fastqcD
-
+"""
 
 def get_history(history):
     ''' extracts information from the history.json file in an assembly directory

@@ -130,6 +130,8 @@ def salmon_task(opc, index, left, right, out_name, gene_map, out_dir, cpu_cap, t
            '--geneMap {6!s} -p {7!s} --extraSensitive; cp {4!s}/{5!s}/quant.sf '
            '{4!s}/{5!s}_quant.sf; cp {4!s}/{5!s}/quant.genes.sf '
            '{4!s}/{5!s}_quant.genes.sf').format(
+    #cmd = '{0!s} quant -i {1!s} -l IU -1 {2!s} -2 {3!s} -o {4!s}/{5!s} 
+    #--geneMap {6!s} -p {7!s} --extraSensitive --numBootstraps 30 --biasCorrect ; cp ' \
            tool_path_check(TOOLS_DICT['salmon'].full_exe[0]), index, left,
            right, out_dir, out_name, gene_map, cpu_cap)
     name = os.path.basename(index) + '_' + os.path.basename(left)
