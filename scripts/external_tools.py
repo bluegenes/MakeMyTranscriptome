@@ -11,7 +11,7 @@ TOOL_LIST = []
 ### Trinity ###
 trinity_source_url = 'https://github.com/trinityrnaseq/trinityrnaseq/archive/v2.1.1.tar.gz'
 trinity_source_target = join(PATH_TOOLS, 'trinityrnaseq-2.1.1')
-trinity_exe = ['Trinity', 'util/support_scripts/get_Trinity_gene_to_trans_map.pl']
+trinity_exe = ['Trinity', 'util/support_scripts/get_Trinity_gene_to_trans_map.pl', 'trinity-plugins/fastool']
 trinity_instructions = '\n\t After downloading the binary: \n\n\t\t tar zxf trinityrnaseq-2.1.1.tar.gz \n\t\t ' \
                         'cd trinityrnaseq-1.1.1 \n\t\t make \n ' \
                         '\n\tThen: soft link /path/to/trinityrnaseq-2.1.1 into the MMT "external_tools" folder\n' \
