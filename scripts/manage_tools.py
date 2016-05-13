@@ -138,6 +138,10 @@ def main(install=False, toolList = [], tool_check=True, cpu=4):
                 install_task = tool.install_task
                 if install_task is not None:
                     tasks.append(install_task)
+                for flag, exe in zip(tool.executeable_flags, tool.full_exe):
+                    if(flag):
+                        cmd = 'chmod u+x {0!s}'.format(exe)
+                        subprocess.call(cmd, shell=True)
             else:
                 print(tool.instructions)
     else:

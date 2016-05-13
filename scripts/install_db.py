@@ -44,10 +44,7 @@ def check_db_dir():
         make_dir(d)
 
 
-def gen_db_supervisor(
-  force=False, sprot=False, uniref90=False, nr=False,
-  busco_args=busco_defaults, blast_plus=False,
-  idmapping=False, cpu=float('inf'), pfam=True, dep=[]):
+def gen_db_supervisor(force=False, sprot=False, uniref90=False, nr=False, busco_args=busco_defaults, blast_plus=False, idmapping=False, cpu=float('inf'), pfam=True, dep=[]):
     check_db_dir()
     dbs = get_dbs(defaults=force)
     tasks = []
@@ -73,8 +70,9 @@ def gen_db_supervisor(
             dbs['id_mapping'].download_location, dbs['id_mapping_biocyc'].call_path,
             dbs['id_mapping_eggnog'].call_path, dbs['id_mapping_ko'].call_path,
             dbs['id_mapping_orthodb'].call_path, [idmap_task]))
+    special_dbs = set(['uniprot_sprot', 'uniref90', 'nr', 'swiss_enzyme', 'orthology_pathway', 'nog_categories', 'pfam'])
     for db_string in dbs:
-        if(db_string in ['uniprot_sprot', 'uniref90', 'nr', 'swiss_enzyme', 'orthology_pathway', 'nog_categories'] or
+        if(db_string in special_dbs or
            db_string.startswith('busco_') or
            db_string.startswith('id_mapping')):
             pass
