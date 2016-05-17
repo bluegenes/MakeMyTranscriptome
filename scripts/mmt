@@ -380,7 +380,7 @@ def go_expression(path_assembly, out_dir, args, dep):
         out_dir, args.express, args.intersectbed)
 
 
-def go_manage_db(args, dep, log_files=True):
+def go_manage_db(args, dep):
     if(args.which == 'annotation'):
         args.fresh = False
         busco_args = {'metazoa': True}
@@ -398,7 +398,9 @@ def go_manage_db(args, dep, log_files=True):
         blast_plus=args.blastplus, idmapping=True, dep=dep, pfam=True)
 
 
-def go_manage_tools(args, dep, log_files=True):
+def go_manage_tools(args, dep, log_flag=True):
+    if(not os.path.exists(mmt_defaults.PATH_TOOLS)):
+        os.makedirs(mmt_defaults.PATH_TOOLS)
     toolsD = {'trinity': False, 'trimmomatic': False, 'prinseq': False,
               'transdecoder': False, 'diamond': False, 'hmmer': False,
               'transrate': False, 'busco': False, 'salmon': False,
@@ -421,7 +423,7 @@ def go_manage_tools(args, dep, log_files=True):
     tool_checklist = [tool for tool, value in toolsD.items() if value is True]
     return fg.manage_tools_task(
         args.install, args.reinstall, int(round(args.cpu / 4)),
-        tool_checklist, dep, log_files)
+        tool_checklist, dep, log_flag)
 
 
 # Main_Modules
@@ -622,20 +624,20 @@ def run_filter(args):
 
 
 def run_databases(args):
-    s = go_manage_db(args, [], False)
+    s = go_manage_db(args, [])
     s.run()
 
 
 def run_tools(args):
-    s = go_manage_tools(args, [], False)
+    s = go_manage_tools(args, [], log_flag=False)
     s.run()
 
 
 def run_setup(args):
     supers = []
-    manage_db = go_manage_db(args, [], False)
+    manage_db = go_manage_db(args, [])
     supers.append(manage_db)
-    manage_tools = go_manage_tools(args, [], False)
+    manage_tools = go_manage_tools(args, [])
     supers.append(manage_tools)
     setup = Supervisor(tasks=supers, cpu=args.cpu, force_run=args.force, email=args.email)
     setup.run()  # logging is taken care of independently. NEED TO PRINT RESULTS TO SCREEN THO...
