@@ -91,7 +91,7 @@ PATH_TRANSDECODER = 'TransDecoder' #which exe to use!???
 
 transdecoder_url = 'https://github.com/TransDecoder/TransDecoder/archive/2.0.1.tar.gz'
 transdecoder_target = join(PATH_TOOLS, 'TransDecoder-2.0.1')
-transdecoder_exe = ['TransDecoder.LongOrfs', 'TransDecoder.Predict']
+transdecoder_exe = ['TransDecoder.LongOrfs', 'TransDecoder.Predict', 'util/bin/cd-hit']
 transdecoder_instructions ='\n\t After downloading the binary: \n\n\t\t tar zxf 2.0.1.tar.gz \n\t\t ' \
                         'cd TransDecoder-2.0.1 \n\t\t make \n ' \
                         '\n\tThen: soft link /path/to/TransDecoder-2.0.1 into the MMT "external_tools" folder\n' \
