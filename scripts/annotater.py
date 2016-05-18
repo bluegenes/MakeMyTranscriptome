@@ -88,10 +88,10 @@ def gen_annotation_supervisor(opc, dbs, cpu, uniref90_flag, nr_flag, blast_flag,
             expand = fan.blast_augment_task(opc, dbs['nr'].call_path, dmnd_pnr.targets[0], [dmnd_pnr])
             task_insert(expand, 'nrP', gff3_flag=True)
     if(tmhmm_flag):
-        tmhmm = fan.tmhmm_task(predict_orfs.targets[0], out_dir,[predict_orfs])
+        tmhmm = fan.tmhmm_task(opc,predict_orfs.targets[0], out_dir,[predict_orfs])
         task_insert(tmhmm, 'tmhmm')
     if(signalp_flag):
-        signalp = fan.signalp_task(predict_orfs.targets[0], out_dir, [predict_orfs])
+        signalp = fan.signalp_task(opc,predict_orfs.targets[0], out_dir, [predict_orfs])
         task_insert(signalp, 'signalP')
     # need more intelligent annot table -- if pfam fails, for example, we can still generate an annot table
     annot = fan.annot_table_task(opc, dbs, path_assembly,out_dir,annot_table_opts, tasks[:])

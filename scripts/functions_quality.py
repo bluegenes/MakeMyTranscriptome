@@ -65,6 +65,7 @@ def transrate_dep_generator(reads_dir, transrate_task, lefts, rights, reference,
             new_lefts = '--left ' + new_lefts if(len(new_lefts) > 0) else ''
             new_rights = '--right ' + new_rights if(len(new_rights) > 0) else ''
             cmd = '{0!s} --assembly {1!s} {2!s} {3!s} --threads {4!s} {5!s} --output {6!s}'.format(
+            #cmd = '{0!s} --assembly {1!s} --threads {4!s} {5!s} --output {6!s}'.format( 
                   tool_path_check(TOOLS_DICT['transrate'].full_exe[0]), assembly_path, new_lefts,
                   new_rights, cpu_cap, reference, transrate_dir)
             transrate_task.command = cmd
@@ -85,6 +86,7 @@ def transrate_task(opc, reads_dir, assembly_path, assembly_name,lefts, rights, o
     lefts = '--left ' + lefts if(len(lefts) > 0) else ''
     rights = '--right ' + rights if(len(rights) > 0) else ''
     reference = '--reference ' + reference if(reference != '') else ''
+    #cmd = '{0!s} --assembly {1!s} --threads {4!s} {5!s} --output {6!s}'.format(
     cmd = '{0!s} --assembly {1!s} {2!s} {3!s} --threads {4!s} {5!s} --output {6!s}'.format(
           tool_path_check(TOOLS_DICT['transrate'].full_exe[0]), assembly_path, lefts,
           rights, cpu_cap, reference, transrate_dir)

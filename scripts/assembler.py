@@ -75,9 +75,9 @@ def gen_trimming_supervisor(opc, out_dir, fq1,fq2,unpaired,no_trim,trimmomatic_f
             deps.append(paired_sup)
         if(unpaired != []):
             if(trimmomatic_flag):
-                unpaired_sup = gen_unpaired_trimmomatic_supervisor(out_dir,fq1,fq2, unpaired, dependency_set, cpu_cap)
+                unpaired_sup = gen_unpaired_trimmomatic_supervisor(opc,out_dir,fq1,fq2, unpaired, dependency_set, cpu_cap)
             else:
-                unpaired_sup = gen_unpaired_prinseq_supervisor(opc, out_dir,fq1,fq2,unpaired,dependency_set,rmdup)
+                unpaired_sup = gen_unpaired_prinseq_supervisor(opc,out_dir,fq1,fq2,unpaired,dependency_set,rmdup)
             unpaired = unpaired_sup.targets
             tasks.append(unpaired_sup)
             tasks.append(fa.fastqc_task(opc, opc.path_assembly_files, unpaired, 'post_trimming_unpaired',int(round(float(cpu_cap)/2)),[unpaired_sup]))
