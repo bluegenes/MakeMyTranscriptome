@@ -367,7 +367,7 @@ def go_annotation(args, dep):
     return gen_annotation_supervisor(
         args.opc, args.dbs, args.cpu, args.uniref90, args.nr, args.blastplus, args.signalp,
         args.tmhmm, args.rnammer, dep, args.gene_trans_map, path_assembly=args.opc.path_assembly,
-        assembly_name=args.opc.assembly_name, out_dir=args.opc.path_expression_files,
+        assembly_name=args.opc.assembly_name, out_dir=args.opc.path_annotation_files,
         improve_orfs=args.improve_orf_prediction)
 
 
