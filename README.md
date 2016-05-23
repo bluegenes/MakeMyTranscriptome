@@ -31,12 +31,18 @@ cd into the MakeMyTranscriptome directory.
 cd MakeMyTranscriptome
 ```
 
-To install tools and databases, run:
+
+MMT currently requires some python libraries that you should be able to install with anaconda or pip
+- pandas
+- Fadapa
+
+To install the remaining tools and databases, run:
 
 ``` 
 mmt setup --install --email youremail
 ``` 
 If you just want to check the installed tools, omit the ```--install``` option. In release v0.1, databases will be downloaded in setup, but we'll update in a future release to allow you to specify a database path if you've previously installed these databases. Since downloading databases takes a while, we recommend using our ```--email``` option: MMT will email you with updates and when all databases have been installed.
+
 
 
 We've included test data to check your installation:

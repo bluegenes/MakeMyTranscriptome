@@ -19,7 +19,7 @@ def build_bowtie_task(opc, path_assembly, assembly_name, out_dir, tasks):
 
 
 def bowtie2_unpaired_task(opc, bowtie2_index, out_dir, fastq, out_name, opt, cpu_cap, tasks):
-    opts = ['-a -t --end-to-end', '-t --local']
+    opts = ['-a -t --end-to-end', '-t --local', '-k 200 --end-to-end']
     trgs = ['{0!s}/{1!s}.bam'.format(out_dir, out_name)]
     cmd = ('{0!s} {1!s} -L {2!s} -N 1 --threads {3!s} -x {4!s} -U '
            '{5!s} | samtools view -Sb - > {6!s} ').format(
@@ -31,8 +31,8 @@ def bowtie2_unpaired_task(opc, bowtie2_index, out_dir, fastq, out_name, opt, cpu
 
 
 def bowtie2_task(opc, bowtie2_index, out_dir, fastq1, fastq2, out_name, opt, cpu_cap, tasks):
-    opts = ['-a -t --end-to-end', '-t --local']
-    opts_name = ['express', 'intersectBed']
+    opts = ['-a -t --end-to-end', '-t --local','-k 200 -t --no-discordant --end-to-end' ]
+    opts_name = ['express', 'intersectBed', 'rapclust']
     trgs = ['{0!s}/{1!s}.bam'.format(out_dir, out_name)]
     cmd = ('{0!s} {1!s} -L {2!s} -N 1 --maxins 800 --threads {3!s} -x {4!s} -1 '
            '{5!s} -2 {6!s} | samtools view -Sb - > {7!s} ').format(

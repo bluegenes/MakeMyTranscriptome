@@ -37,9 +37,9 @@ def gen_salmon_supervisor(opc, fastq1,fastq2,paired_names,unpaired,unpaired_name
     salmon_tasks = [salmon_dir,build_salmon,salmon_gene_map,counts_to_table_salmon, deseq2_salmon, deseq2_salmon_gene]+salmon_tasks
     return Supervisor(tasks = salmon_tasks)
 
-def gen_express_supervisor(fastq1,fastq2,paired_names,unpaired,unpaired_names,assembly_path,assembly_name,bowtie2_index,gene_trans_map,sample_info,model,out_dir,cpu_cap,deps):
+def gen_express_supervisor(opc,fastq1,fastq2,paired_names,unpaired,unpaired_names,assembly_path,assembly_name,bowtie2_index,gene_trans_map,sample_info,model,out_dir,cpu_cap,deps):
     express_tasks,bowtie_e_tasks = [],[]
-    express_dir = fg.make_dir_task(opc, os.path.join(out_dir,'express'))
+    express_dir = fg.make_dir_task(os.path.join(out_dir,'express'))
     out_dir = express_dir.targets[0]
     for i in range(len(fastq1)):
         filename = paired_names[i] #'_'.join([paired_names[i],express_naming,assembly_name]) 
@@ -62,7 +62,7 @@ def gen_express_supervisor(fastq1,fastq2,paired_names,unpaired,unpaired_names,as
     e_tasks = [express_dir,counts_to_table_express,deseq2_express,deseq2_express_gene]+bowtie_e_tasks+express_tasks
     return Supervisor(tasks = e_tasks)
 
-def gen_intersect_supervisor(fq1,fq2,paired_names,unpaired,unpaired_names,assembly_path,assembly_name,bowtie2_index,gene_trans_map,sample_info,model,out_dir,cpu_cap, deps):
+def gen_intersect_supervisor(opc,fq1,fq2,paired_names,unpaired,unpaired_names,assembly_path,assembly_name,bowtie2_index,gene_trans_map,sample_info,model,out_dir,cpu_cap, deps):
     intersect_tasks,bowtie_i_tasks,sam_sort_tasks = [],[],[]
     intersect_dir = fg.make_dir_task(os.path.join(out_dir,'intersectBed'))
     out_dir = intersect_dir.targets[0]
@@ -103,7 +103,7 @@ def gen_expression_supervisor(opc, dbs, fastq1,fastq2,paired_names,unpaired,unpa
         trimmomatic_flag = True
 	rmdup = False
 	truncate_opt = False
-	trim_tasks,fastq1,fastq2,unpaired=assemb.gen_trimming_supervisor(out_dir,fastq1,fastq2,unpaired,False,trimmomatic_flag,rmdup,10**15,0,truncate_opt,[],cpu) 
+	trim_tasks,fastq1,fastq2,unpaired=assemb.gen_trimming_supervisor(opc,out_dir,fastq1,fastq2,unpaired,False,trimmomatic_flag,rmdup,10**15,0,truncate_opt,[],cpu) 
 	all_tasks.append(trim_tasks)
 	deps.append(trim_tasks)
     salmon_tasks = gen_salmon_supervisor(opc, fastq1,fastq2,paired_names,unpaired,unpaired_names,assembly_path,assembly_name,gene_trans_map,sample_info,model,out_dir,cpu, deps)
@@ -113,10 +113,10 @@ def gen_expression_supervisor(opc, dbs, fastq1,fastq2,paired_names,unpaired,unpa
         bowtie2_index = join(dirname(build_bowtie.targets[0]),basename(build_bowtie.targets[0]).split('.')[0])
 	all_tasks.append(build_bowtie)
 	if run_express:
-	    express_tasks = gen_express_supervisor(fastq1,fastq2,paired_names,unpaired,unpaired_names,assembly_path,assembly_name,bowtie2_index,gene_trans_map,sample_info,model,out_dir,cpu, [build_bowtie])
+	    express_tasks = gen_express_supervisor(opc,fastq1,fastq2,paired_names,unpaired,unpaired_names,assembly_path,assembly_name,bowtie2_index,gene_trans_map,sample_info,model,out_dir,cpu, [build_bowtie])
             all_tasks.append(express_tasks)
 	if run_intersectbed:
-	    intersect_tasks = gen_intersect_supervisor(fastq1,fastq2,paired_names,unpaired,unpaired_names,assembly_path,assembly_name,bowtie2_index,gene_trans_map,sample_info,model,out_dir,cpu,[build_bowtie])
+	    intersect_tasks = gen_intersect_supervisor(opc,fastq1,fastq2,paired_names,unpaired,unpaired_names,assembly_path,assembly_name,bowtie2_index,gene_trans_map,sample_info,model,out_dir,cpu,[build_bowtie])
 	    all_tasks.append(intersect_tasks)
     return Supervisor(tasks=all_tasks,dependencies=dependency_set)
 

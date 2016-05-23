@@ -59,10 +59,7 @@ def prinseq_task(opc, out_dir, input_1, input_2, basename, opts, tasks):
 
 
 def trimmomatic_unpaired_task(opc, out_dir,input1, cpu_cap, basename, tasks):
-    # form = lambda s, i : s.format(out_dir, basename, os.path.basename(i))
     trgs = ['{0!s}/{1!s}_{2!s}'.format(out_dir, basename, os.path.basename(input1))]
-    # trgs = [form('{0!s}/{1!s}_{2!s}', input1)]
-    # orphans = [form('{0!s}/{1!s}_orphans_{2!s}', input1)]
     cmd = ('java -jar {0!s} SE -threads {3!s} {1!s} {2!s} ILLUMINACLIP:'
            '{4!s}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:35'
            ).format(tool_path_check(TOOLS_DICT['trimmomatic'].full_exe[0]),
