@@ -5,6 +5,7 @@ import signal
 import subprocess
 import warnings
 import platform
+import shlex
 
 
 def time_to_hms(delta):
@@ -56,7 +57,8 @@ class Task:
 
     def __init__(
       self, command, dependencies=[], targets=[], cpu=1, name='Anonymous_Task',
-      stderr=None, stdout=None, error_check=not_zero, max_wall_time=float('inf')):
+      stderr=None, stdout=None, error_check=not_zero, max_wall_time=float('inf'),
+      cwd=None):
         ''' The __init__ for the Task object has nine parameters described below:
             command -
                 a string representation of the cmd line command to be executed.
@@ -90,6 +92,8 @@ class Task:
                 the amount of time, in minutes, that the command should be
                 allowed to run before being stopped by a call to
                 self.finished(). Default = float('inf')
+	    cwd -
+	        the direcory to run the command from within
         '''
         if(stderr is not None):
             f = open(stderr, 'a')
@@ -111,6 +115,7 @@ class Task:
         self.soft_finished_status = False
         self.start_time = time.time()
         self.max_wall_time = max_wall_time
+        self.cwd = cwd
 
     def checkDependencies(self):
         ''' Method will check all dependencies of this object.
@@ -155,7 +160,7 @@ class Task:
         else:
             out = None
         self.start_time = time.time()
-        temp = subprocess.Popen(self.command, shell=True, stdout=out, stderr=err)
+        temp = subprocess.Popen(shlex.split(self.command), stdout=out, stderr=err, cwd=celf.cwd)
         self.process = temp
 
     def finished(self):
@@ -531,6 +536,7 @@ class Supervisor:
         for t in self.tasks_running:
             t.killRun()
         self.running = []
+        sys.exit(0)
 
     def add_task(self, task):
         ''' Allows for a task or supervisor to be added to this supervisor.
