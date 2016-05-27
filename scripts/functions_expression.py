@@ -126,14 +126,17 @@ def salmon_gene_map_task(opc, out_dir, assembly_name, gene_trans_map, tasks):
 def salmon_task(opc, index, left, right, out_name, gene_map, out_dir, cpu_cap, tasks):
     trgs = ['{0!s}/{1!s}_quant.sf'.format(out_dir, out_name),
             '{0!s}/{1!s}_quant.genes.sf'.format(out_dir, out_name)]
+    if len(gene_map) > 0:
+        trans_gene_map = ' --geneMap {0!s}'.format(gene_map)
     cmd = ('{0!s} quant -i {1!s} -l IU -1 {2!s} -2 {3!s} -o {4!s}/{5!s} '
-           '--geneMap {6!s} -p {7!s} --extraSensitive; cp {4!s}/{5!s}/quant.sf '
+           #'--geneMap {6!s} -p {7!s} --extraSensitive; cp {4!s}/{5!s}/quant.sf '
+           '{6!s} -p {7!s} --dumpEq; cp {4!s}/{5!s}/quant.sf '
            '{4!s}/{5!s}_quant.sf; cp {4!s}/{5!s}/quant.genes.sf '
            '{4!s}/{5!s}_quant.genes.sf').format(
     #cmd = '{0!s} quant -i {1!s} -l IU -1 {2!s} -2 {3!s} -o {4!s}/{5!s} 
     #--geneMap {6!s} -p {7!s} --extraSensitive --numBootstraps 30 --biasCorrect ; cp ' \
            tool_path_check(TOOLS_DICT['salmon'].full_exe[0]), index, left,
-           right, out_dir, out_name, gene_map, cpu_cap)
+           right, out_dir, out_name, trans_gene_map, cpu_cap)
     name = os.path.basename(index) + '_' + os.path.basename(left)
     out, err = gen_logs(opc.path_logs, name)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
@@ -142,12 +145,15 @@ def salmon_task(opc, index, left, right, out_name, gene_map, out_dir, cpu_cap, t
 def salmon_unpaired_task(opc, index, unpaired, out_name, gene_map, out_dir, cpu_cap, tasks):
     trgs = ['{0!s}/{1!s}_quant.sf'.format(out_dir, out_name),
             '{0!s}/{1!s}_quant.genes.sf'.format(out_dir, out_name)]
-    cmd = ('{0!s} quant -i {1!s} -l U -r {2!s} -o {3!s}/{4!s} --geneMap {5!s} '
-           '-p {6!s} --extraSensitive; cp {3!s}/{4!s}/quant.sf '
+    if len(gene_map) > 0:
+        trans_gene_map = ' --geneMap {0!s}'.format(gene_map)
+    cmd = ('{0!s} quant -i {1!s} -l U -r {2!s} -o {3!s}/{4!s} {5!s} '
+           #'-p {6!s} --extraSensitive; cp {3!s}/{4!s}/quant.sf '
+           '-p {6!s} --dumpEq --extraSensitive; cp {3!s}/{4!s}/quant.sf '
            '{3!s}/{4!s}_quant.sf; cp {3!s}/{4!s}/quant.genes.sf '
            '{3!s}/{4!s}_quant.genes.sf').format(
            tool_path_check(TOOLS_DICT['salmon'].full_exe[0]), index, unpaired,
-           out_dir, out_name, gene_map, cpu_cap)
+           out_dir, out_name, trans_gene_map, cpu_cap)
     name = 'salmon_unpaired_' + os.path.basename(index) + '_' + os.path.basename(unpaired)
     out, err = gen_logs(opc.path_logs, name)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
