@@ -16,9 +16,10 @@ def fastqc_task(opc, out_dir, fq_files, output_name, cpu_cap, tasks):
             tasks - a list of tasks that this task is dependent on.
     '''
     cpu_param = min(len(fq_files), cpu_cap)
-    trgs = ['{0!s}/fastqc_{1!s}'.format(out_dir, output_name)]
+    outDir = '{0!s}/fastqc_{1!s}'.format(out_dir, output_name)
+    trgs = [os.path.join(outDir, os.path.basename(x).rsplit('.f')[0] + '_fastqc.zip') for x in fq_files]
     cmd = 'mkdir {2!s}; {0!s} --extract --outdir {2!s} --threads {3!s} {1!s}'.format(
-           TOOLS_DICT['fastqc'].full_exe[0],' '.join(fq_files), trgs[0], cpu_param)
+           TOOLS_DICT['fastqc'].full_exe[0],' '.join(fq_files), outDir, cpu_param)
     name = 'fastqc_'+output_name
     out, err = gen_logs(opc.path_logs, name)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
