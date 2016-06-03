@@ -58,7 +58,7 @@ class Task:
     def __init__(
       self, command, dependencies=[], targets=[], cpu=1, name='Anonymous_Task',
       stderr=None, stdout=None, error_check=not_zero, max_wall_time=float('inf'),
-      cwd=None):
+      cwd=None, stdin=None):
         ''' The __init__ for the Task object has nine parameters described below:
             command -
                 a string representation of the cmd line command to be executed.
@@ -116,6 +116,7 @@ class Task:
         self.start_time = time.time()
         self.max_wall_time = max_wall_time
         self.cwd = cwd
+        self.stdin = stdin
 
     def checkDependencies(self):
         ''' Method will check all dependencies of this object.
@@ -159,8 +160,13 @@ class Task:
             self.opened_files.append(out)
         else:
             out = None
+        if(self.stdin is not None):
+            stdin = open(self.stdin)
+            self.opened_files.append(stdin)
+        else:
+            stdin = None
         self.start_time = time.time()
-        temp = subprocess.Popen(shlex.split(self.command), stdout=out, stderr=err, cwd=celf.cwd)
+        temp = subprocess.Popen(shlex.split(self.command), stdout=out, stderr=err, cwd=self.cwd, stdin=stdin)
         self.process = temp
 
     def finished(self):

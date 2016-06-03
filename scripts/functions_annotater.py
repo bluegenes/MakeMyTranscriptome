@@ -1,8 +1,8 @@
 import os
-from tasks_v2 import Task
+from tasks_v2 import Task, Supervisor
 import mmt_defaults as statics
 from external_tools import TOOLS_DICT
-from functions_general import gen_logs, tool_path_check
+from functions_general import gen_logs, tool_path_check, make_dir_task
 
 
 ''' static db variables
@@ -18,11 +18,12 @@ PATH_NOG_CATEGORIES = join(fg.PATH_DATABASES, 'nog_categories')
 def gene_trans_map_task(opc, path_assembly, out_dir, tasks):
     assembly_name = os.path.basename(path_assembly).split('.fa')[0]
     trgs = ['{0!s}/{1!s}.gene_trans_map'.format(out_dir, assembly_name)]
-    cmd = 'perl {0!s} {1!s} > {2!s}'.format(
+    cmd = 'perl {0!s} {1!s}'.format(
           tool_path_check(TOOLS_DICT['trinity'].full_exe[1]),
           path_assembly, trgs[0])
     name = 'gene_trans_map_' + assembly_name
     out, err = gen_logs(opc.path_logs, name)
+    out = trgs[0]
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
 
 
@@ -37,11 +38,12 @@ def blast_task(opc, blast_type, out_dir, path_query, path_db, cpu_cap, tasks):
     trgs = ["{0!s}/{1!s}_{2!s}.{3!s}".format(out_dir, assembly_name, db_name, blast_type)]
     cmd = ('{0!s} -query {1!s} -db {2!s} -num_threads {3!s} -max_target_seqs 1 '
            '-outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart '
-           'send evalue bitscore stitle slen" -evalue 0.0001 > {4!s}'
+           'send evalue bitscore stitle slen" -evalue 0.0001'
            ).format(tool_path_check(TOOLS_DICT['blast'].full_exe[exe_index]),
                     path_query, path_db, cpu_cap, trgs[0])
     name = '{0!s}_{1!s}_{2!s}'.format(assembly_name, blast_type, db_name)
     out, err = gen_logs(opc.path_logs, name)
+    out = trgs[0]
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
 
 
@@ -53,7 +55,7 @@ def diamond_task(opc, blast_type, out_dir, path_query, ref, cpu_cap, tasks):
     pseudo_trgs = ['{0!s}/diamond_{1!s}_{2!s}'.format(out_dir, base_ref, blast_type)]
     cmd = ('{0!s} {1!s} --db {2!s} --query {3!s} --daa {4!s} --tmpdir {5!s} '
            '--max-target-seqs 20 --sensitive --threads {6!s} --evalue 0.001; {0!s} view '
-           '--daa {4!s}.daa --out {7!s};').format(
+           '--daa {4!s}.daa --out {7!s}').format(
            tool_path_check(TOOLS_DICT['diamond'].full_exe[0]), blast_type, ref, path_query,
            pseudo_trgs[0], out_dir, cpu_cap, trgs[0])
     name = 'diamond_{0!s}_{1!s}_{2!s}'.format(blast_type, base_ref, query_name)
@@ -64,10 +66,11 @@ def diamond_task(opc, blast_type, out_dir, path_query, ref, cpu_cap, tasks):
 def blast_augment_task(opc, db, blast, tasks):
     id2name = db+'.stitle'
     trgs = ['{0!s}_ex'.format(blast)]
-    cmd = 'python {0!s}/addStitleToBlastTab.py --db2Name {1!s} --blast {2!s} > {3!s}'.format(
+    cmd = 'python {0!s}/addStitleToBlastTab.py --db2Name {1!s} --blast {2!s}'.format(
            statics.PATH_UTIL, id2name, blast, trgs[0])
     name = 'Blast_Augmentation_'+os.path.basename(blast)
     out, err = gen_logs(opc.path_logs, name)
+    out = trgs[0]
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
 
 
@@ -75,13 +78,13 @@ def rnammer_task(opc, path_assembly, out_dir, tasks):
     assembly_name = os.path.basename(path_assembly).split('.fa')[0]
     path_to_rnammer = os.path.dirname(TOOLS_DICT['rnammer'].folder_name)
     trgs = ['{0!s}/{1!s}.fasta.rnammer.gff'.format(out_dir, assembly_name)]
-    cmd = ("cd {0!s}; {1!s} --transcriptome {2!s}  --path_to_rnammer {4!s} "
-           "--org_type euk; cd -").format(
+    cmd = ("{1!s} --transcriptome {2!s}  --path_to_rnammer {4!s} "
+           "--org_type euk").format(
            out_dir, tool_path_check(TOOLS_DICT['rnammer'].full_exe[0]),
            path_assembly, path_to_rnammer)
     name = 'rnammer_' + assembly_name
     out, err = gen_logs(opc.path_logs, name)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cwd=out_dir)
 
 
 def transdecoder_longorfs_task(opc, path_assembly, path_transdecoder_output, cpu_cap, tasks):
@@ -90,11 +93,17 @@ def transdecoder_longorfs_task(opc, path_assembly, path_transdecoder_output, cpu
     trgs = ['{0!s}/longest_orfs.pep'.format(longorf_outbase),
             '{0!s}/longest_orfs.gff3'.format(longorf_outbase),
             '{0!s}/longest_orfs.cds'.format(longorf_outbase)]
-    cmd = ("mkdir -p {0!s}; cd {0!s}; {1!s} -t {2!s}").format(path_transdecoder_output,
+    super_tasks = []
+    mkdir_task = make_dir_task(path_transdecoder_output)
+    super_tasks.append(mkdir_task)
+    cmd = ("{1!s} -t {2!s}").format(path_transdecoder_output,
             tool_path_check(TOOLS_DICT['transdecoder'].full_exe[0]), path_assembly, cpu_cap)
     name = 'TransDecoder_LongORFs_' + assembly_name
     out, err = gen_logs(opc.path_logs, name)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap) 
+    trans_task = Task(command=cmd, dependencies=[mkdir_task], targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap, cwd=path_transdecoder_output) 
+    super_tasks.append(trans_task)
+    super_name = 'Super_' + name
+    return Supervisor(tasks=super_tasks, dependencies=tasks, name=super_name)
 
 
 def transdecoder_predict_orfs_task(opc, path_assembly, path_transdecoder_output, tasks, pfam_input='', blastp_input=''):
@@ -112,12 +121,18 @@ def transdecoder_predict_orfs_task(opc, path_assembly, path_transdecoder_output,
     assembly_name = os.path.basename(path_assembly).split('.fa')[0]
     base_targ = '{0!s}/{1!s}.fasta.transdecoder'.format(path_transdecoder_output, opc.assembly_name)
     trgs = [base_targ+'.pep', base_targ+'.bed', base_targ+'.gff3']
-    cmd = "mkdir -p {0!s}; cd {0!s}; {1!s} -t {2!s} {3!s} {4!s}".format(
+    super_tasks = []
+    mkdir_task = make_dir_task(path_transdecoder_output)
+    super_tasks.append(mkdir_task)
+    cmd = "{1!s} -t {2!s} {3!s} {4!s}".format(
           path_transdecoder_output, tool_path_check(TOOLS_DICT['transdecoder'].full_exe[1]),
           path_assembly, pfam, blastp)
     name = 'TransDecoder_Predict_' + assembly_name + retain_pfam + retain_blastp
     out, err = gen_logs(opc.path_logs, name)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+    trans_task = Task(command=cmd, dependencies=[mkdir_task], targets=trgs, name=name, stdout=out, stderr=err, cwd=path_transdecoder_output)
+    super_tasks.append(trans_task)
+    super_name = 'Super_' + name
+    return Supervisor(tasks=super_tasks, dependencies=tasks, name=super_name)
 
 
 def signalp_task(opc, path_orfs, out_dir, tasks):
@@ -132,12 +147,13 @@ def signalp_task(opc, path_orfs, out_dir, tasks):
 def tmhmm_task(opc, path_orfs, out_dir, tasks):
     out_name = os.path.basename(path_orfs).split('.')[0]
     trgs = ['{0!s}/{1!s}.tmhmm'.format(out_dir, out_name)]
-    cmd = 'cd {0!s}; {1!s} --short < {2!s} > {3!s}'.format(
+    cmd = '{1!s} --short'.format(
           out_dir, tool_path_check(TOOLS_DICT['tmhmm'].full_exe[0]),
           path_orfs, trgs[0])
     name = 'tmhmm_' + out_name
     out, err = gen_logs(opc.path_logs, name)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+    out = trgs[0]
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cwd=out_dir, stdin=path_orfs)
 
 
 def pfam_task(opc, dbs, path_orfs, out_dir, cpu_cap, tasks):
@@ -199,22 +215,33 @@ def kegg_task(opc, annotation_table, out_dir, tasks, kegg_map_id='ko01100'):
     kegg_dir = '{0!s}/kegg_maps'.format(out_dir)
     trgs = ['{0!s}/{1!s}.pdf'.format(kegg_dir, kegg_map_id),
             '{0!s}/{1!s}_KO.txt'.format(kegg_dir, kegg_map_id)]
-    cmd = ('mkdir -p {3!s} ; cd {3!s} ; python {0!s}/color_pathways2.py --path {1!s} '
+    super_tasks = []
+    mkdir_task = make_dir_task(kegg_dir)
+    super_tasks.append(mkdir_task)
+    cmd = ('python {0!s}/color_pathways2.py --path {1!s} '
            ' --transcriptomeKO {2!s} --output {3!s}').format(
            statics.PATH_UTIL, kegg_map_id, annotation_table, kegg_dir)
     name = 'draw_kegg_map_{0!s}_{1!s}'.format(os.path.basename(annotation_table), kegg_map_id)
     out, err = gen_logs(opc.path_logs, name)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+    kegg_task = Task(command=cmd, dependencies=[mkdir_task], targets=trgs, name=name, stdout=out, stderr=err, cwd=kegg_dir)
+    super_tasks.append(kegg_task)
+    super_name = "Super_" + name
+    return Supervisor(tasks=super_tasks, dependencies=tasks, name=super_name)
 
 
 def pipeplot_task(opc, dbs, annotation_table, out_dir, tasks):
     trgs = ['{0!s}/plots/cogMultiple.png'.format(out_dir)]
-    # pipeplot no targets
+    super_tasks = []
+    mkdir_task = make_dir_task(out_dir + '/plots')
+    super_tasks.append(mkdir_task)
     cmd = 'mkdir -p {0!s}/plots ; cd {0!s}/plots ; python {1!s}/pipePlot.py -i {2!s} --nog_categories {3!s};'.format(
             out_dir, statics.PATH_UTIL, annotation_table, dbs['nog_categories'].call_path)
     name = 'pipeplot'
     out, err = gen_logs(opc.path_logs, name)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+    pipe_task = Task(command=cmd, dependencies=[mkdir_task], targets=trgs, name=name, stdout=out, stderr=err, cwd=out_dir+'/plots')
+    super_tasks.append(pipe_task)
+    super_name = "Super_" + name
+    return Supervisor(tasks=super_tasks, dependencies=tasks, name=super_name)
 
 
 def assembly_to_bed_task(opc, path_assembly, out_dir, tasks):
