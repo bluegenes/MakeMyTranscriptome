@@ -234,7 +234,7 @@ def pipeplot_task(opc, dbs, annotation_table, out_dir, tasks):
     super_tasks = []
     mkdir_task = make_dir_task(out_dir + '/plots')
     super_tasks.append(mkdir_task)
-    cmd = 'mkdir -p {0!s}/plots ; cd {0!s}/plots ; python {1!s}/pipePlot.py -i {2!s} --nog_categories {3!s};'.format(
+    cmd = 'python {1!s}/pipePlot.py -i {2!s} --nog_categories {3!s}'.format(
             out_dir, statics.PATH_UTIL, annotation_table, dbs['nog_categories'].call_path)
     name = 'pipeplot'
     out, err = gen_logs(opc.path_logs, name)
