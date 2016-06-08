@@ -89,7 +89,9 @@ def gen_logs(log_dir, name):
     return (stdout, stderr)
 
 
-def round_div(cpu, k): return int(round(float(cpu)/k))
+def round_div(cpu, k):
+    ret = int(round(float(cpu) / k))
+    return ret
 
 
 def tool_path_check(full_exe):
@@ -114,6 +116,13 @@ def make_dir_task(path):
     cmd = 'mkdir -p {0!s}'.format(path)
     name = 'mdkir_' + path
     return Task(command=cmd, targets=trgs, stdout=os.devnull, stderr=os.devnull, name=name)
+
+
+def cp_task(source, target, tasks):
+    trgs = [target]
+    cmd = "cp {0!s} {1!s}".format(source, target)
+    name = 'cp_{0!s}_{1!s}'.format(os.path.basename(source), os.path.basename(target))
+    return Task(command=cmd, dependencies=tasks, targets=trgs, stdout=os.devnull, stderr=os.devnull, name=name)
 
 
 def build_dir_task(opc, tasks):
