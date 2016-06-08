@@ -129,7 +129,7 @@ def build_dir_task(opc, tasks):
     trgs = [opc.path_dir, opc.path_assembly_files, opc.path_quality_files,
             opc.path_annotation_files, opc.path_filter_files,
             opc.path_expression_files, opc.path_logs]
-    cmd = ' '.join(['mkdir -p {0!s};'.format(d) for d in trgs])
+    cmd = 'mkdir -p {0!s}'.format(' '.join(trgs))
     return Task(command=cmd, dependencies=tasks, targets=trgs, stdout=os.devnull, stderr=os.devnull)
 
 
