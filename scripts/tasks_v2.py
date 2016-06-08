@@ -5,6 +5,7 @@ import signal
 import subprocess
 import warnings
 import platform
+import shlex
 
 
 def time_to_hms(delta):
@@ -61,7 +62,9 @@ class Task:
             below. It also supports all keyword arguments of the
             subprocess.Popen object:
             args -
-                equivalent to the subprocess.Popen argument args.
+                almost equivalent to the subprocess.Popen argument args. If
+                a string is given, it will be split using shlex.split before
+                being passed to Popen
             dependencies -
                 a list containing Task objects, Supervisor objects, or unit
                 functions. A call to self.checkDependencies will return True
@@ -118,13 +121,15 @@ class Task:
         ''' Method used to start the execution of this Task. self.command will
             be executed using the subprocess.Popen constructor with shell=True.
         '''
+        print(self.name)
         stdin = self._handleFilePopenArgs("stdin")
         stdout = self._handleFilePopenArgs("stdout", "w")
         stderr = self._handleFilePopenArgs("stderr", "w")
         file_args = ["stdin", "stdout", "stderr"]
         args = {k: self.popen_args[k] for k in self.popen_args if(k not in file_args)}
         self.start_time = time.time()
-        self.process = subprocess.Popen(self.command, stdin=stdin, stdout=stdout, stderr=stderr, **args)
+        cmd = shlex.split(self.command) if(isinstance(self.command, str)) else self.command
+        self.process = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, **args)
 
     def checkDependencies(self):
         ''' Method will check all dependencies of this object.
