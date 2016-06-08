@@ -121,7 +121,6 @@ class Task:
         ''' Method used to start the execution of this Task. self.command will
             be executed using the subprocess.Popen constructor with shell=True.
         '''
-        print(self.name)
         stdin = self._handleFilePopenArgs("stdin")
         stdout = self._handleFilePopenArgs("stdout", "w")
         stderr = self._handleFilePopenArgs("stderr", "w")
