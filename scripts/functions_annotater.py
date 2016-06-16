@@ -133,18 +133,18 @@ def transdecoder_predict_orfs_task(opc, path_assembly, path_transdecoder_output,
     assembly_name = os.path.basename(path_assembly).split('.fa')[0]
     base_targ = '{0!s}/{1!s}.fasta.transdecoder'.format(path_transdecoder_output, opc.assembly_name)
     trgs = [base_targ+'.pep', base_targ+'.bed', base_targ+'.gff3']
-    super_tasks = []
-    mkdir_task = make_dir_task(path_transdecoder_output)
-    super_tasks.append(mkdir_task)
+    # super_tasks = []
+    # mkdir_task = make_dir_task(path_transdecoder_output)
+    # super_tasks.append(mkdir_task)
     cmd = "{1!s} -t {2!s} {3!s} {4!s}".format(
           path_transdecoder_output, tool_path_check(TOOLS_DICT['transdecoder'].full_exe[1]),
           path_assembly, pfam, blastp)
     name = 'TransDecoder_Predict_' + assembly_name + retain_pfam + retain_blastp
     out, err = gen_logs(opc.path_logs, name)
-    trans_task = Task(command=cmd, dependencies=[mkdir_task], targets=trgs, name=name, stdout=out, stderr=err, cwd=path_transdecoder_output)
-    super_tasks.append(trans_task)
-    super_name = 'Super_' + name
-    return Supervisor(tasks=super_tasks, dependencies=tasks, name=super_name)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cwd=path_transdecoder_output)
+    # super_tasks.append(trans_task)
+    # super_name = 'Super_' + name
+    # return Supervisor(tasks=super_tasks, dependencies=tasks, name=super_name)
 
 
 def signalp_task(opc, path_orfs, out_dir, tasks):
