@@ -57,14 +57,15 @@ class Task:
 
     def __init__(
       self, command, dependencies=[], targets=[], cpu=1, name='unnamed_task',
-      error_check=not_zero, max_wall_time=float("inf"), **popen_args):
+      error_check=not_zero, max_wall_time=float("inf"), shlex_split=True,
+      **popen_args):
         ''' The __init__ for the Task object has nine parameters described
             below. It also supports all keyword arguments of the
             subprocess.Popen object:
-            args -
+            command -
                 almost equivalent to the subprocess.Popen argument args. If
                 a string is given, it will be split using shlex.split before
-                being passed to Popen
+                being passed to Popen. Otherewise, it will be passed directly.
             dependencies -
                 a list containing Task objects, Supervisor objects, or unit
                 functions. A call to self.checkDependencies will return True
@@ -89,6 +90,10 @@ class Task:
                 the amount of time, in minutes, that the command should be
                 allowed to run before being stopped by a call to
                 self.finished(). Default = float('inf')
+            shlex_split -
+                a boolean that, if True and command is a string, will cause
+                the task to parse command using shlex.split prior to passing
+                the command to the Popen constructor. Default = True
         '''
         self.command = command
         self.targets = targets
@@ -103,6 +108,7 @@ class Task:
         self.exit_code = None
         self.soft_finished_status = False
         self.start_time = -1
+        self.split = shlex_split
 
     def _handleFilePopenArgs(self, arg, type_flag='r'):
         ''' Allows for strings to be passed in popen args where files would
@@ -127,7 +133,10 @@ class Task:
         file_args = ["stdin", "stdout", "stderr"]
         args = {k: self.popen_args[k] for k in self.popen_args if(k not in file_args)}
         self.start_time = time.time()
-        cmd = shlex.split(self.command) if(isinstance(self.command, str)) else self.command
+        if(self.split and isinstance(self.command, str)):
+            cmd = shlex.split(self.command)
+        else:
+            cmd = self.command
         self.process = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, **args)
 
     def checkDependencies(self):
