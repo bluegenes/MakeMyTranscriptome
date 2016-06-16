@@ -47,6 +47,15 @@ def blast_task(opc, blast_type, out_dir, path_query, path_db, cpu_cap, tasks):
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
 
 
+def diamond_view_task(opc, daa, out, tasks):
+    trgs = [out]
+    cmd = '{0!s} view --daa {1!s} --out {2!s}'.format(
+          tool_path_check(TOOLS_DICT['diamond'].full_exe[0]), daa, out)
+    name = 'diamond_view_' + os.path.basename(out)
+    out, err = gen_logs(opc.path_logs, name)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
+
 def diamond_task(opc, blast_type, out_dir, path_query, ref, cpu_cap, tasks):
     ''' valid blast_types: "blastx", "blastp" '''
     base_ref = os.path.basename(ref)
@@ -54,13 +63,16 @@ def diamond_task(opc, blast_type, out_dir, path_query, ref, cpu_cap, tasks):
     trgs = ['{0!s}/{1!s}_{2!s}.diamond_{3!s}'.format(out_dir, query_name, base_ref, blast_type)]
     pseudo_trgs = ['{0!s}/diamond_{1!s}_{2!s}'.format(out_dir, base_ref, blast_type)]
     cmd = ('{0!s} {1!s} --db {2!s} --query {3!s} --daa {4!s} --tmpdir {5!s} '
-           '--max-target-seqs 20 --sensitive --threads {6!s} --evalue 0.001; {0!s} view '
-           '--daa {4!s}.daa --out {7!s}').format(
+           '--max-target-seqs 20 --sensitive --threads {6!s} --evalue 0.001').format(
            tool_path_check(TOOLS_DICT['diamond'].full_exe[0]), blast_type, ref, path_query,
-           pseudo_trgs[0], out_dir, cpu_cap, trgs[0])
+           pseudo_trgs[0], out_dir, cpu_cap)
+    pseudo_trgs[0] = pseudo_trgs[0] + '.daa'
     name = 'diamond_{0!s}_{1!s}_{2!s}'.format(blast_type, base_ref, query_name)
     out, err = gen_logs(opc.path_logs, name)
-    return Task(command=cmd, dependencies=tasks, cpu=cpu_cap, targets=trgs, name=name, stdout=out, stderr=err)
+    partial = Task(command=cmd, dependencies=[], cpu=cpu_cap, targets=pseudo_trgs, name=name, stdout=out, stderr=err)
+    view = diamond_view_task(opc, pseudo_trgs[0], trgs[0], [partial])
+    super_name = 'super_' + name
+    return Supervisor(tasks=[partial, view], dependencies=tasks, name=super_name)
 
 
 def blast_augment_task(opc, db, blast, tasks):
