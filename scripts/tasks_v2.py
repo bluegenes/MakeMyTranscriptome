@@ -200,8 +200,8 @@ class Task:
             if(self.error_check(exit_code)):
                 error_message = ('The task {0!s} seems to have failed with exit_code {1!s}.'
                                  ).format(self.name, exit_code)
-                if(self.stderr is not None):
-                    error_message += ' Consult {0!s} for more info.'.format(self.stderr)
+                # if(self.stderr is not None):
+                #     error_message += ' Consult {0!s} for more info.'.format(self.stderr)
                 inst = self.ExitCodeException(error_message)
                 inst.exit_code = exit_code
                 self.rename_targets()
@@ -210,8 +210,8 @@ class Task:
                 if(not os.path.exists(t)):
                     error_message = ('Task {0!s} encountered an unexpected error resulting in it'
                                      ' failing to produce its target files.').format(self.name)
-                    if(self.stderr is not None):
-                        error_message += ' Consult {0!s} for more info.'.format(self.stderr)
+                    # if(self.stderr is not None):
+                    #     error_message += ' Consult {0!s} for more info.'.format(self.stderr)
                     raise self.TaskException(error_message)
             return True
 
@@ -537,7 +537,6 @@ class Supervisor:
         for t in self.tasks_running:
             t.killRun()
         self.running = []
-        sys.exit(0)
 
     def add_task(self, task):
         ''' Allows for a task or supervisor to be added to this supervisor.
