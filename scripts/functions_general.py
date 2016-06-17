@@ -114,8 +114,8 @@ def tool_path_check(full_exe):
 def make_dir_task(path, tasks=[]):
     trgs = [path]
     cmd = 'mkdir -p {0!s}'.format(path)
-    name = 'mdkir_' + path
-    return Task(command=cmd, dependencies=tasks, targets=trgs, stdout=os.devnull, stderr=os.devnull, name=name)
+    name = 'mdkir_' + os.path.basename(path)
+    return Task(command=cmd, dependencies=[t for t in tasks], targets=trgs, stdout=os.devnull, stderr=os.devnull, name=name)
 
 
 def cp_task(source, target, tasks):

@@ -227,18 +227,15 @@ def kegg_task(opc, annotation_table, out_dir, tasks, kegg_map_id='ko01100'):
     kegg_dir = '{0!s}/kegg_maps'.format(out_dir)
     trgs = ['{0!s}/{1!s}.pdf'.format(kegg_dir, kegg_map_id),
             '{0!s}/{1!s}_KO.txt'.format(kegg_dir, kegg_map_id)]
-    super_tasks = []
     mkdir_task = make_dir_task(kegg_dir)
-    super_tasks.append(mkdir_task)
     cmd = ('python {0!s}/color_pathways2.py --path {1!s} '
            ' --transcriptomeKO {2!s} --output {3!s}').format(
            statics.PATH_UTIL, kegg_map_id, annotation_table, kegg_dir)
     name = 'draw_kegg_map_{0!s}_{1!s}'.format(os.path.basename(annotation_table), kegg_map_id)
     out, err = gen_logs(opc.path_logs, name)
     kegg_task = Task(command=cmd, dependencies=[mkdir_task], targets=trgs, name=name, stdout=out, stderr=err, cwd=kegg_dir)
-    super_tasks.append(kegg_task)
     super_name = "Super_" + name
-    return Supervisor(tasks=super_tasks, dependencies=tasks, name=super_name)
+    return Supervisor(tasks=[mkdir_task, kegg_task], dependencies=tasks, name=super_name)
 
 
 def pipeplot_task(opc, dbs, annotation_table, out_dir, tasks):

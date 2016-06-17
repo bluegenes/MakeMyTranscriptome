@@ -547,7 +547,7 @@ class Supervisor:
             for t in task.tasks:
                 t.dependencies.extend(task.dependencies)
                 self.add_task(t)
-        if(isinstance(task, Task)):
+        elif(isinstance(task, Task)):
             if(task.cpu > self.cpu):
                 err_mess = ('Task {0!s} has a higher cpu than this supervisor, {1!s}.\nYou '
                             'must increase this supervisor\'s cpu or decrease {0!s}\'s cpu.')
