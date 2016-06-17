@@ -56,7 +56,7 @@ class Task:
         pass
 
     def __init__(
-      self, command, dependencies=[], targets=[], cpu=1, name='unnamed_task',
+      self, command, dependencies=None, targets=None, cpu=1, name='unnamed_task',
       error_check=not_zero, max_wall_time=float("inf"), shlex_split=True,
       **popen_args):
         ''' The __init__ for the Task object has nine parameters described
@@ -96,8 +96,8 @@ class Task:
                 the command to the Popen constructor. Default = True
         '''
         self.command = command
-        self.targets = targets
-        self.dependencies = dependencies
+        self.targets = targets if(targets is not None) else []
+        self.dependencies = dependencies if(dependencies is not None) else []
         self.cpu = cpu
         self.name = name
         self.error_check = error_check
@@ -295,7 +295,7 @@ class Supervisor:
     STATE_REMOVED = 'removed'
 
     def __init__(
-      self, tasks=[], dependencies=[], cpu=float('inf'), name='Supervisor',
+      self, tasks=None, dependencies=None, cpu=float('inf'), name='Supervisor',
       delay=1, force_run=False, email=None, email_interval=30, log=None):
         ''' the __init__ for the Superviosr object has nine paramters
             described below.
@@ -338,7 +338,7 @@ class Supervisor:
         self.cpu = cpu
         self.name = name
         self.delay = delay
-        self.dependencies = dependencies
+        self.dependencies = dependencies if(dependencies is not None) else []
         self.force_run = force_run
         self.email = email
         self.email_interval = email_interval * 60
@@ -350,8 +350,9 @@ class Supervisor:
         self.errors = []
         self.targets = []
         self.tasks = set()
-        for t in tasks:
-            self.add_task(t)
+        if(tasks is not None):
+            for t in tasks:
+                self.add_task(t)
 
     def run(self):
         ''' Use this funciton to get a Supervisor to run all tasks that it is
