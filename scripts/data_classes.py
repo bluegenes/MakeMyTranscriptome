@@ -81,14 +81,16 @@ sprot_data.install(force=False)
 '''
 
 
-def file_exists(obj):
+def file_exists_relative(obj, path=''):
+    obj = os.path.join(path, obj)
     if(os.path.exists(obj)):
         return obj
     else:
         raise Exception('Unable to locate {0!s}.'.format(obj))
 
 
-def get_db_config():
+def get_db_config(relative_path):
+    file_exists = lambda x : file_exists_relative(x, relative_path)
     db_config = json_config.json_config()
     db_config.add_config('uniprot_sprot_fasta',
                          type=file_exists,
@@ -156,6 +158,9 @@ def get_db_config():
     db_config.add_config('enzyme_pathway',
                          type=file_exists,
                          default=mmt_defaults.PATH_ENZYME_PATHWAY)
+    db_config.add_config('orthology_pathway',
+                         type=file_exists,
+                         default=mmt_defaults.PATH_ORTHOLOGY_PATHWAY)
     return db_config
 
 
@@ -170,7 +175,7 @@ class database:
 
 def get_dbs(json_config=mmt_defaults.PATH_DB_CONFIG_FILE, defaults=False):
     ret = {}
-    db_conf = get_db_config()
+    db_conf = get_db_config(os.path.dirname(json_config))
     config = db_conf.defaults if(defaults) else db_conf.load_config(json_config, True)
 
     ret['uniprot_sprot'] = database(
