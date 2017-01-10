@@ -176,7 +176,7 @@ def annot_table_task(opc, dbs, path_assembly, out_dir, opts, tasks):
         ' --sp2ortho {11!s} --sp2bioc {12!s} --sp2goentrez {13!s} ').format(
         statics.PATH_UTIL, path_assembly, base_out_name, grab_db('swiss_enzyme'),
         grab_db('enzyme_pathway'), grab_db('pfam_enzyme'), grab_db('go_pathway'),
-        grab_db('nog_categories'), grab_db('goslim_generic'), grab_db('id_mapping_ko'),
+        grab_db('nog_functions'), grab_db('goslim_generic'), grab_db('id_mapping_ko'),
         grab_db('id_mapping_eggnog'), grab_db('id_mapping_orthodb'),
         grab_db('id_mapping_biocyc'), grab_db('id_mapping_selected'), grab_db('orthology_pathway'))
     cmd += ' '.join(['--'+k+' '+opts[k] for k in opts])

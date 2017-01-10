@@ -150,6 +150,9 @@ def get_db_config():
     db_config.add_config('nog_categories',
                          type=file_exists,
                          default=mmt_defaults.PATH_NOG_CATEGORIES)
+    db_config.add_config('nog_functions',
+                         type=file_exists,
+                         default=mmt_defaults.PATH_NOG_FUNCTIONS)
     db_config.add_config('orthology_pathway',
                          type=file_exists,
                          default=mmt_defaults.PATH_ORTHOLOGY_PATHWAY)
@@ -261,6 +264,10 @@ def get_dbs(json_config=mmt_defaults.PATH_DB_CONFIG_FILE, defaults=False):
     ret['uniprot_sprot_map'] = database(
         mmt_defaults.URL_UNIPROT_SPROT_MAP,
         config['uniprot_sprot_map'])
+
+    ret['nog_functions'] = database(
+        mmt_defaults.URL_NOG_FUNCTIONS,
+        config['nog_functions'])
 
     ret['kog_functional'] = database(
         mmt_defaults.URL_KOG_FUNCTIONAL,

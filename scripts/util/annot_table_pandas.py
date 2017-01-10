@@ -40,7 +40,7 @@ def get_blast_info(query_lengths, blastFile, blastType='blastx', blastDB = 'sp',
         else:
             query_lengthsDF.rename(columns={'ORF_Length': 'query_length'}, inplace=True)
         bestWordsDF = bestWordsDF.merge(query_lengthsDF,  how='outer',left_on='query_id',right_index=True).dropna()
-        bestWordsDF.loc[:,'query_coverage'] = bestWordsDF.loc[:,'alignment_length'].astype(float)/ bestWordsDF['query_length'].astype(float) 
+        bestWordsDF.loc[:,'query_coverage'] = bestWordsDF.loc[:,'alignment_length'].astype(float)/ bestWordsDF['query_length'].astype(float)
         # get the words from each entry
         bestWordsDF.loc[:,'words'] = bestWordsDF.loc[:,'full_name'].str.strip().str.lower().str.replace(',','').str.replace(':','').str.replace('-like','').str.replace(' isoform','_isoform').str.replace('\[\S*', '').str.replace('\S*\]', '')
         bestWordsDF.loc[:,'words'] = bestWordsDF.loc[:,'words'].str.replace('and','').str.replace('or', '').str.replace('similar', '').str.replace('protein','').str.replace('hypothetical', '').str.replace('quality','').str.replace('unnamed','').str.replace('product','').str.split()
@@ -51,7 +51,7 @@ def get_blast_info(query_lengths, blastFile, blastType='blastx', blastDB = 'sp',
         #get the best word score
         bestWordScore = bestWordsDF.iloc[bestWordsDF.groupby([cNames[0]]).apply(lambda x: x['score'].idxmax())]
         bestWordScore.set_index(cNames[0], inplace=True)
-        bestWordScore.drop_duplicates(keep='first', inplace=True) 
+        bestWordScore.drop_duplicates(keep='first', inplace=True)
         #here we need to add a column for best word hit name
         #infoToAdd['best_word'] = bestWordScore.loc[:, 'hit_id']
     blastInfo = blastInfo.iloc[blastInfo.groupby(['query_id']).apply(lambda x: x['evalue'].idxmin())]
@@ -60,19 +60,19 @@ def get_blast_info(query_lengths, blastFile, blastType='blastx', blastDB = 'sp',
     blastInfo= blastInfo.loc[:, ['hit_id', 'subject_length']]
     query_name, db_name = get_colnames(blastType,blastDB)
     hit_name = db_name + '_' + blastType
-    # change column names to reflect the database + the blast type  
+    # change column names to reflect the database + the blast type
     blastInfo.rename(columns={'query_id': query_name, 'hit_id': hit_name, 'subject_length': hit_name + '_length'}, inplace=True)
     return(blastInfo)
 
 def wordsToScoreDt(df_row):
     wordlist = list(set(df_row['words']))
-    numWords = len(wordlist) 
+    numWords = len(wordlist)
     wordDt = dict(zip(wordlist, numWords*([df_row['multiplier']])))
     return wordDt
 
 def get_total_score(df_row):
     wordlist = list(set(df_row['words']))
-    numWords = len(wordlist) 
+    numWords = len(wordlist)
     total_score = numWords* df_row['multiplier']
     return total_score
 
@@ -107,7 +107,7 @@ def get_pfam_info(pfam_file):
     return(groupORF)
 
 def get_signalp(signalp_file):
-     sigInfo = pd.read_table(signalp_file, header=None, comment='#') 
+     sigInfo = pd.read_table(signalp_file, header=None, comment='#')
      sigInfo = sigInfo.rename(columns={0:'ORF_id'})
      sigInfo['signalp'] =  sigInfo.iloc[:,2] + ':' + sigInfo.iloc[:,3:5].apply(lambda x: '-'.join(x.astype(str)), axis=1) + '__score:' +  sigInfo.iloc[:,5].astype(str)
      infoToAdd = sigInfo.loc[:,['ORF_id', 'signalp']]
@@ -115,7 +115,7 @@ def get_signalp(signalp_file):
      return(infoToAdd)
 
 def get_tmhmm(tmhmm_file, AA_threshold = 1):
-    tmInfo = pd.read_table(tmhmm_file, header=None, comment='#') 
+    tmInfo = pd.read_table(tmhmm_file, header=None, comment='#')
     tmInfo = tmInfo.rename(columns={0:'ORF_id'})
     tmInfo['tmhmm'] =  tmInfo.iloc[:,[2,4,5]].apply(lambda x: '__'.join(x.astype(str)), axis=1)
     tmInfo['expAA'] =  tmInfo.ix[:,2].str.extract('ExpAA=(\d+\.\d{1,2})').astype(float)
@@ -143,7 +143,7 @@ def main(args):
     blastpDF = get_blast_info(orfLengths, args.spP, blastDB='sp', blastType='blastp')
     initDF = initDF.merge(blastpDF, how='left', left_on='Longest_ORF_id', right_index=True, copy=False)
     pfamDF = get_pfam_info(args.pfam)
-    initDF = initDF.merge(pfamDF, how='left', left_on='Longest_ORF_id', right_index=True, copy=False) 
+    initDF = initDF.merge(pfamDF, how='left', left_on='Longest_ORF_id', right_index=True, copy=False)
     if args.ur90P is not None:
         ur90blastpDF = get_blast_info(orfLengths,args.ur90P, blastDB='ur90', blastType='blastp')
         initDF = initDF.merge(ur90blastpDF, how='left', left_on='Longest_ORF_id', right_index=True, copy=False)
@@ -151,14 +151,15 @@ def main(args):
         nrblastpDF = get_blast_info(orfLengths, args.nrP, blastDB='nr', blastType='blastp') #bestWords = True (when this is working)
         initDF = initDF.merge(nrblastpDF, how='left', left_on='Longest_ORF_id', right_index=True, copy=False)
     if args.signalP is not None:
-        sigpDF = get_signalp(args.signalP) 
+        sigpDF = get_signalp(args.signalP)
         initDF = initDF.merge(sigpDF, how='left', left_on='Longest_ORF_id', right_index=True, copy=False)
     if args.tmhmm is not None:
         tmhmmDF = get_tmhmm(args.tmhmm)
         initDF = initDF.merge(tmhmmDF,how='left', left_on='Longest_ORF_id', right_index=True, copy=False)
     initDF = get_keggInfo(initDF, args.sp2ko, args.ko2path)
     initDF = get_eggNOG(initDF, args.sp2nog,args.nog2function)
-
+    initDF = addGO(initDF, args.sp2goentrez)
+#    initDF = initDF.drop('spHitX', 1)
     #change this --> within the functions where we create these:
     #initDF.drop('spHitX',axis=1, inplace=True)
     #initDF.drop('spHitP',axis=1, inplace=True)
@@ -195,6 +196,13 @@ def get_keggInfo(initDF, sp_to_ko, koToPath):
     #initDF = initDF.merge(spKO, how=left, left_on='spHitP', right_index=True, copy=False)
     return (initDF)
 
+def addGO(initDF, sp2goentrez):
+    sp2goD = pd.read_table(sp2goentrez, header=None, index_col = 0,usecols=[0,6], names=['spHitX','GO'])
+    #names=['UniProtKB-ID','GeneID(EntrezGene)','RefSeq','GI','PDB','GO','UniRef100','UniRef90','UniRef50','UniParc','PIR','NCBI-taxon','MIM','UniGene','PubMed','EMBL','EMBL-CDS','Ensembl','Ensembl_TRS', 'Ensembl_PRO','Additional PubMed'])
+    initDF = initDF.merge(sp2goD, how='left', left_on='spHitX', right_index=True, copy=False)
+    return(initDF)
+
+
 def get_eggNOG(initDF, sp2nog, nog2function):
     sp2nogD = pd.read_table(sp2nog, header=None, index_col = 0, names=['db', 'eggNOG'])
     sp2nogD.drop('db', axis=1, inplace=True)
@@ -202,7 +210,16 @@ def get_eggNOG(initDF, sp2nog, nog2function):
     nog2funcD = nog2funcD.loc[:,['eggNOG', 'eggNOG_function']]
     nog2funcD.set_index('eggNOG', inplace=True)
     sp2nogD = sp2nogD.merge(nog2funcD, how='left', left_on='eggNOG', right_index=True, copy=False)
-    initDF = initDF.merge(sp2nogD, how='left', left_on='spHitX', right_index=True, copy=False)
+    sp2nogD.fillna('', inplace=True)
+    sp2nogD.reset_index(level=0, inplace=True)
+    groupNOG = sp2nogD.groupby('index')[['eggNOG', 'eggNOG_function']].agg(lambda x: ''.join(x)).reset_index()
+    # this results in some ",S" columns, and likely some " , " columns --> an issue.
+    #sp2nogD.groupby('index').apply(lambda x: ','.join(x)).reset_index()  #[['eggNOG', 'eggNOG_function']].head()
+#    groupNOG = sp2nogD.groupby(3)[1].apply(lambda x: ','.join(x)).reset_index()
+    #groupNOG.rename(columns={3:'spHitX', 1:'eggNOG'}, inplace=True)
+    groupNOG.rename(columns={'index':'spHitX'}, inplace=True)
+    groupNOG.set_index('spHitX', inplace=True)
+    initDF = initDF.merge(groupNOG, how='left', left_on='spHitX', right_index=True, copy=False)
     return(initDF)
 
 
@@ -239,10 +256,9 @@ if __name__ == '__main__':
     psr.add_argument('--pfam2enzyme',help='pfam domain to kegg enzyme conversion')
     psr.add_argument('--go2path',help='GO term to kegg pathway conversion')
     psr.add_argument('--go2slim',help='GO term to GO-slim term conversion')
-    
+
     #outfile name
     psr.add_argument('--outfile',metavar='outfile',help='output filename')
 
     args = psr.parse_args()
     main(args)
-

@@ -30,7 +30,9 @@ pathway = retrieve_KEGG_pathway(args.path) #pathway of interest
 
 def readKOFile(koFile, keggPath):
     pd_annot_table = pd.io.parsers.read_table(koFile, header=0, sep='\t')
-    koList = pd_annot_table['Kegg_Pathway']
+    koList = pd_annot_table['Kegg_Orthology']
+    koList = ['ko:' + s for s in koList]
+#    import pdb; pdb.set_trace()
     '''
     with open(koFile, 'r') as koF:
         for line in koF:

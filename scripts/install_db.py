@@ -44,7 +44,7 @@ def check_db_dir():
         make_dir(d)
 
 
-def gen_db_supervisor(force=False, sprot=False, uniref90=False, nr=False, busco_args=busco_defaults, blast_plus=False, idmapping=False, cpu=float('inf'), pfam=True, dep=[]):
+def gen_db_supervisor(force=False, sprot=False, uniref90=False, nr=False, busco_args=busco_defaults, blast_plus=False, idmapping=False, cpu=float('inf'), pfam=True, nog_functions =True, dep=[]):
     check_db_dir()
     dbs = get_dbs(defaults=force)
     tasks = []
@@ -62,6 +62,9 @@ def gen_db_supervisor(force=False, sprot=False, uniref90=False, nr=False, busco_
         hmmpress = fdb.pfam_build_task(dbs['pfam'].download_location, dbs['pfam'].call_path, [pfam_task])
         tasks.append(pfam_task)
         tasks.append(hmmpress)
+    if(nog_functions):
+        nogF_task = download_task_wrapper(dbs['nog_functions'], [])
+        tasks.append(nogF_task)
     if(idmapping):
         idmap_task = download_task_wrapper(dbs['id_mapping'], [])
         tasks.append(idmap_task)
@@ -70,7 +73,7 @@ def gen_db_supervisor(force=False, sprot=False, uniref90=False, nr=False, busco_
             dbs['id_mapping'].download_location, dbs['id_mapping_biocyc'].call_path,
             dbs['id_mapping_eggnog'].call_path, dbs['id_mapping_ko'].call_path,
             dbs['id_mapping_orthodb'].call_path, [idmap_task]))
-    special_dbs = set(['uniprot_sprot', 'uniref90', 'nr', 'swiss_enzyme', 'orthology_pathway', 'nog_categories', 'pfam'])
+    special_dbs = set(['uniprot_sprot', 'uniref90', 'nr', 'swiss_enzyme', 'orthology_pathway', 'nog_categories', 'nog_functions', 'pfam'])
     for db_string in dbs:
         if(db_string in special_dbs or
            db_string.startswith('busco_') or
@@ -92,12 +95,13 @@ if(__name__ == '__main__'):
     parser.add_argument('--cpu', type=int, default=4)
     parser.add_argument('--buildBlastPlus', action='store_true', default=False)
     parser.add_argument('--id_mapping', action='store_true', default=False)
+    parser.add_argument('--nog_functions', action='store_true', default=False)
     args = parser.parse_args()
     busco_flags = {}
     if(args.buscos is not None):
         args.buscos = args.buscos.split(',')
         for b in args.buscos:
             busco_flags[b] = True
-    sup = gen_db_supervisor(args.hard, args.swiss_prot, args.uniref90, args.nr, busco_flags, args.buildBlastPlus, args.id_mapping, args.cpu)
+    sup = gen_db_supervisor(args.hard, args.swiss_prot, args.uniref90, args.nr, busco_flags, args.buildBlastPlus, args.id_mapping, args.nog_functions,args.cpu)
     sup.run()
 

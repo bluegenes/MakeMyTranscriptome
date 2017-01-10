@@ -29,9 +29,9 @@ def gen_annotation_supervisor(opc, dbs, cpu, uniref90_flag, nr_flag, blast_flag,
     tasks.append(longorfs)
     if improve_orfs:
         blastp_transd = fan.blast_task(opc, 'blastp',  transd_dir, longorfs.targets[0],dbs['uniprot_sprot'].call_path, int(cpu/2), [longorfs])
-        pfam_transd = fan.pfam_task(longorfs.targets[0], transd_dir,cpumod(cpu,2), [longorfs])
+        pfam_transd = fan.pfam_task(opc,dbs,longorfs.targets[0], transd_dir,cpumod(cpu,2), [longorfs])
         tasks.extend([blastp_transd,pfam_transd]) 
-        predict_orfs=fan.transdecoder_predict_orfs_task(path_assembly,transd_dir,[longorfs,pfam_transd,blastp_transd],pfam_transd.targets[0],blastp_transd.targets[0])
+        predict_orfs=fan.transdecoder_predict_orfs_task(opc, path_assembly,transd_dir,[longorfs,pfam_transd,blastp_transd],pfam_transd.targets[0],blastp_transd.targets[0])
     else:
         predict_orfs = fan.transdecoder_predict_orfs_task(opc, path_assembly,transd_dir,[longorfs])
     gff3_dependencies.append(predict_orfs)

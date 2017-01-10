@@ -30,6 +30,7 @@ PATH_BUSCO_PLANT = join(PATH_BUSCO_REFERENCE_DIR, 'plantae_buscos')
 PATH_PFAM_DIR = join(PATH_DATABASES, 'pfam')
 PATH_PFAM_DATABASE = join(PATH_PFAM_DIR, 'Pfam-A.hmm')
 PATH_NOG_CATEGORIES = join(PATH_DATABASES, 'nog_categories')
+PATH_NOG_FUNCTIONS = join(PATH_DATABASES, 'NOG.annotations.tsv')
 PATH_GO_PATHWAY = join(PATH_DATABASES, 'go_pathway.txt')
 PATH_SWISS_ENZYME = join(PATH_DATABASES, 'swiss_enzyme.list')
 PATH_PFAM_ENZYME = join(PATH_DATABASES, 'pfam_enzyme.list')
@@ -73,7 +74,7 @@ URL_SWISS_ENZYME = 'http://rest.genome.jp/link/enzyme/swissprot'
 URL_ORTHOLOGY_PATHWAY = None
 URL_ENZYME_PATHWAY = None
 URL_NOG_CATEGORIES = None
-
+URL_NOG_FUNCTIONS = 'http://eggnogdb.embl.de/download/eggnog_4.5/data/NOG/NOG.annotations.tsv.gz'
 
 class Output_Path_Vars:
 
