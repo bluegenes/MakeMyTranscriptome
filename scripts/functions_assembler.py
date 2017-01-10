@@ -1,9 +1,9 @@
 '''
 '''
-from tasks_v2 import Task
+from tasks_v2 import Task, Supervisor
 import os
 from external_tools import TOOLS_DICT
-from functions_general import gen_logs, tool_path_check
+from functions_general import gen_logs, tool_path_check, make_dir_task, cp_task
 import mmt_defaults as statics
 
 # opc is the output_path_class object
@@ -22,19 +22,25 @@ def fastqc_task(opc, out_dir, fq_files, output_name, cpu_cap, tasks):
            TOOLS_DICT['fastqc'].full_exe[0],' '.join(fq_files), outDir, cpu_param)
     name = 'fastqc_'+output_name
     out, err = gen_logs(opc.path_logs, name)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+    fast_task = Task(command=cmd, dependencies=[mkdir_task], targets=trgs, name=name, stdout=out, stderr=err)
+    super_name = "super_" + name
+    return Supervisor([mkdir_task, fast_task], name=super_name, dependencies=tasks)
 
 
 def prinseq_unpaired_task(opc, out_dir, input1, basename, opts, tasks):
     trgs = ['{0!s}/{1!s}_{2!s}'.format(out_dir, basename, os.path.basename(input1))]
+    pseudo_trgs =['{0!s}/{1!s}.fastq'.format(out_dir, basename)]
     cmd = ('perl {0!s} -fastq {1!s} --out_format 3 --out_good {2!s}/{3!s} --out_bad null '
            '--trim_qual_left 20 --trim_qual_right 20 --trim_qual_type min --min_len 35 '
-           '--trim_tail_left 8 --trim_tail_right 8 {4!s} -log; mv {2!s}/{3!s}.fastq {5!s}'
+           '--trim_tail_left 8 --trim_tail_right 8 {4!s} -log'
            ).format(tool_path_check(TOOLS_DICT['prinseq'].full_exe[0]), input1, out_dir,
                     basename, opts, trgs[0])
     name = basename
     out, err = gen_logs(opc.path_logs, name)
-    return Task(command = cmd, dependencies=tasks, name=name, stdout=out, stderr=err, targets=trgs)
+    prinseq = Task(command=cmd, dependencies=[], name=name, stdout=out, stderr=err, targets=pseudo_trgs)
+    cp = cp_task(pseudo_trgs[0], trgs[0], [prinseq])
+    super_name = "super_" + name
+    return Supervisor([prinseq, cp], dependencies=tasks, name=super_name)
 
 
 def prinseq_task(opc, out_dir, input_1, input_2, basename, opts, tasks):
@@ -51,12 +57,16 @@ def prinseq_task(opc, out_dir, input_1, input_2, basename, opts, tasks):
     pseudo_trgs = ['{0!s}/{1!s}_{2!s}.fastq'.format(out_dir, basename, x) for x in range(1, 3)]
     cmd = ('perl {0!s} -fastq {1!s} -fastq2 {2!s} --out_format 3 --out_good {3!s}/{4!s} '
            '--out_bad null --trim_qual_left 20 --trim_qual_right 20 --trim_qual_type min '
-           '--min_len 55 --trim_tail_left 8 --trim_tail_right 8 {5!s} -log; mv {6!s} {7!s};'
-           ' mv {8!s} {9!s};').format(tool_path_check(TOOLS_DICT['prinseq'].full_exe[0]), input_1,
+           '--min_len 55 --trim_tail_left 8 --trim_tail_right 8 {5!s} -log'
+           ).format(tool_path_check(TOOLS_DICT['prinseq'].full_exe[0]), input_1,
            input_2, out_dir, basename, opts, pseudo_trgs[0], trgs[0], pseudo_trgs[1], trgs[1])
     name = basename
     out, err = gen_logs(opc.path_logs, name)
-    return Task(command=cmd, dependencies=tasks, name=name, stdout=out, stderr=err, targets=trgs)
+    prinseq = Task(command=cmd, dependencies=[], name=name, stdout=out, stderr=err, targets=pseudo_trgs)
+    cp1 = cp_task(pseudo_trgs[0], trgs[0], [prinseq])
+    cp2 = cp_task(pseudo_trgs[1], trgs[1], [prinseq])
+    super_name = "super_" + name
+    return Supervisor(tasks=[prinseq, cp1, cp2], dependencies=[tasks], name=super_name)
 
 
 def trimmomatic_unpaired_task(opc, out_dir,input1, cpu_cap, basename, tasks):
@@ -115,14 +125,22 @@ def remove_dups_task(opc, out_dir, left, right, out_base, tasks):
     return Task(command=cmd, dependencies=tasks, name=name, stdout=out, stderr=err, targets=trgs)
 
 
+def basic_cat_task(sources, target, tasks):
+    trgs = [target]
+    cmd = 'cat {0!s}'.format(' '.join(sources))
+    out = target
+    err = os.devnull
+    name = "cat_" + os.path.basename(target)
+    return Task(command=cmd, dependencies=tasks, name=name, stdout=out, stderr=err, targets=trgs)
+
+
 def cat_task(opc, out_dir, left, right, basename, tasks):
     trgs = ['{0!s}/{1!s}_1.fastq'.format(out_dir, basename),
             '{0!s}/{1!s}_2.fastq'.format(out_dir, basename)]
-    cmd = 'cat {0!s} > {1!s}; cat {2!s} > {3!s}'.format(
-          ' '.join(left), trgs[0], ' '.join(right), trgs[1])
-    name = 'cat_basename'
-    out, err = gen_logs(opc.path_logs, name)
-    return Task(command=cmd, dependencies=tasks, name=name, stdout=out, stderr=err, targets=trgs)
+    left_cat = basic_cat_task(left, trgs[0], [])
+    right_cat = basic_cat_task(right, trgs[1], [])
+    name = 'cat_' + basename
+    return Supervisor(tasks=[left_cat, right_cat], name=name, dependencies=[tasks])
 
 
 def subset_task(opc, out_dir, fastq1, fastq2, out_base, num, seed, tasks):
@@ -151,15 +169,21 @@ def subset_task(opc, out_dir, fastq1, fastq2, out_base, num, seed, tasks):
 #    return Task(command=cmd, dependencies=tasks, name=name, stdout=out, stderr=err, targets=trgs, cpu=cpu_cap)
 
 
-def truncate_task(opc, out_dir,left, right, length, tasks):
+def basic_truncate_task(opc, source, target, length, tasks):
+    cmd = 'python {0!s}/truncate_fastq.py {1!s} --length {2!s} --target {3!s}'.format(
+          statics.PATH_UTIL, source, length, target)
+    name = "truncate_" + os.path.basename(source)
+    out, err = gen_logs(opc.path_logs, name)
+    return Task(command=cmd, dependencies=tasks, name=name, stdout=out, stderr=err, targets=[target])
+
+
+def truncate_task(opc, out_dir, left, right, length, tasks):
     trgs = ['{0!s}/truncated_1.fastq'.format(out_dir, left),
             '{0!s}/truncated_2.fastq'.format(out_dir, right)]
-    cmd = ('python {0!s}/truncate_fastq.py {1!s} --length {2!s} --target {3!s}; '
-           'python {0!s}/truncate_fastq.py {4!s} --length {2!s} --target {5!s};').format(
-           statics.PATH_UTIL, left, length, trgs[0], right, trgs[1])
+    trunc1 = basic_truncate_task(opc, left, trgs[0], length, [])
+    trunc2 = basic_truncate_task(opc, right, trgs[1], length, [])
     name = 'truncate_reads'
-    out, err = gen_logs(opc.path_logs, name)
-    return Task(command=cmd, dependencies=tasks, name=name, stdout=out, stderr=err, targets=trgs)
+    return Supervisor(tasks=[trunc1, trunc2], name=name, dependencies=tasks)
 
 
 def trinity_task(opc, path_assembly, out_dir, fastq, fastq2, unpaired, cpu_cap_trin, cpu_cap_bfly, mem_trin, mem_bfly, normalize_flag, tasks):
@@ -173,33 +197,41 @@ def trinity_task(opc, path_assembly, out_dir, fastq, fastq2, unpaired, cpu_cap_t
     normalize_flag = '--normalize_reads' if(normalize_flag) else ''
     input_str = ''
     if(unpaired != [] and fastq == []):
-        input_str += '--single '+','.join(unpaired)
+        input_str += '--single ' + ','.join(unpaired)
     if(fastq != []):
-        input_str += '--left '+','.join(fastq+unpaired)
-        input_str += ' --right '+','.join(fastq2)
+        input_str += '--left ' + ','.join(fastq + unpaired)
+        input_str += ' --right ' + ','.join(fastq2)
     trgs = [path_assembly]
+    pseudo_trgs = ['{0!s}/trinity/Trinity.fasta'.format(out_dir)]
     cmd = ('{0!s} --seqType fq {1!s} --CPU {2!s} --max_memory {3!s}G --bflyCalculateCPU {4!s} '
-           '--output {6!s}/trinity; cp {6!s}/trinity/Trinity.fasta {7!s};'
+           '--output {6!s}/trinity'
            ).format(tool_path_check(TOOLS_DICT['trinity'].full_exe[0]), input_str, cpu_cap_trin,
                     mem_trin, normalize_flag, mem_bfly, out_dir, trgs[0])
     name = 'trinity_assembly'
     out, err = gen_logs(opc.path_logs, name)
     cpu_cap = max(cpu_cap_trin, cpu_cap_bfly)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
+    trinity = Task(command=cmd, dependencies=[], targets=pseudo_trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
+    cp = cp_task(pseudo_trgs[0], trgs[0], [trinity])
+    super_name = 'super_' + name
+    return Supervisor(tasks=[trinity, cp], dependencies=tasks, name=super_name)
 
 
 def rnaspades_task(opc, path_assembly, out_dir, left, right, unpaired, cpu_cap, tasks):
     virtual_target = '{0!s}/rna_spades_out_dir'.format(out_dir)
     trgs = [path_assembly]
+    pseudo_trgs = ['{0!s}/contigs.fasta'.format(virtual_target)]
     input_strings = []
     if(left != []):
         input_strings.append('-1 '+left[0])
         input_strings.append('-2 '+right[0])
     if(unpaired != []):
         input_strings.append('-s '+unpaired[0])
-    cmd = '{0!s} {1!s} --threads {2!s} -o {3!s}; cp {3!s}/contigs.fasta {4!s};'.format(
+    cmd = '{0!s} {1!s} --threads {2!s} -o {3!s}'.format(
             tool_path_check(TOOLS_DICT['rnaspades'].full_exe[0]), ' '.join(input_strings),
             cpu_cap, virtual_target, trgs[0])
     name = 'rnaSPAdes_assembly'
     out, err = gen_logs(opc.path_logs, name)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
+    rnaspades = Task(command=cmd, dependencies=[], targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
+    cp = cp_task(pseudo_trgs[0], trgs[0], [rnaspades])
+    super_name = 'super_' + name
+    return Supervisor(tasks=[rnaspades, cp], dependencies=task, name=super_name)

@@ -38,7 +38,7 @@ def busco_task(opc, dbs, assembly_path, assembly_name, out_dir, reference_name, 
            reference_name, assembly_name, assembly_path, busco_db.call_path, cpu_cap)
     name = 'busco_' + reference_name + '_' + assembly_name
     out, err = gen_logs(opc.path_logs, name)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, cpu=cpu_cap, stdout=out, stderr=err, cwd=out_dir)
 
 
 def transrate_dep_generator(reads_dir, transrate_task, lefts, rights, reference, assembly_path, cpu_cap, transrate_dir, other_dependencies):
@@ -108,10 +108,11 @@ def assembly_stats_task(opc, out_dir, assembly, tasks):
             tasks - a list of tasks that this task is dependant on (trinity_task)
     '''
     trgs = ['{0!s}/assembly_stats.json'.format(out_dir)]
-    cmd = 'python {0!s}/assembly_stats.py {1!s} > {2!s}'.format(
-          statics.PATH_UTIL, assembly, trgs[0])
+    cmd = 'python {0!s}/assembly_stats.py {1!s}'.format(
+          statics.PATH_UTIL, assembly)
     name = 'assembly_stats_' + os.path.basename(assembly)
     out, err = gen_logs(opc.path_logs, name)
+    out = trgs[0]
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
 
 
