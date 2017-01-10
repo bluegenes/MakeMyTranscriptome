@@ -6,6 +6,7 @@ import functions_general as fg
 import functions_annotater as fan
 import functions_expression as fex
 # import functions_databases as fd
+import sys
 
 
 def cpumod(cpu, k): return int(round(float(cpu)/k))
@@ -63,11 +64,11 @@ def gen_annotation_supervisor(opc, dbs, cpu, uniref90_flag, nr_flag, blast_flag,
             task_insert(task, name)
         dmnd_xsprot = fan.diamond_task(opc, 'blastx',out_dir, path_assembly,dbs['uniprot_sprot'].call_path, cpumod(cpu, 2), dmnd_dependencies[:])
         dmnd_task_insert(dmnd_xsprot)
-        expand = fan.blast_augment_task(opc, dbs['uniprot_sprot'].call_path, dmnd_xsprot.targets[0], [dmnd_xsprot])
+        expand = fan.blast_augment_task(opc, dbs['uniprot_sprot'].call_path, dmnd_xsprot.targets[1], [dmnd_xsprot])
         task_insert(expand, 'spX', gff3_flag=True)
         dmnd_psprot = fan.diamond_task(opc, 'blastp',out_dir, predict_orfs.targets[0],dbs['uniprot_sprot'].call_path, cpumod(cpu, 2), dmnd_dependencies+[predict_orfs])
         dmnd_task_insert(dmnd_psprot)
-        expand = fan.blast_augment_task(opc, dbs['uniprot_sprot'].call_path, dmnd_psprot.targets[0], [dmnd_psprot])
+        expand = fan.blast_augment_task(opc, dbs['uniprot_sprot'].call_path, dmnd_psprot.targets[1], [dmnd_psprot])
         task_insert(expand, 'spP', gff3_flag=True)
         if(uniref90_flag):
             dmnd_xur90 = fan.diamond_task(opc, 'blastx',out_dir,path_assembly,dbs['uniref90'].call_path, cpumod(cpu, 2), dmnd_dependencies[:])
@@ -103,7 +104,7 @@ def gen_annotation_supervisor(opc, dbs, cpu, uniref90_flag, nr_flag, blast_flag,
     tasks.append(pipeplot)
     kegg = fan.kegg_task(opc, annot.targets[0],out_dir, [annot])
     tasks.append(kegg)
-    return Supervisor(tasks=tasks,dependencies=dependency_set)
+    return Supervisor(tasks=tasks, dependencies=dependency_set, name='annotation_super')
 
 
 if(__name__=='__main__'):

@@ -4,7 +4,7 @@
 from tasks_v2 import Task
 import os
 from external_tools import TOOLS_DICT
-from functions_general import tool_path_check
+from functions_general import tool_path_check, make_dir_task
 import mmt_defaults as statics
 
 
@@ -19,17 +19,18 @@ PATH_NOG_CATEGORIES = join(fg.PATH_DATABASES, 'nog_categories')
 
 def gen_db_logs(name):
     base_log_name = os.path.join(statics.PATH_DATABASE_LOGS, name)
-    out, err = base_log_name+'.out', base_log_name+'.err'
+    out, err = base_log_name + '.out', base_log_name + '.err'
     return out, err
 
 
 def db2stitle_task(db, tasks):
     base_db = os.path.basename(db)
     trgs = ['{0!s}/{1!s}.stitle'.format(statics.PATH_DATABASES, base_db)]
-    cmd = 'python {0!s}/fastaID2names.py --fasta {1!s} > {2!s}'.format(
-           statics.PATH_UTIL, db, trgs[0])
+    cmd = 'python {0!s}/fastaID2names.py --fasta {1!s}'.format(
+           statics.PATH_UTIL, db)
     name = 'db2stitle_' + base_db
     out, err = gen_db_logs(name)
+    out = trgs[0]
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
 
 
@@ -41,7 +42,7 @@ def build_blast_task(path_db, out_dir, dbtype, tasks):
           path_db, tool_path_check(TOOLS_DICT['blast'].full_exe[0]), dbtype, title, out_dir)
     name = 'build_blastplus_db_' + title
     out, err = gen_db_logs(name)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, shell=True)
 
 
 def build_diamond_task(path_db_fasta, out_path, tasks):
@@ -57,15 +58,11 @@ def build_diamond_task(path_db_fasta, out_path, tasks):
 
 
 def pfam_build_task(source, out_root_path, tasks):
-    ''' Trgs seem to be declared without respect to input.
-    '''
     trgs = [os.path.join(statics.PATH_PFAM_DIR, os.path.basename(source))+'.h3f']
-    cmd = 'cd {0!s} ; {1!s} -f {2!s};'.format(
-          statics.PATH_DATABASES, tool_path_check(TOOLS_DICT['hmmer'].full_exe[1]),
-          source)
+    cmd = '{0!s} -f {1!s};'.format(tool_path_check(TOOLS_DICT['hmmer'].full_exe[1]), source)
     name = 'hmmpress_' + os.path.basename(source)
     out, err = gen_db_logs(name)
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cwd=statics.PATH_DATABASES)
 
 
 def download_task(url, install_location, ftype, tasks):
