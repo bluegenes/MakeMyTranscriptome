@@ -16,11 +16,11 @@ def fastqc_task(opc, out_dir, fq_files, output_name, cpu_cap, tasks):
             tasks - a list of tasks that this task is dependent on.
     '''
     cpu_param = min(len(fq_files), cpu_cap)
-    trgs = ['{0!s}/fastqc_{1!s}'.format(out_dir, output_name)]
-    mkdir_task = make_dir_task(trgs[0])
-    cmd = '{0!s} --extract --outdir {2!s} --threads {3!s} {1!s}'.format(
-           TOOLS_DICT['fastqc'].full_exe[0], ' '.join(fq_files), trgs[0], cpu_param)
-    name = 'fastqc_' + output_name
+    outDir = '{0!s}/fastqc_{1!s}'.format(out_dir, output_name)
+    trgs = [os.path.join(outDir, os.path.basename(x).rsplit('.f')[0] + '_fastqc.zip') for x in fq_files]
+    cmd = 'mkdir {2!s}; {0!s} --extract --outdir {2!s} --threads {3!s} {1!s}'.format(
+           TOOLS_DICT['fastqc'].full_exe[0],' '.join(fq_files), outDir, cpu_param)
+    name = 'fastqc_'+output_name
     out, err = gen_logs(opc.path_logs, name)
     fast_task = Task(command=cmd, dependencies=[mkdir_task], targets=trgs, name=name, stdout=out, stderr=err)
     super_name = "super_" + name
@@ -70,10 +70,7 @@ def prinseq_task(opc, out_dir, input_1, input_2, basename, opts, tasks):
 
 
 def trimmomatic_unpaired_task(opc, out_dir,input1, cpu_cap, basename, tasks):
-    # form = lambda s, i : s.format(out_dir, basename, os.path.basename(i))
     trgs = ['{0!s}/{1!s}_{2!s}'.format(out_dir, basename, os.path.basename(input1))]
-    # trgs = [form('{0!s}/{1!s}_{2!s}', input1)]
-    # orphans = [form('{0!s}/{1!s}_orphans_{2!s}', input1)]
     cmd = ('java -jar {0!s} SE -threads {3!s} {1!s} {2!s} ILLUMINACLIP:'
            '{4!s}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:35'
            ).format(tool_path_check(TOOLS_DICT['trimmomatic'].full_exe[0]),

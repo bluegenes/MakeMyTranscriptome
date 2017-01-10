@@ -101,6 +101,8 @@ def do_args():
     expression_input.add_argument('--model', help='An optional list of comma seperated values used to run differential expression. This is particularly useful for refining Differential Expression runs as it allow you to use the same input CSV file and perform new comparisons.')
     expression_input.add_argument('-intersectbed', help='run bowtie2 + bedtools intersect in addition to Salmon quantification. MMT will run differential expression analysis separately for each quantification tool.', action='store_true', default=False)
     expression_input.add_argument('-express', help='run bowtie2 + express in addition to Salmon quantification. MMT will run differential expression analysis separately for each quantification tool.', action='store_true', default=False)
+    expression_input.add_argument('--no_salmon', help='don\'t run Salmon quantification.', action='store_true', default=False)
+    expression_input.add_argument('-rapclust', help='run bowtie2 for rapclust in addition to Salmon quantification.', action='store_true', default=False)
     #FILTER ARGS
     filter_input = argparse.ArgumentParser(add_help=False)
     filter_input.add_argument('--filter_by_TPM', action='store_true', default=False, help='Part of the "quality" module. Filter the assembly by a coverage threshold (in TPM). Set the threshold with "--tpm_threshold"; default=1')
@@ -377,7 +379,7 @@ def go_expression(path_assembly, out_dir, args, dep):
         args.opc, args.dbs, args.fastq1, args.fastq2, args.paired_names,
         args.unpaired, args.unpaired_names, args.cpu, args.sample_info,
         args.model, args.gene_trans_map, dep, assembly_name, path_assembly,
-        out_dir, args.express, args.intersectbed)
+        out_dir, not args.no_salmon, args.express, args.intersectbed, args.rapclust)
 
 
 def go_manage_db(args, dep):

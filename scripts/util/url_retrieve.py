@@ -10,22 +10,22 @@ else:
 
 
 def url_unzip(source, target):
-    urlretrieve(source, target+'.gz')
-    f = gzip.open(target+'.gz', 'rb')
+    urlretrieve(source, target + '.gz')
+    f = gzip.open(target + '.gz', 'rb')
     g = open(target, 'wb')
     for line in f:
         g.write(line)
     f.close()
     g.close()
-    os.remove(target+'.gz')
+    os.remove(target + '.gz')
 
 
 def tar_retrieve(source, target):
-    urlretrieve(source, target+'.tar.gz')
-    tfile = tarfile.open(target+'.tar.gz', 'r:gz')
+    urlretrieve(source, target + '.tar.gz')
+    tfile = tarfile.open(target + '.tar.gz', 'r:gz')
     tfile.extractall(target)
     tfile.close()
-    os.remove(target+'.tar.gz')
+    os.remove(target + '.tar.gz')
 
 
 if(__name__ == '__main__'):
@@ -44,11 +44,13 @@ if(__name__ == '__main__'):
         args.target = os.path.basename(args.url)
         if(args.target.endswith(args.type)):
             args.target = args.target[:-1*len(args.type)]
+    temp_target = args.target + '.temp'
     if(args.type == '.'):
-        urlretrieve(args.url, args.target)
+        urlretrieve(args.url, temp_target)
     elif(args.type == '.gz'):
-        url_unzip(args.url, args.target)
+        url_unzip(args.url, temp_target)
     elif(args.type == '.tar.gz'):
-        tar_retrieve(args.url, args.target)
+        tar_retrieve(args.url, temp_target)
     else:
-        raise Exception('Unrecognized --type argument : {}'.format(args.type))
+        raise Exception('Unrecognized --type argument : {0!s}'.format(args.type))
+    os.rename(temp_target, args.target)

@@ -119,14 +119,16 @@ transrate_tool.set_install(transrate_cmd)
 TOOL_LIST.append(transrate_tool)
 
 ### BUSCO ###
-busco_url = 'http://busco.ezlab.org/files/BUSCO_v1.1b1.tar.gz'
-busco_target = join(PATH_TOOLS, 'BUSCO_v1.1b1')
-busco_exe = ['BUSCO_v1.1b1.py']
-busco_instructions = '\n\t After downloading the binary: \n\n\t\t tar zxf BUSCO_v1.1b1.tar.gz \n\n ' \
-                        '\n\t\t cd BUSCO_v1.1b1\n' \
-                        '\n\t\t chmod u+x BUSCO_v1.1b1.py\n' \
+#busco_url = 'http://busco.ezlab.org/files/BUSCO_v1.1b1.tar.gz'
+busco_url = 'http://busco.ezlab.org/files/BUSCO_v1.2.tar.gz' 
+#busco_target = join(PATH_TOOLS, 'BUSCO_v1.1b1')
+busco_target = join(PATH_TOOLS, 'BUSCO_v1.2')
+busco_exe = ['BUSCO_v1.2.py']
+busco_instructions = '\n\t After downloading the binary: \n\n\t\t tar zxf BUSCO_v1.2.tar.gz \n\n ' \
+                        '\n\t\t cd BUSCO_v1.2\n' \
+                        '\n\t\t chmod u+x BUSCO_v1.2.py\n' \
                         '\tThen: soft link /path/to/BUSCO_v1.1b1 into the MMT "external_tools" folder\n' \
-                        '\t  Or: add /path/to/BUSCO_v1.1b1 to your $path variable\n'
+                        '\t  Or: add /path/to/BUSCO_v1.2 to your $path variable\n'
 busco_website='http://busco.ezlab.org'
 
 busco_tool = tc('busco', busco_url, busco_target, busco_exe, busco_instructions, web=busco_website)
