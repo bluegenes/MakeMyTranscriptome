@@ -5,7 +5,6 @@ import signal
 import subprocess
 import warnings
 import platform
-import shlex
 
 
 def time_to_hms(delta):
@@ -56,16 +55,11 @@ class Task:
         pass
 
     def __init__(
-      self, command, dependencies=None, targets=None, cpu=1, name='unnamed_task',
-      error_check=not_zero, max_wall_time=float("inf"), shlex_split=True,
-      **popen_args):
-        ''' The __init__ for the Task object has nine parameters described
-            below. It also supports all keyword arguments of the
-            subprocess.Popen object:
+      self, command, dependencies=[], targets=[], cpu=1, name='Anonymous_Task',
+      stderr=None, stdout=None, error_check=not_zero, max_wall_time=float('inf')):
+        ''' The __init__ for the Task object has nine parameters described below:
             command -
-                almost equivalent to the subprocess.Popen argument args. If
-                a string is given, it will be split using shlex.split before
-                being passed to Popen. Otherewise, it will be passed directly.
+                a string representation of the cmd line command to be executed.
             dependencies -
                 a list containing Task objects, Supervisor objects, or unit
                 functions. A call to self.checkDependencies will return True
@@ -80,9 +74,15 @@ class Task:
                 value is used by Supervisor objects. Default=1
             name -
                 A string that will be used for representing the task for more
-                convienient logging. Default="unnamed_task"
+                convienient logging
+            stderr -
+                String path to the location where stderr from the command
+                should be written. Defaults is sys.stderr
+            stdout -
+                String path to the location where stdout from the command
+                should be written. Defaults is sys.stdout
             error_check -
-                a function f(int)->Bool that the exit code
+                a function that accepts a single int parameter, the exit code
                 from running command. The function should return True if the
                 exit code implies an error was encountered while running
                 command, else False. Default = lambda i: i != 0
@@ -90,54 +90,27 @@ class Task:
                 the amount of time, in minutes, that the command should be
                 allowed to run before being stopped by a call to
                 self.finished(). Default = float('inf')
-            shlex_split -
-                a boolean that, if True and command is a string, will cause
-                the task to parse command using shlex.split prior to passing
-                the command to the Popen constructor. Default = True
         '''
+        if(stderr is not None):
+            f = open(stderr, 'a')
+            f.close()
+        if(stdout is not None):
+            f = open(stdout, 'a')
+            f.close()
         self.command = command
-        self.targets = targets if(targets is not None) else []
-        self.dependencies = dependencies if(dependencies is not None) else []
+        self.dependencies = dependencies
         self.cpu = cpu
         self.name = name
+        self.stdout = stdout
+        self.stderr = stderr
+        self.targets = targets
         self.error_check = error_check
-        self.max_wall_time = max_wall_time
-        self.popen_args = popen_args
-        self.process = None
         self.opened_files = []
+        self.process = None
         self.exit_code = None
         self.soft_finished_status = False
-        self.start_time = -1
-        self.split = shlex_split
-
-    def _handleFilePopenArgs(self, arg, type_flag='r'):
-        ''' Allows for strings to be passed in popen args where files would
-            normally be required. Its a helper function.
-        '''
-        if(arg in self.popen_args and isinstance(self.popen_args[arg], str)):
-            temp_file = open(self.popen_args[arg], type_flag)
-            self.opened_files.append(temp_file)
-        elif(arg in self.popen_args):
-            temp_file = self.popen_args[arg]
-        else:
-            temp_file = None
-        return temp_file
-
-    def start(self):
-        ''' Method used to start the execution of this Task. self.command will
-            be executed using the subprocess.Popen constructor with shell=True.
-        '''
-        stdin = self._handleFilePopenArgs("stdin")
-        stdout = self._handleFilePopenArgs("stdout", "w")
-        stderr = self._handleFilePopenArgs("stderr", "w")
-        file_args = ["stdin", "stdout", "stderr"]
-        args = {k: self.popen_args[k] for k in self.popen_args if(k not in file_args)}
         self.start_time = time.time()
-        if(self.split and isinstance(self.command, str)):
-            cmd = shlex.split(self.command)
-        else:
-            cmd = self.command
-        self.process = subprocess.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, **args)
+        self.max_wall_time = max_wall_time
 
     def checkDependencies(self):
         ''' Method will check all dependencies of this object.
@@ -158,11 +131,32 @@ class Task:
                 if(not d()):
                     return False
             else:
-                err_msg = ('Unable to check depencies of task {0!1}. \nTask '
-                           'dependencies must not conatin anything that is not '
-                           'a function or a Task.').format(self.name)
-                raise self.TaskException(err_msg)
+                error_message = (
+                    'Unable to check depencies of task {0!1}. \nTask '
+                    'dependencies must not conatin anything that is not '
+                    'a function or a Task. ').format(self.name)
+                raise self.TaskException(error_message)
         return True
+
+    def start(self):
+        ''' Method used to start the execution of this Task. self.command will
+            be executed using the subprocess.Popen constructor with shell=True.
+        '''
+        if(self.stderr is not None):
+            err = open(self.stderr, 'w', 1)
+            err.write(str(self.command) + '\n\n')
+            self.opened_files.append(err)
+        else:
+            err = None
+        if(self.stdout is not None):
+            out = open(self.stdout, 'w', 1)
+            out.write(str(self.command) + '\n\n')
+            self.opened_files.append(out)
+        else:
+            out = None
+        self.start_time = time.time()
+        temp = subprocess.Popen(self.command, shell=True, stdout=out, stderr=err)
+        self.process = temp
 
     def finished(self):
         ''' A method that will check if this Task has finished executing,
@@ -200,8 +194,8 @@ class Task:
             if(self.error_check(exit_code)):
                 error_message = ('The task {0!s} seems to have failed with exit_code {1!s}.'
                                  ).format(self.name, exit_code)
-                # if(self.stderr is not None):
-                #     error_message += ' Consult {0!s} for more info.'.format(self.stderr)
+                if(self.stderr is not None):
+                    error_message += ' Consult {0!s} for more info.'.format(self.stderr)
                 inst = self.ExitCodeException(error_message)
                 inst.exit_code = exit_code
                 self.rename_targets()
@@ -210,8 +204,8 @@ class Task:
                 if(not os.path.exists(t)):
                     error_message = ('Task {0!s} encountered an unexpected error resulting in it'
                                      ' failing to produce its target files.').format(self.name)
-                    # if(self.stderr is not None):
-                    #     error_message += ' Consult {0!s} for more info.'.format(self.stderr)
+                    if(self.stderr is not None):
+                        error_message += ' Consult {0!s} for more info.'.format(self.stderr)
                     raise self.TaskException(error_message)
             return True
 
@@ -237,7 +231,7 @@ class Task:
         self.rename_targets()
 
     def close_files(self):
-        ''' This method is responsible for closing all files opened by a call to self.start.
+        ''' This method is responsible for closing all log files opened by a call to self.start.
         '''
         for f in self.opened_files:
             f.close()
@@ -295,7 +289,7 @@ class Supervisor:
     STATE_REMOVED = 'removed'
 
     def __init__(
-      self, tasks=None, dependencies=None, cpu=float('inf'), name='Supervisor',
+      self, tasks=[], dependencies=[], cpu=float('inf'), name='Supervisor',
       delay=1, force_run=False, email=None, email_interval=30, log=None):
         ''' the __init__ for the Superviosr object has nine paramters
             described below.
@@ -338,7 +332,7 @@ class Supervisor:
         self.cpu = cpu
         self.name = name
         self.delay = delay
-        self.dependencies = dependencies if(dependencies is not None) else []
+        self.dependencies = dependencies
         self.force_run = force_run
         self.email = email
         self.email_interval = email_interval * 60
@@ -350,9 +344,8 @@ class Supervisor:
         self.errors = []
         self.targets = []
         self.tasks = set()
-        if(tasks is not None):
-            for t in tasks:
-                self.add_task(t)
+        for t in tasks:
+            self.add_task(t)
 
     def run(self):
         ''' Use this funciton to get a Supervisor to run all tasks that it is
@@ -548,7 +541,7 @@ class Supervisor:
             for t in task.tasks:
                 t.dependencies.extend(task.dependencies)
                 self.add_task(t)
-        elif(isinstance(task, Task)):
+        if(isinstance(task, Task)):
             if(task.cpu > self.cpu):
                 err_mess = ('Task {0!s} has a higher cpu than this supervisor, {1!s}.\nYou '
                             'must increase this supervisor\'s cpu or decrease {0!s}\'s cpu.')
@@ -570,13 +563,13 @@ class Supervisor:
 
 
 if(__name__ == '__main__'):
+    '''
     t1 = Task('python ..\\..\\test.py 4.4', dependencies=[], name='t1')
     t2 = Task('python ..\\..\\test.py 6', dependencies=[t1], name='t2')
 
     def t2_dep():
         t2.command = 'python ..\\..\\test.py 8'
         return True
-
     t2.dependencies.append(t2_dep)
     t3 = Task('python ..\\..\\test.py 3', dependencies=[], name='t3')
     t4 = Task('python ..\\..\\test.py 2', dependencies=[t3], name='t4')
@@ -588,6 +581,6 @@ if(__name__ == '__main__'):
     s4 = Supervisor([t5, t6], name='s4', dependencies=[t1])
     s = Supervisor([s3, s4], force_run=False)
     s.run()
-
-    # help(Task)
-    # help(Supervisor)
+    '''
+    help(Task)
+    help(Supervisor)

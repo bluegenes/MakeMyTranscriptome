@@ -89,9 +89,7 @@ def gen_logs(log_dir, name):
     return (stdout, stderr)
 
 
-def round_div(cpu, k):
-    ret = int(round(float(cpu) / k))
-    return ret
+def round_div(cpu, k): return int(round(float(cpu)/k))
 
 
 def tool_path_check(full_exe):
@@ -111,25 +109,18 @@ def tool_path_check(full_exe):
         return name
 
 
-def make_dir_task(path, tasks=[]):
+def make_dir_task(path):
     trgs = [path]
     cmd = 'mkdir -p {0!s}'.format(path)
-    name = 'mdkir_' + os.path.basename(path)
-    return Task(command=cmd, dependencies=[t for t in tasks], targets=trgs, stdout=os.devnull, stderr=os.devnull, name=name)
-
-
-def cp_task(source, target, tasks):
-    trgs = [target]
-    cmd = "cp {0!s} {1!s}".format(source, target)
-    name = 'cp_{0!s}_{1!s}'.format(os.path.basename(source), os.path.basename(target))
-    return Task(command=cmd, dependencies=tasks, targets=trgs, stdout=os.devnull, stderr=os.devnull, name=name)
+    name = 'mdkir_' + path
+    return Task(command=cmd, targets=trgs, stdout=os.devnull, stderr=os.devnull, name=name)
 
 
 def build_dir_task(opc, tasks):
     trgs = [opc.path_dir, opc.path_assembly_files, opc.path_quality_files,
             opc.path_annotation_files, opc.path_filter_files,
             opc.path_expression_files, opc.path_logs]
-    cmd = 'mkdir -p {0!s}'.format(' '.join(trgs))
+    cmd = ' '.join(['mkdir -p {0!s};'.format(d) for d in trgs])
     return Task(command=cmd, dependencies=tasks, targets=trgs, stdout=os.devnull, stderr=os.devnull)
 
 
