@@ -130,8 +130,10 @@ def salmon_gene_map_task(opc, out_dir, assembly_name, gene_trans_map, tasks):
 
 
 def salmon_task(opc, index, left, right, out_name, gene_map, out_dir, cpu_cap, tasks):
-    trgs = ['{0!s}/{1!s}_quant.sf'.format(out_dir, out_name),
-            '{0!s}/{1!s}_quant.genes.sf'.format(out_dir, out_name)]
+    #trgs = ['{0!s}/{1!s}_quant.sf'.format(out_dir, out_name),
+    #        '{0!s}/{1!s}_quant.genes.sf'.format(out_dir, out_name)]
+    #pseudo_trgs = ['{0!s}/{1!s}/quant.sf'.format(out_dir, out_name),'{0!s}/{1!s}/quant.genes.sf'.format(out_dir, out_name)]
+    trgs = ['{0!s}/{1!s}/quant.sf'.format(out_dir, out_name),'{0!s}/{1!s}/quant.genes.sf'.format(out_dir, out_name)]
     if len(gene_map) > 0:
         trans_gene_map = ' --geneMap {0!s}'.format(gene_map)
     cmd = ('{0!s} quant -i {1!s} -l IU -1 {2!s} -2 {3!s} -o {4!s}/{5!s} '
@@ -145,17 +147,23 @@ def salmon_task(opc, index, left, right, out_name, gene_map, out_dir, cpu_cap, t
            right, out_dir, out_name, trans_gene_map, cpu_cap)
     name = os.path.basename(index) + '_' + os.path.basename(left)
     out, err = gen_logs(opc.path_logs, name)
-    salmon = Task(command=cmd, dependencies=[], targets=pseudo_trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
-    cp1 = cp_task(pseudo_trgs[0], trgs[0], [salmon])
-    cp2 = cp_task(pseudo_trgs[1], trgs[1], [salmon])
-    super_name = 'super_' + name
-    return Supervisor(tasks=[salmon, cp1, cp2], dependencies=tasks, name=super_name)
+    #salmon = Task(command=cmd, dependencies=[], targets=pseudo_trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
+    return Task(command=cmd, dependencies=[], targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
+    
+    #cp1 = cp_task(pseudo_trgs[0], trgs[0], [salmon])
+    #cp2 = cp_task(pseudo_trgs[1], trgs[1], [salmon])
+    #super_name = 'super_' + name
+    #return Supervisor(tasks=[salmon, cp1, cp2], dependencies=tasks, name=super_name)
+    
+    #return Supervisor(tasks=[salmon], dependencies=tasks, name=super_name)
 
 
 
 def salmon_unpaired_task(opc, index, unpaired, out_name, gene_map, out_dir, cpu_cap, tasks):
     trgs = ['{0!s}/{1!s}_quant.sf'.format(out_dir, out_name),
             '{0!s}/{1!s}_quant.genes.sf'.format(out_dir, out_name)]
+    pseudo_trgs = ['{0!s}/{1!s}/quant.sf'.format(out_dir, out_name),
+                '{0!s}/{1!s}/quant.genes.sf'.format(out_dir, out_name)]
     if len(gene_map) > 0:
         trans_gene_map = ' --geneMap {0!s}'.format(gene_map)
     cmd = ('{0!s} quant -i {1!s} -l U -r {2!s} -o {3!s}/{4!s} {5!s} '
@@ -168,10 +176,12 @@ def salmon_unpaired_task(opc, index, unpaired, out_name, gene_map, out_dir, cpu_
     name = 'salmon_unpaired_' + os.path.basename(index) + '_' + os.path.basename(unpaired)
     out, err = gen_logs(opc.path_logs, name)
     salmon = Task(command=cmd, dependencies=[], targets=pseudo_trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
+    salmon = Task(command=cmd, dependencies=[], targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
     cp1 = cp_task(pseudo_trgs[0], trgs[0], [salmon])
     cp2 = cp_task(pseudo_trgs[1], trgs[1], [salmon])
     super_name = 'super_' + name
     return Supervisor(tasks=[salmon, cp1, cp2], dependencies=tasks, name=super_name)
+    #return Supervisor(tasks=[salmon], dependencies=tasks, name=super_name)
 
 
 def build_kallisto_task(opc, assembly_path, assembly_name, out_dir, tasks):

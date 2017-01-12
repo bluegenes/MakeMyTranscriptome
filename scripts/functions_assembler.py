@@ -17,10 +17,15 @@ def fastqc_task(opc, out_dir, fq_files, output_name, cpu_cap, tasks):
     '''
     cpu_param = min(len(fq_files), cpu_cap)
     outDir = '{0!s}/fastqc_{1!s}'.format(out_dir, output_name)
-    trgs = [os.path.join(outDir, os.path.basename(x).rsplit('.f')[0] + '_fastqc.zip') for x in fq_files]
-    cmd = 'mkdir {2!s}; {0!s} --extract --outdir {2!s} --threads {3!s} {1!s}'.format(
-           TOOLS_DICT['fastqc'].full_exe[0],' '.join(fq_files), outDir, cpu_param)
-    name = 'fastqc_'+output_name
+#    trgs = [os.path.join(outDir, os.path.basename(x).rsplit('.f')[0] + '_fastqc.zip') for x in fq_files]
+    trgs = ['{0!s}/fastqc_{1!s}'.format(out_dir, output_name)]
+    mkdir_task = make_dir_task(trgs[0])
+    cmd = '{0!s} --extract --outdir {2!s} --threads {3!s} {1!s}'.format(
+           TOOLS_DICT['fastqc'].full_exe[0], ' '.join(fq_files), trgs[0], cpu_param)
+    name = 'fastqc_' + output_name
+    #cmd = 'mkdir {2!s}; {0!s} --extract --outdir {2!s} --threads {3!s} {1!s}'.format(
+     #      TOOLS_DICT['fastqc'].full_exe[0],' '.join(fq_files), outDir, cpu_param)
+    #name = 'fastqc_'+output_name
     out, err = gen_logs(opc.path_logs, name)
     fast_task = Task(command=cmd, dependencies=[mkdir_task], targets=trgs, name=name, stdout=out, stderr=err)
     super_name = "super_" + name

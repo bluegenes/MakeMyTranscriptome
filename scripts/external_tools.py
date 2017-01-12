@@ -175,8 +175,22 @@ diamond_tool.change_exe_fullpath(PATH_TOOLS) # bc reg is PATH_TOOLS/target/exe
 TOOL_LIST.append(diamond_tool)
 
 ### Salmon ###
-salmon_linux_url = 'https://github.com/COMBINE-lab/salmon/releases/download/v0.6.0/SalmonBeta-0.6.0_DebianSqueeze.tar.gz'
-salmon_linux_target = join(PATH_TOOLS, 'SalmonBeta-0.6.1_DebianSqueeze')
+#salmon_linux_url = 'https://github.com/COMBINE-lab/salmon/releases/download/v0.6.0/SalmonBeta-0.6.0_DebianSqueeze.tar.gz'
+#salmon_linux_target = join(PATH_TOOLS, 'SalmonBeta-0.6.1_DebianSqueeze')
+#salmon_exe = ['bin/salmon']
+#salmon_instructions = '\n\t After downloading the binary: \n\n\t\t tar zxf SalmonBeta-0.6.0_DebianSqueeze.tar.gz \n\n ' \
+#                         '\tThen: soft link SalmonBeta-0.6.1_DebianSqueeze into the MMT "external_tools" folder\n' \
+#                        '\t  Or: 1. add /path/to/SalmonBeta-0.6.1_DebianSqueeze/bin to your $path variable\n' \
+#                        '\t      2. add /path/to/SalmonBeta-0.6.1_DebianSqueeze/lib to your shared libraries variable\n'
+# 
+#salmon_website = 'http://combine-lab.github.io/salmon'
+#
+#salmon_tool = tc('salmon', salmon_linux_url, salmon_linux_target, salmon_exe, salmon_instructions, web=salmon_website)
+#TOOL_LIST.append(salmon_tool)
+
+### Salmon 7.2 ###
+salmon_linux_url = 'https://github.com/COMBINE-lab/salmon/releases/download/v0.7.2/Salmon-0.7.2_linux_x86_64.tar.gz'
+salmon_linux_target = join(PATH_TOOLS, 'Salmon-0.7.2_linux_x86_64')
 salmon_exe = ['bin/salmon']
 salmon_instructions = '\n\t After downloading the binary: \n\n\t\t tar zxf SalmonBeta-0.6.0_DebianSqueeze.tar.gz \n\n ' \
                          '\tThen: soft link SalmonBeta-0.6.1_DebianSqueeze into the MMT "external_tools" folder\n' \
