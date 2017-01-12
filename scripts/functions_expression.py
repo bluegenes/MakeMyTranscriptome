@@ -1,6 +1,6 @@
-from tasks_v2 import Task, Supervisor
+from tasks_v2 import Task
 import os
-from functions_general import tool_path_check, gen_logs, make_dir_task, cp_task
+from functions_general import tool_path_check, gen_logs
 from external_tools import TOOLS_DICT
 import mmt_defaults as statics
 
@@ -22,13 +22,12 @@ def bowtie2_unpaired_task(opc, bowtie2_index, out_dir, fastq, out_name, opt, cpu
     opts = ['-a -t --end-to-end', '-t --local', '-k 200 --end-to-end']
     trgs = ['{0!s}/{1!s}.bam'.format(out_dir, out_name)]
     cmd = ('{0!s} {1!s} -L {2!s} -N 1 --threads {3!s} -x {4!s} -U '
-           '{5!s} | samtools view -Sb -').format(
+           '{5!s} | samtools view -Sb - > {6!s} ').format(
            tool_path_check(TOOLS_DICT['bowtie2'].full_exe[1]),
-           opts[opt], 22, cpu_cap, bowtie2_index, fastq)
+           opts[opt], 22, cpu_cap, bowtie2_index, fastq, trgs[0])
     name = 'bowtie2_' + os.path.basename(bowtie2_index) + '_' + out_name
     out, err = gen_logs(opc.path_logs, name)
-    out = trgs[0]
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap, shell=True)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
 
 
 def bowtie2_task(opc, bowtie2_index, out_dir, fastq1, fastq2, out_name, opt, cpu_cap, tasks):
@@ -36,28 +35,24 @@ def bowtie2_task(opc, bowtie2_index, out_dir, fastq1, fastq2, out_name, opt, cpu
     opts_name = ['express', 'intersectBed', 'rapclust']
     trgs = ['{0!s}/{1!s}.bam'.format(out_dir, out_name)]
     cmd = ('{0!s} {1!s} -L {2!s} -N 1 --maxins 800 --threads {3!s} -x {4!s} -1 '
-           '{5!s} -2 {6!s} | samtools view -Sb -').format(
+           '{5!s} -2 {6!s} | samtools view -Sb - > {7!s} ').format(
            tool_path_check(TOOLS_DICT['bowtie2'].full_exe[1]),
-           opts[opt], 22, cpu_cap, bowtie2_index, fastq1, fastq2)
+           opts[opt], 22, cpu_cap, bowtie2_index, fastq1, fastq2, trgs[0])
     name = 'bowtie2_' + os.path.basename(bowtie2_index) + '_' + out_name + '_' + opts_name[opt]
     out, err = gen_logs(opc.path_logs, name)
-    out = trgs[0]
-    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap, shell=True)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
 
 
 def express_task(opc, bowtie2_index, assembly_path, out_dir, out_name, bam_input, tasks):
     trgs = ['{0!s}/{1!s}.xprs'.format(out_dir, out_name)]
-    mkdir = make_dir_task(os.path.join(out_dir, out_name))
-    pseudo_trgs = ['{0!s}/{1!s}/results.xprs'.format(out_dir, out_name)]
-    cmd = ('{0!s} --output-dir {1!s}/{2!s} {3!s} {4!s}').format(
+    cmd = ('mkdir {1!s}/{2!s}; {0!s} --output-dir {1!s}/{2!s} {3!s} {4!s}; mv '
+           '{1!s}/{2!s}/results.xprs {5!s}; rm -rf {1!s}/{2!s};').format(
            tool_path_check(TOOLS_DICT['express'].full_exe[0]), out_dir,
-           out_name, assembly_path, bam_input)
+           out_name, assembly_path, bam_input, trgs[0])
     name = 'express_' + os.path.basename(bowtie2_index) + '_' + out_name
     out, err = gen_logs(opc.path_logs, name)
-    express = Task(command=cmd, dependencies=[make_dir_task], targets=pseudo_trgs, name=name, stdout=out, stderr=err)
-    cp = cp_task(pseudo_trgs[0], trgs[0], [express])
-    super_name = 'super_' + name
-    return Supervisor(tasks=[mkdir, express, cp], dependencies=tasks, name=super_name)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
+
 
 def counts_to_table_task(opc, assembly_name, gene_trans_map, out_dir, count_files, out_name, flag, tasks):
     trgs = ['{0!s}/{1!s}.countsTable'.format(out_dir, out_name),
@@ -87,12 +82,11 @@ def sam_sort_task(opc, out_dir, bam_file, out_name, tasks):
 def intersect_bed_task(opc, out_dir, bam_file, bed_reference, output_name, tasks):
     trgs = ['{0!s}/{1!s}.bed'.format(out_dir, output_name)]
     # cmd = '{0!s} intersect -abam {1!s} -b {2!s} -wb -bed > {3!s}'.format(
-    cmd = '{0!s} -abam {1!s} -b {2!s} -wb -bed'.format(
+    cmd = '{0!s} -abam {1!s} -b {2!s} -wb -bed > {3!s}'.format(
           tool_path_check(TOOLS_DICT['bedtools'].full_exe[0]),
-          bam_file, bed_reference)
+          bam_file, bed_reference, trgs[0])
     name = 'intersect_bed_' + os.path.basename(bed_reference) + '_' + output_name
     out, err = gen_logs(opc.path_logs, name)
-    out = trgs[0]
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
 
 
@@ -119,13 +113,13 @@ def build_salmon_task(opc, path_assembly, assembly_name, out_dir, cpu_cap, tasks
     out, err = gen_logs(opc.path_logs, name)
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
 
+
 def salmon_gene_map_task(opc, out_dir, assembly_name, gene_trans_map, tasks):
     ''' salmon requires gene_trans_map in reverse column order (transcript \\t gene \\n)'''
     trgs = ['{0!s}/{1!s}.trans_gene_map'.format(out_dir, assembly_name)]
-    cmd = '''awk '{{ print $2 " " $1}}' {0!s}'''.format(gene_trans_map)
+    cmd = '''awk '{{ print $2 " " $1}}' {0!s} > {1!s}'''.format(gene_trans_map, trgs[0])
     name = 'salmon_gene_map_task_' + assembly_name
     out, err = gen_logs(opc.path_logs, name)
-    out = trgs[0]
     return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err)
 
 
@@ -145,12 +139,7 @@ def salmon_task(opc, index, left, right, out_name, gene_map, out_dir, cpu_cap, t
            right, out_dir, out_name, trans_gene_map, cpu_cap)
     name = os.path.basename(index) + '_' + os.path.basename(left)
     out, err = gen_logs(opc.path_logs, name)
-    salmon = Task(command=cmd, dependencies=[], targets=pseudo_trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
-    cp1 = cp_task(pseudo_trgs[0], trgs[0], [salmon])
-    cp2 = cp_task(pseudo_trgs[1], trgs[1], [salmon])
-    super_name = 'super_' + name
-    return Supervisor(tasks=[salmon, cp1, cp2], dependencies=tasks, name=super_name)
-
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
 
 
 def salmon_unpaired_task(opc, index, unpaired, out_name, gene_map, out_dir, cpu_cap, tasks):
@@ -167,11 +156,7 @@ def salmon_unpaired_task(opc, index, unpaired, out_name, gene_map, out_dir, cpu_
            out_dir, out_name, trans_gene_map, cpu_cap)
     name = 'salmon_unpaired_' + os.path.basename(index) + '_' + os.path.basename(unpaired)
     out, err = gen_logs(opc.path_logs, name)
-    salmon = Task(command=cmd, dependencies=[], targets=pseudo_trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
-    cp1 = cp_task(pseudo_trgs[0], trgs[0], [salmon])
-    cp2 = cp_task(pseudo_trgs[1], trgs[1], [salmon])
-    super_name = 'super_' + name
-    return Supervisor(tasks=[salmon, cp1, cp2], dependencies=tasks, name=super_name)
+    return Task(command=cmd, dependencies=tasks, targets=trgs, name=name, stdout=out, stderr=err, cpu=cpu_cap)
 
 
 def build_kallisto_task(opc, assembly_path, assembly_name, out_dir, tasks):
