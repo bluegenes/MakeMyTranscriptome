@@ -124,15 +124,13 @@ def salmon_gene_map_task(opc, out_dir, assembly_name, gene_trans_map, tasks):
 
 
 def salmon_task(opc, index, left, right, out_name, gene_map, out_dir, cpu_cap, tasks):
-    trgs = ['{0!s}/{1!s}_quant.sf'.format(out_dir, out_name),
-            '{0!s}/{1!s}_quant.genes.sf'.format(out_dir, out_name)]
+    trgs = ['{0!s}/{1!s}/quant.sf'.format(out_dir, out_name),
+            '{0!s}/{1!s}/quant.genes.sf'.format(out_dir, out_name)]
     if len(gene_map) > 0:
         trans_gene_map = ' --geneMap {0!s}'.format(gene_map)
     cmd = ('{0!s} quant -i {1!s} -l IU -1 {2!s} -2 {3!s} -o {4!s}/{5!s} '
            #'--geneMap {6!s} -p {7!s} --extraSensitive; cp {4!s}/{5!s}/quant.sf '
-           '{6!s} -p {7!s} --dumpEq; cp {4!s}/{5!s}/quant.sf '
-           '{4!s}/{5!s}_quant.sf; cp {4!s}/{5!s}/quant.genes.sf '
-           '{4!s}/{5!s}_quant.genes.sf').format(
+           '{6!s} -p {7!s} --dumpEq').format(
     #cmd = '{0!s} quant -i {1!s} -l IU -1 {2!s} -2 {3!s} -o {4!s}/{5!s} 
     #--geneMap {6!s} -p {7!s} --extraSensitive --numBootstraps 30 --biasCorrect ; cp ' \
            tool_path_check(TOOLS_DICT['salmon'].full_exe[0]), index, left,
