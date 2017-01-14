@@ -1,8 +1,6 @@
-from functions_general import PATH_DATABASES
+from mmt_defaults import PATH_DATABASES,PATH_UNIREF90, PATH_SWISS_PROT,PATH_NR, PATH_PFAM_DATABASE
 from functions_databases import (
-    PATH_UNIREF90, PATH_SWISS_PROT,
-    PATH_NR, PATH_PFAM_DATABASE, pfam_build_task, 
-    build_diamond_task, build_blast_task, db2stitle_task)
+    pfam_build_task, build_diamond_task, build_blast_task, db2stitle_task)
 from time import strftime
 import gzip
 import tarfile

@@ -112,14 +112,14 @@ def do_args():
     #DATABASE SELECTOR ARGS 
     database_selector = argparse.ArgumentParser(add_help=False)
     #need to add no-metazoa arg???? so can turn off busco-metazoa?
+    database_selector.add_argument('-fresh', help= 'download new version of all databases', action='store_true', default=False)
+    
     database_selector.add_argument('-m', '--metazoa', help = 'use metazoa BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=True)
     database_selector.add_argument('-e', '--eukaryota', help = 'use eukaryote BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
     database_selector.add_argument('-v', '--vertebrata', help = 'use vertebrate BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
     database_selector.add_argument('--arthropoda', help = 'use arthropod BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
     database_selector.add_argument('-f', '--fungi', help = 'use fungi BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
     database_selector.add_argument('-b', '--bacteria', help = 'use bacteria BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
-    database_selector.add_argument('--fresh', help= 'download new version of all databases', default=False)
-    #currently this option does nothing, bc it requires an updated busco.py
     database_selector.add_argument('-p', '--plantae', help = 'use plantae BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
     #ANNOTATION DATABASE SELECTOR ARGS 
     annot_database_selector = argparse.ArgumentParser(add_help=False)

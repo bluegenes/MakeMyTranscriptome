@@ -267,7 +267,7 @@ def get_dbs(json_config=mmt_defaults.PATH_DB_CONFIG_FILE, defaults=False):
 
     ret['nog_functions'] = database(
         mmt_defaults.URL_NOG_FUNCTIONS,
-        config['nog_functions'])
+        config['nog_functions'], ftype='.gz')
 
     ret['kog_functional'] = database(
         mmt_defaults.URL_KOG_FUNCTIONAL,
@@ -285,7 +285,7 @@ def get_dbs(json_config=mmt_defaults.PATH_DB_CONFIG_FILE, defaults=False):
 
     ret['id_mapping_selected'] = database(
         mmt_defaults.URL_ID_MAPPING_SELECTED,
-        config['id_mapping_selected'])
+        config['id_mapping_selected'], ftype='.gz')
 
     ret['nog_categories'] = database(
         mmt_defaults.URL_NOG_CATEGORIES,
