@@ -120,7 +120,7 @@ def do_args():
     database_selector.add_argument('--arthropoda', help = 'use arthropod BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
     database_selector.add_argument('-f', '--fungi', help = 'use fungi BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
     database_selector.add_argument('-b', '--bacteria', help = 'use bacteria BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
-    database_selector.add_argument('-p', '--plantae', help = 'use plantae BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
+    database_selector.add_argument('-p', '--plant', help = 'use plant BUSCO database. If used with "databases" tool, download this database.',action='store_true',default=False)
     #ANNOTATION DATABASE SELECTOR ARGS 
     annot_database_selector = argparse.ArgumentParser(add_help=False)
     annot_database_selector.add_argument('-blastplus',action='store_true',help='Use the blast+ tool suite instead of diamond to align your transcripts to the references. If used with "databases" tool, download this database.')
@@ -349,7 +349,7 @@ def go_quality(args, dep, assembly_path, out_dir, transrate_cp=True):
     busco_args = {'arthropoda': args.arthropoda, 'metazoa': args.metazoa,
                   'vertebrata': args.vertebrata, 'eukaryota': args.eukaryota,
                   'fungi': args.fungi, 'bacteria': args.bacteria,
-                  'plantae': args.plantae}
+                  'plant': args.plant}
     busco_args = [k for k in busco_args if(busco_args[k])]
     return gen_quality_supervisor(
         args.opc, args.dbs, args.fastq1, args.fastq2, dep, busco_args,
@@ -390,7 +390,7 @@ def go_manage_db(args, dep):
         busco_args = {'arthropoda': args.arthropoda, 'metazoa': args.metazoa,
                       'vertebrata': args.vertebrata, 'eukaryota': args.eukaryota,
                       'fungi': args.fungi, 'bacteria': args.bacteria,
-                      'plantae': args.plantae}
+                      'plant': args.plant}
     if(args.which == 'quality'):  # need to put these in the namespace
         args.nr = False
         args.uniref90 = False

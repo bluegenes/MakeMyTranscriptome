@@ -32,8 +32,8 @@ def busco_task(opc, dbs, assembly_path, assembly_name, out_dir, reference_name, 
     trgs = ['{0!s}/run_busco_{1!s}_{2!s}'.format(out_dir, assembly_name, reference_name)]
     busco_db = dbs['busco_' + reference_name]
     cmd = ('cd {0!s}; python {1!s} '
-           '-o busco_{3!s}_{2!s} -in {4!s} -l {5!s}/{2!s} -m '
-           'trans -f -c {6!s}').format(
+           '-o busco_{3!s}_{2!s} -i {4!s} -l {5!s}/{2!s}_odb9 -m '
+           'tran -f -c {6!s}').format(
            out_dir, tool_path_check(TOOLS_DICT['busco'].full_exe[0]),
            reference_name, assembly_name, assembly_path, busco_db.call_path, cpu_cap)
     name = 'busco_' + reference_name + '_' + assembly_name

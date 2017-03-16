@@ -33,9 +33,12 @@ def busco_parser(buscoDir, filename):
     ''' BUSCO PARSER
         Extracts info from BUSCO's "short_summary_busco_DBNAME" file
         C:94%[D:40%],F:1.8%,M:3.5%,n:843o
+	C:0.1%[S:0.0%,D:0.1%],F:0.1%,M:99.8%,n:978
     '''
     buscoDB = "busco_" + buscoDir.rsplit('_', 1)[1] # grab DBNAME
-    buscoF = glob.glob(os.path.join(buscoDir, filename))
+    #buscoF = glob.glob(os.path.join(buscoDir, filename))
+    buscoF = filename
+    import pdb;pdb.set_trace()
     buscoInfo = {}
     if len(buscoF) <1:
         buscoInfo = {}
@@ -43,12 +46,15 @@ def busco_parser(buscoDir, filename):
     else:
         with open(buscoF[0], 'r') as f:
             read_report = f.read()
-            info = re.search('C:(\d+\.?\d*)%\[D:(\d+\.?\d*)%\],F:(\d+\.?\d*)%,M:(\d+\.?\d*)%,n:(\d*)',read_report).groups()
+            #info = re.search('C:(\d+\.?\d*)%\[D:(\d+\.?\d*)%\],F:(\d+\.?\d*)%,M:(\d+\.?\d*)%,n:(\d*)',read_report).groups()
+            info = re.search('C:(\d+\.?\d*)%\[S:(\d+\.?\d*)%,D:(\d+\.?\d*)%\],F:(\d+\.?\d*)%,M:(\d+\.?\d*)%,n:(\d*)',read_report).groups()
             buscoInfo[buscoDB + '_%_complete'] = info[0]
-            buscoInfo[buscoDB + '_%_duplicated'] = info[1]
-            buscoInfo[buscoDB + '_%_fragmented'] = info[2]
-            buscoInfo[buscoDB + '_%_missing'] = info[3]
-            buscoInfo[buscoDB + '_number_searched'] = info[4]
+            buscoInfo[buscoDB + '_%_complete_single_copy'] = info[1]
+            buscoInfo[buscoDB + '_%_complete_duplicated'] = info[2]
+            buscoInfo[buscoDB + '_%_fragmented'] = info[3]
+            buscoInfo[buscoDB + '_%_missing'] = info[4]
+            buscoInfo[buscoDB + '_number_searched'] = info[5]
+    print buscoInfo
     return buscoInfo
 
 
@@ -58,11 +64,13 @@ def get_busco_info(short_summary_file):
     busco_db = "busco_"+busco_db
     with open(short_summary_file) as f:
         re_string = 'C:(\d+\.?\d*)%\[D:(\d+\.?\d*)%\],F:(\d+\.?\d*)%,M:(\d+\.?\d*)%,n:(\d*)'
-        info = re.search(re_string, f.read()).groups()
-        info_keys = ['_%_complete', '_%_duplicated', '_%_fragmented', '_%_missing',
+        inf = re.search(re_string, f.read())
+	if inf is not None:
+	    info = inf.groups()
+            info_keys = ['_%_complete', '_%_duplicated', '_%_fragmented', '_%_missing',
                      '_number_searched']
-        info_keys = [busco_db+k for k in info_keys]
-        return {k: v for k, v in zip(info_keys, info)}
+            info_keys = [busco_db+k for k in info_keys]
+            return {k: v for k, v in zip(info_keys, info)}
 
 
 def detonate_parser(detonateDir, filename):

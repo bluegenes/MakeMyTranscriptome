@@ -128,7 +128,8 @@ for file in countFiles:
         countFileNames = [os.path.basename(name)  for name in countFiles]    
     elif opts.salmon:
     	cD = countsFromSalmon(file, i, contigD)
-        countFileNames = [os.path.basename(name)  for name in countFiles]    
+        countFileNames = [name.split('/')[-2] for name in countFiles] #if haven't pulled abundance.txt out of it's well-named directory
+        #countFileNames = [os.path.basename(name)  for name in countFiles]    
     elif opts.kallisto:
     	cD = countsFromKallisto(file, i, contigD)
         countFileNames = [name.split('/')[-2] for name in countFiles] #if haven't pulled abundance.txt out of it's well-named directory

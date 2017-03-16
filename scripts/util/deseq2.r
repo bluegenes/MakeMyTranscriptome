@@ -44,5 +44,6 @@ subsetCounts <- countTable[,colnames(countTable)%in%rownames(treatmentInfo)]
 dds <- DESeq(DESeqDataSetFromMatrix(countData = subsetCounts, colData = treatmentInfo, design= ~ 1))
 design(dds) <- formula(modelParam)
 dds <- DESeq(dds)
-runAllDESeq2(baseDir,treatmentInfo,baseName, dds,.1)
+#runAllDESeq2(baseDir,treatmentInfo,baseName, dds,.1)
+runAllDESeq2(baseDir,treatmentInfo,baseName, dds,.05)
 

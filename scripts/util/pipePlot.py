@@ -161,8 +161,12 @@ pathDF = pd.DataFrame(pd.Series(keggList).value_counts()[1:]) # convert back to 
 pathDF.reset_index(level=0, inplace=True)
 pathDF.columns = ['pathway', 'count']
 pathDF = pathDF.sort('count', ascending=0)
-pathXOrder = pathDF.pathway[0:20]
-pathPlot = sns.factorplot('pathway', 'count', data=pathDF[0:20],aspect=3, x_order = pathXOrder)
+if len(pathDF['count'] >=20):
+    pathXOrder = pathDF.pathway[0:20]
+else:
+    pathXOrder = pathDF.pathway[0:len(pathDF['count'])]
+#pathPlot = sns.factorplot('pathway', 'count', data=pathDF[0:20],aspect=3, x_order = pathXOrder)
+pathPlot = sns.factorplot('pathway', 'count', data=pathDF[0:20],aspect=3, order = pathXOrder)
 #pathPlot.savefig('rabbitfish_keggPaths.png', format = 'png')
 pathPlot.savefig('keggPaths.png', format = 'png')
 #pathDF[0:20].to_csv('topKeggPaths.kegg_pathways', sep='\t', index=False) #write top paths to file
@@ -180,7 +184,7 @@ hitRatioDF["orthologHitRatio"] = hitRatioDF.Transcript_Length/hitRatioDF.swisspr
 data = np.array(hitRatioDF['orthologHitRatio'])
 linspaceBins = np.linspace(0,2.5,num =50 )
 plt.figure()
-plt.hist(data,linspaceBins)
+plt.hist(data,linspaceBins, range=(linspaceBins.min(),linspaceBins.max()))
 plt.title("Ortholog Hit Ratio")
 plt.savefig('orthologHitRatio_moreBins.png', format='png')
 

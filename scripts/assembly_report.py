@@ -31,10 +31,13 @@ summaryFile = 'annotation_summary.json'
 def get_busco_info(assembly_dir):
     pattern = os.path.join(assembly_dir, relative_paths['busco'], buscoDirBase, buscoShortSum)
     busco_summaries = glob.glob(pattern)
+    print busco_summaries
     ret = {}
     for p in busco_summaries:
-        ret.update(parsers.get_busco_info(p))
-    return ret
+        info = parsers.get_busco_info(p)
+	print info
+#        ret.update(parsers.get_busco_info(p))
+#    return ret
 
 
 def get_fastqc_data(assembly_dir):

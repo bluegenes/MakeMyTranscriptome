@@ -61,7 +61,8 @@ runAllDESeq2 <- function(baseDir,treatmentInfo, deseqBasename, ddsData,PVAL=.05,
     writeLines(capture.output(sessionInfo()), paste(dirName, "_sessionInfo.txt", sep="")) 
     deseqBaseDir <- getwd()
     # DESeq2 transformations (regularized log transform + variance stabilizing transform) for clustering & plotting
-    mycols <- brewer.pal(8, "Dark2")[1:length(colnames(ddsData))] # get colors for conditions --> if have >8, need to switch color palette!!!
+#    mycols <- brewer.pal(8, "Dark2")[1:length(colnames(ddsData))] # get colors for conditions --> if have >8, need to switch color palette!!!
+    mycols <- colorRampPalette(c("blue", "red"))(length(colnames(ddsData))) # solve 8 color issue
     #transformData(ddsData, deseqBasename, mycols) #this function transforms, plots, and outputs the transformed count data 
     resultsList <- getAllContrastResults(ddsData,treatmentInfo) #make all pairwise contrasts; store each results df as element of resultsList
     for (name in names(resultsList)){
@@ -72,10 +73,10 @@ runAllDESeq2 <- function(baseDir,treatmentInfo, deseqBasename, ddsData,PVAL=.05,
         if (filter == TRUE){ #option to filter by base mean 
             newDeseqBasename = paste(newDeseqBasename, '_filterbm', filterBM, sep="")
             resultsD <- resultsD[resultsD$baseMean>filterBM, ]} #elim any gene with basemean < filterBM counts
-        plotdeseq2indepFiltering(resultsD, newDeseqBasename)
+        #plotdeseq2indepFiltering(resultsD, newDeseqBasename)
         resData <- mergeResultsWithCountData(resultsD, ddsData, newDeseqBasename,PVAL) # merge DESeq2 results with count data + write out in tsv format 
         names(resData)[1] <- "Gene" #add column header for 'Gene' column
-        plotDispersionsAndVolcano(ddsData, resData, newDeseqBasename, PVAL)
+        #plotDispersionsAndVolcano(ddsData, resData, newDeseqBasename, PVAL)
         #heatmap NOT WORKING #
         #plotDEHeatmap(ddsData,resData, newDeseqBasename, 50, nrow(treatmentInfo), mycols) # default top 50 genes for heatmap --> will this work??? Maybe need to plot differently
         deseqsigData <- subset(resData, padj < PVAL) #get signif genes
